@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "eventlog",
+    "scheme": "eventlog",
+    "slug": "eventlog",
+    "version": "1.0.0",
+    "plugins": [
+      "expo-router",
+      [
+        "expo-font",
+        {
+          "fonts": ["./assets/fonts/SquadaOne.ttf", "./assets/fonts/Arial.ttf"]
+        }
+      ]
+    ]
+  }
+}
