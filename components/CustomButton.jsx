@@ -17,6 +17,7 @@ export default function CustomButton({
            : "bg-gray-400"
        }
     `}
+      onPress={onPress}
     >
       <Text
         className={`font-SquadaOne text-[26px]
