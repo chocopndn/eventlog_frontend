@@ -28,7 +28,7 @@ export default function App() {
 
       <View className="mt-5">
         <CustomButton type="primary" title="LOG IN" onPress={login} />
-        <CustomButton type="disabled" title="REGISTER" onPress={signup} />
+        <CustomButton type="secondary" title="REGISTER" onPress={signup} />
       </View>
 
       <StatusBar style="dark" />
