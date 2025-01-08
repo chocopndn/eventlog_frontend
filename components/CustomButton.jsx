@@ -9,7 +9,7 @@ export default function CustomButton({
   return (
     <TouchableOpacity
       className={`
-       rounded-xl items-center justify-center m-3 w-60 h-[46px] ${
+       rounded-xl items-center justify-center m-3 w-[228px] h-[46px] ${
          type === "primary"
            ? "bg-primary"
            : type === "secondary"
