@@ -20,7 +20,7 @@ export default function App() {
     <View className="items-center justify-center h-full bg-secondary">
       <Text className="text-[80px] font-SquadaOne color-primary">EVENTLOG</Text>
       <View className="mt-5 mb-7">
-        <Image source={images.logo} className="w-52 h-52" />
+        <Image source={images.logo} className="w-[196px] h-[196px]" />
       </View>
       <Text className="font-SquadaOne color-primary text-[30px]">
         Every CIT Event's Companion
