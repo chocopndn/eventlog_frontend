@@ -22,7 +22,7 @@ export default function App() {
       <View className="mt-5 mb-7">
         <Image source={images.logo} className="w-52 h-52" />
       </View>
-      <Text className="font-SquadaOne color-primary text-[29px]">
+      <Text className="font-SquadaOne color-primary text-[30px]">
         Every CIT Event's Companion
       </Text>
 
