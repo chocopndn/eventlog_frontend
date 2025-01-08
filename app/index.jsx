@@ -1,5 +1,6 @@
 import React from "react";
 import { Text, View, Image } from "react-native";
+import { router } from "expo-router";
 
 import images from "../constants/images";
 import { StatusBar } from "expo-status-bar";
@@ -7,8 +8,16 @@ import { StatusBar } from "expo-status-bar";
 import CustomButton from "../components/CustomButton";
 
 export default function App() {
+  const login = () => {
+    router.push("./login");
+  };
+
+  const signup = () => {
+    router.push("./signup");
+  };
+
   return (
-    <View className="items-center justify-center h-[100%]">
+    <View className="items-center justify-center h-[100%] bg-secondary">
       <Text className="text-[80px] font-SquadaOne color-primary">EVENTLOG</Text>
       <View className="mt-5 mb-7">
         <Image source={images.logo} className="w-52 h-52" />
@@ -18,11 +27,11 @@ export default function App() {
       </Text>
 
       <View className="mt-5">
-        <CustomButton type="primary" title="LOG IN" />
-        <CustomButton type="disabled" title="REGISTER" />
+        <CustomButton type="primary" title="LOG IN" onPress={login} />
+        <CustomButton type="disabled" title="REGISTER" onPress={signup} />
       </View>
 
-      <StatusBar style="auto" />
+      <StatusBar style="dark" />
     </View>
   );
 }
