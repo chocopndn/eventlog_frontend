@@ -9,18 +9,18 @@ export default function CustomButton({
   return (
     <TouchableOpacity
       className={`
-       rounded-xl items-center justify-center m-3 w-60 h-[50px] ${
+       rounded-xl items-center justify-center m-3 w-60 h-[46px] ${
          type === "primary"
            ? "bg-primary"
            : type === "secondary"
-           ? "bg-white border-primary border-[3px]"
+           ? "bg-white border-primary border-[2px]"
            : "bg-gray-400"
        }
     `}
       onPress={onPress}
     >
       <Text
-        className={`font-SquadaOne text-[26px]
+        className={`font-SquadaOne text-[30px]
       ${
         type === "primary"
           ? "text-secondary"
