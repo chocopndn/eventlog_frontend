@@ -17,7 +17,7 @@ export default function App() {
   };
 
   return (
-    <View className="items-center justify-center h-[100%] bg-secondary">
+    <View className="items-center justify-center h-full bg-secondary">
       <Text className="text-[80px] font-SquadaOne color-primary">EVENTLOG</Text>
       <View className="mt-5 mb-7">
         <Image source={images.logo} className="w-52 h-52" />
