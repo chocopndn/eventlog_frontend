@@ -1,10 +1,58 @@
-import { Text, View } from "react-native";
-import React from "react";
+import { Text, View, Image } from "react-native";
+import React, { useState } from "react";
+import { StatusBar } from "expo-status-bar";
+
+import images from "../../constants/images";
+import FormField from "../../components/FormField";
+import CustomButton from "../../components/CustomButton";
 
 export default function LogIn() {
+  const [idNumber, setIdNumber] = useState("");
+  const [password, setPassword] = useState("");
+
+  const isButtonSecondary = idNumber.length > 0 && password.length > 0;
+
   return (
-    <View>
-      <Text>LogIn</Text>
+    <View className="items-center justify-center h-full bg-primary">
+      <View className="w-full h-50 items-center justify-center">
+        <View className="absolute w-full h-28 bg-secondary"></View>
+        <View className="absolute w-[70%] h-10 bg-cyan-500 top-1/3 right-52"></View>
+        <View className="absolute w-[70%] h-10 bg-cyan-500 bottom-1/3 left-52"></View>
+        <View className="absolute w-[70%] h-10 bg-primary"></View>
+
+        <View className="mt-5 mb-7">
+          <Image source={images.logo} className="w-[196px] h-[196px]" />
+        </View>
+      </View>
+
+      <Text className="font-SquadaOne text-7xl text-secondary mb-5">
+        WELCOME!
+      </Text>
+
+      <FormField
+        type="id"
+        placeholder="ID Number"
+        value={idNumber}
+        onChangeText={setIdNumber}
+      />
+      <FormField
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
+      />
+
+      <CustomButton
+        type={isButtonSecondary ? "secondary" : "disabled"}
+        title="LOG IN"
+      />
+
+      <View className="flex-row mt-5">
+        <Text className="font-Arial text-white">Don't Have An Account? </Text>
+        <Text className="font-Arial font-bold text-white">Register.</Text>
+      </View>
+
+      <StatusBar style="dark" />
     </View>
   );
 }
