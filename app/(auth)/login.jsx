@@ -1,6 +1,7 @@
-import { Text, View, Image } from "react-native";
+import { Text, View, Image, TouchableOpacity } from "react-native";
 import React, { useState } from "react";
 import { StatusBar } from "expo-status-bar";
+import { router } from "expo-router";
 
 import images from "../../constants/images";
 import FormField from "../../components/FormField";
@@ -11,6 +12,10 @@ export default function LogIn() {
   const [password, setPassword] = useState("");
 
   const isButtonSecondary = idNumber.length > 0 && password.length > 0;
+
+  const signup = () => {
+    router.push("./signup");
+  };
 
   return (
     <View className="items-center justify-center h-full bg-primary">
@@ -49,7 +54,9 @@ export default function LogIn() {
 
       <View className="flex-row mt-5">
         <Text className="font-Arial text-white">Don't Have An Account? </Text>
-        <Text className="font-Arial font-bold text-white">Register.</Text>
+        <TouchableOpacity onPress={signup}>
+          <Text className="font-Arial font-bold text-white">Register.</Text>
+        </TouchableOpacity>
       </View>
 
       <StatusBar style="dark" />
