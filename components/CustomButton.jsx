@@ -1,11 +1,7 @@
 import { Text, TouchableOpacity, View } from "react-native";
 import React from "react";
 
-export default function CustomButton({
-  type = "primary",
-  title = "Button",
-  onPress,
-}) {
+const CustomButton = ({ type = "primary", title = "Button", onPress }) => {
   return (
     <TouchableOpacity
       className={`
@@ -34,4 +30,6 @@ export default function CustomButton({
       </Text>
     </TouchableOpacity>
   );
-}
+};
+
+export default CustomButton;

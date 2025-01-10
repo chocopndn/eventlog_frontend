@@ -3,7 +3,7 @@ import React, { useState } from "react";
 
 import images from "../constants/images.js";
 
-export default function FormField({ type, placeholder, onChangeText, value }) {
+const FormField = ({ type, placeholder, onChangeText, value }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -55,4 +55,6 @@ export default function FormField({ type, placeholder, onChangeText, value }) {
       </View>
     </View>
   );
-}
+};
+
+export default FormField;

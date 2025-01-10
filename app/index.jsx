@@ -7,7 +7,7 @@ import { StatusBar } from "expo-status-bar";
 
 import CustomButton from "../components/CustomButton";
 
-export default function App() {
+const App = () => {
   const login = () => {
     router.push("./login");
   };
@@ -34,4 +34,6 @@ export default function App() {
       <StatusBar style="dark" />
     </View>
   );
-}
+};
+
+export default App;

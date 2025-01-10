@@ -7,7 +7,7 @@ import images from "../../constants/images";
 import FormField from "../../components/FormField";
 import CustomButton from "../../components/CustomButton";
 
-export default function LogIn() {
+const LogIn = () => {
   const [idNumber, setIdNumber] = useState("");
   const [password, setPassword] = useState("");
 
@@ -62,4 +62,6 @@ export default function LogIn() {
       <StatusBar style="dark" />
     </View>
   );
-}
+};
+
+export default LogIn;
