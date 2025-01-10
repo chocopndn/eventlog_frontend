@@ -9,11 +9,11 @@ import CustomButton from "../components/CustomButton";
 
 const App = () => {
   const login = () => {
-    router.push("./login");
+    router.push("./LogIn");
   };
 
   const signup = () => {
-    router.push("./signup");
+    router.push("./SignUp");
   };
 
   return (
