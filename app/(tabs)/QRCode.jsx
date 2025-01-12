@@ -1,12 +1,12 @@
 import { View, Text } from "react-native";
 import React from "react";
 
-const Events = () => {
+const QRCode = () => {
   return (
     <View>
-      <Text>Events</Text>
+      <Text>QRCode</Text>
     </View>
   );
 };
 
-export default Events;
+export default QRCode;

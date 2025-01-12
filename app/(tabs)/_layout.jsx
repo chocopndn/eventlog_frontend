@@ -23,7 +23,7 @@ const TabsLayout = () => {
           </View>
         </TabTrigger>
 
-        <TabTrigger name="Scanner" href="/(tabs)/Scanner">
+        <TabTrigger name="QRCode" href="/(tabs)/QRCode">
           <View className="items-center">
             <Image
               source={images.scanner}
@@ -43,7 +43,7 @@ const TabsLayout = () => {
           />
         </View>
 
-        <TabTrigger name="Events" href="/(tabs)/Events">
+        <TabTrigger name="Records" href="/(tabs)/Records">
           <View className="items-center">
             <Image
               source={images.calendar}
