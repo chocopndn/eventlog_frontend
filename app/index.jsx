@@ -1,6 +1,7 @@
-import React from "react";
-import { Text, View, Image } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Text, View, Image, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import images from "../constants/images";
 import { StatusBar } from "expo-status-bar";
@@ -8,6 +9,21 @@ import { StatusBar } from "expo-status-bar";
 import CustomButton from "../components/CustomButton";
 
 const App = () => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAuthToken = async () => {
+      const authToken = await AsyncStorage.getItem("authToken");
+      if (authToken) {
+        router.replace("../(tabs)/Home");
+      } else {
+        setLoading(false);
+      }
+    };
+
+    checkAuthToken();
+  }, []);
+
   const login = () => {
     router.push("./LogIn");
   };
@@ -15,6 +31,14 @@ const App = () => {
   const signup = () => {
     router.push("./SignUp");
   };
+
+  if (loading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-secondary">
+        <ActivityIndicator size="large" color="#81b0ff" />
+      </View>
+    );
+  }
 
   return (
     <View className="items-center justify-center h-full bg-secondary">
