@@ -9,6 +9,7 @@ import Checkbox from "expo-checkbox";
 import images from "../../constants/images";
 import FormField from "../../components/FormField";
 import CustomButton from "../../components/CustomButton";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const LogIn = () => {
   const [idNumber, setIdNumber] = useState("");
@@ -94,7 +95,7 @@ const LogIn = () => {
   };
 
   return (
-    <View className="items-center justify-center h-full bg-primary">
+    <SafeAreaView className="items-center justify-center h-full bg-primary">
       <View className="w-full h-50 items-center justify-center">
         <View className="absolute w-full h-28 bg-secondary"></View>
         <View className="absolute w-[70%] h-10 bg-cyan-500 top-1/3 right-52"></View>
@@ -164,7 +165,7 @@ const LogIn = () => {
       </View>
 
       <StatusBar style="dark" />
-    </View>
+    </SafeAreaView>
   );
 };
 
