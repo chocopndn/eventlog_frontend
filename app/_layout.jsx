@@ -11,6 +11,9 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [loaded, error] = useFonts({
     SquadaOne: require("../assets/fonts/SquadaOne.ttf"),
+    Arial: require("../assets/fonts/Arial.ttf"),
+    ArialBold: require("../assets/fonts/ArialBold.ttf"),
+    ArialItalic: require("../assets/fonts/ArialItalic.ttf"),
   });
 
   useEffect(() => {

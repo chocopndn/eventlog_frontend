@@ -14,6 +14,8 @@ module.exports = {
       fontFamily: {
         SquadaOne: ["SquadaOne", "sans-serif"],
         Arial: ["Arial", "sans-serif"],
+        ArialBold: ["ArialBold", "sans-serif"],
+        ArialItalic: ["ArialItalic", "sans-serif"],
       },
     },
   },
