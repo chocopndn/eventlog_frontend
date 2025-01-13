@@ -18,7 +18,7 @@ const FormField = ({ type, placeholder, onChangeText, value }) => {
 
   return (
     <View>
-      <View className="w-[311px] h-[46px] bg-white rounded-xl justify-center pl-3 m-5">
+      <View className="w-[311px] h-[46px] bg-secondary rounded-xl justify-center pl-3 m-5">
         <View className="items-center flex-row w-full">
           {type === "password" ? (
             <Image source={images.lock} className="h-[24px] w-[24px]" />

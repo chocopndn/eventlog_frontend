@@ -9,7 +9,7 @@ const CustomButton = ({ type = "primary", title = "Button", onPress }) => {
          type === "primary"
            ? "bg-primary"
            : type === "secondary"
-           ? "bg-white border-primary border-[2px]"
+           ? "bg-secondary border-primary border-[2px]"
            : "bg-gray-400"
        }
     `}
