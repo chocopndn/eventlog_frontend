@@ -1,5 +1,5 @@
 import { View, Text, TextInput, TouchableOpacity, Image } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 
 import images from "../constants/images";
 
@@ -7,30 +7,31 @@ const FormField2 = ({ type, title, onChangeText, value, sample }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
-  const handleInputChange = (text) => {
-    if (title === "ID Number") {
-      const filteredText = text.replace(/[^0-9]/g, "");
-      onChangeText(filteredText);
-    } else {
-      onChangeText(text);
-    }
-  };
+  const handleInputChange = useCallback(
+    (text) => {
+      if (title === "ID Number") {
+        const filteredText = text.replace(/[^0-9]/g, "");
+        onChangeText?.(filteredText);
+      } else {
+        onChangeText?.(text);
+      }
+    },
+    [title, onChangeText]
+  );
 
   return (
     <View className="p-2">
       <Text className="color-secondary font-ArialBold text-[18px]">
         {title}{" "}
-        {sample ? (
+        {sample && (
           <Text className="color-secondary font-ArialItalic text-[12px]">{`(Ex. ${sample})`}</Text>
-        ) : (
-          <Text></Text>
         )}
       </Text>
       <View className="w-[311px] h-[46px] bg-secondary rounded-xl flex-row items-center">
         <TextInput
           className="font-Arial text-[18px] flex-1 pl-2"
           value={value || ""}
-          onChangeText={handleInputChange}
+          onChangeText={handleInputChange} // Process input on change
           secureTextEntry={type === "password" && !showPassword}
           selectionColor={isFocused ? "#000" : "transparent"}
           onFocus={() => setIsFocused(true)}
@@ -39,7 +40,6 @@ const FormField2 = ({ type, title, onChangeText, value, sample }) => {
           autoCapitalize="none"
           autoCorrect={false}
         />
-
         {type === "password" && (
           <TouchableOpacity
             onPress={() => setShowPassword(!showPassword)}
