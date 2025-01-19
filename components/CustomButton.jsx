@@ -1,17 +1,23 @@
 import { Text, TouchableOpacity, View } from "react-native";
 import React from "react";
 
-const CustomButton = ({ type = "primary", title = "Button", onPress }) => {
+const CustomButton = ({
+  type = "primary",
+  title = "Button",
+  onPress,
+  otherStyles,
+}) => {
   return (
     <TouchableOpacity
       className={`
-       rounded-xl items-center justify-center m-3 w-[228px] h-[46px] ${
-         type === "primary"
-           ? "bg-primary"
-           : type === "secondary"
-           ? "bg-secondary border-primary border-[2px]"
-           : "bg-gray-400"
-       }
+      ${otherStyles} rounded-xl items-center justify-center m-3 w-[228px] h-[46px] ${
+        type === "primary"
+          ? "bg-primary"
+          : type === "secondary"
+          ? "bg-secondary border-primary border-[2px]"
+          : "bg-gray-400"
+      }
+       
     `}
       onPress={onPress}
     >
