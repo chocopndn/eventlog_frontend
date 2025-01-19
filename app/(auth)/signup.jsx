@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { View, ScrollView, Alert } from "react-native";
+import { View, ScrollView, Text, Image, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
+import { router } from "expo-router";
 import axios from "axios";
 
 import FormField2 from "../../components/FormField2";
 import CustomButton from "../../components/CustomButton";
 import CustomDropdown from "../../components/CustomDropdown";
-import { StatusBar } from "expo-status-bar";
+import images from "../../constants/images";
 
 const SignUp = () => {
   const [idNumber, setIdNumber] = useState("");
@@ -19,6 +21,10 @@ const SignUp = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [dropdownValue, setDropdownValue] = useState(null);
   const [departments, setDepartments] = useState([]);
+
+  const signin = () => {
+    router.push("./LogIn");
+  };
 
   useEffect(() => {
     const fetchDepartments = async () => {
@@ -42,6 +48,20 @@ const SignUp = () => {
   return (
     <SafeAreaView className="bg-primary h-full">
       <ScrollView>
+        <View className="w-full h-50 items-center justify-center mt-5">
+          <View className="absolute w-full h-28 bg-secondary"></View>
+          <View className="absolute w-[70%] h-10 bg-cyan-500 top-1/3 right-52"></View>
+          <View className="absolute w-[70%] h-10 bg-cyan-500 bottom-1/3 left-52"></View>
+          <View className="absolute w-[70%] h-10 bg-primary"></View>
+
+          <View className="mt-5 mb-7">
+            <Image source={images.logo} className="w-[196px] h-[196px]" />
+          </View>
+        </View>
+
+        <Text className="font-SquadaOne text-7xl text-secondary mb-5 text-center">
+          REGISTER
+        </Text>
         <View className="items-center justify-center">
           <FormField2
             title="ID Number"
@@ -102,10 +122,31 @@ const SignUp = () => {
             value={confirmPassword}
             onChangeText={setConfirmPassword}
           />
-
-          <View className="mt-4">
-            <CustomButton title="Sign Up" />
+          <View className="w-[311px] pt-4">
+            <Text className="text-[12px] font-ArialItalic text-center color-secondary">
+              *By registering for EVENTLOG, you agree with all the terms and
+              conditions set by the College of Information Technology
+              Department. Your participation and continued use of EVENTLOG
+              confirm your acceptance of these policies. *Warning: Make sure to
+              use one account only.
+            </Text>
           </View>
+
+          <CustomButton
+            title="Sign Up"
+            type="secondary"
+            otherStyles="mt-6 mb-2"
+          />
+        </View>
+        <View className="flex-row mt-5 justify-center mb-20">
+          <Text className="font-Arial text-white text-[12px]">
+            Already have an account?{" "}
+          </Text>
+          <TouchableOpacity onPress={signin}>
+            <Text className="font-Arial font-bold text-white text-[12px]">
+              Log In.
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
       <StatusBar style="light" />
