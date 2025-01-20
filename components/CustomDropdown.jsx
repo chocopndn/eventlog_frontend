@@ -42,7 +42,6 @@ const CustomDropdown = ({ onSelect, title, data, placeholder }) => {
               setValue(item.value);
             }
           }}
-          itemContainerStyle={styles.itemContainerStyle}
           renderRightIcon={() =>
             isFocus ? null : (
               <Image
@@ -54,6 +53,8 @@ const CustomDropdown = ({ onSelect, title, data, placeholder }) => {
           }
           itemTextStyle={styles.itemText}
           selectedTextStyle={styles.selectedText}
+          autoScroll={false}
+          containerStyle={styles.containerStyle}
         />
       </View>
     </View>
@@ -85,9 +86,6 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 0,
     backgroundColor: "#FBF1E5",
   },
-  itemContainerStyle: {
-    backgroundColor: "#FBF1E5",
-  },
   focusedPlaceholder: {
     paddingTop: 2,
     backgroundColor: "#255586",
@@ -106,5 +104,8 @@ const styles = StyleSheet.create({
   selectedText: {
     fontFamily: "Arial",
     fontSize: 18,
+  },
+  containerStyle: {
+    backgroundColor: "#FBF1E5",
   },
 });
