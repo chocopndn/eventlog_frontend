@@ -5,11 +5,12 @@ import { router } from "expo-router";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Checkbox from "expo-checkbox";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import images from "../../constants/images";
 import FormField from "../../components/FormField";
 import CustomButton from "../../components/CustomButton";
-import { SafeAreaView } from "react-native-safe-area-context";
+import config, { API_URL } from "../../config/config";
 
 const LogIn = () => {
   const [idNumber, setIdNumber] = useState("");
@@ -54,10 +55,10 @@ const LogIn = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(
-        "http://192.168.1.239:3000/api/auth/login",
-        { student_ID: idNumber, password }
-      );
+      const response = await axios.post(`http://${API_URL}/api/auth/login`, {
+        student_ID: idNumber,
+        password,
+      });
 
       const { token } = response.data;
 

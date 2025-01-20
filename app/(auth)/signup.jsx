@@ -9,6 +9,7 @@ import FormField2 from "../../components/FormField2";
 import CustomButton from "../../components/CustomButton";
 import CustomDropdown from "../../components/CustomDropdown";
 import images from "../../constants/images";
+import config from "../../config/config";
 
 const SignUp = () => {
   const [idNumber, setIdNumber] = useState("");
@@ -30,7 +31,7 @@ const SignUp = () => {
     const fetchDepartments = async () => {
       try {
         const response = await axios.get(
-          "http://192.168.1.239:3000/api/departments"
+          `http://${config.API_URL}/api/departments`
         );
         const formattedData = response.data.departments.map((dept, index) => ({
           label: dept,
