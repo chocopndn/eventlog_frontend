@@ -15,7 +15,7 @@ const App = () => {
     const checkAuthToken = async () => {
       const authToken = await AsyncStorage.getItem("authToken");
       if (authToken) {
-        router.replace("../(tabs)/Home");
+        router.replace("/Home");
       } else {
         setLoading(false);
       }
@@ -23,14 +23,6 @@ const App = () => {
 
     checkAuthToken();
   }, []);
-
-  const login = () => {
-    router.push("./LogIn");
-  };
-
-  const signup = () => {
-    router.push("./SignUp");
-  };
 
   if (loading) {
     return (
@@ -51,8 +43,16 @@ const App = () => {
       </Text>
 
       <View className="mt-5">
-        <CustomButton type="primary" title="LOG IN" onPress={login} />
-        <CustomButton type="secondary" title="REGISTER" onPress={signup} />
+        <CustomButton
+          type="primary"
+          title="LOG IN"
+          onPress={() => router.push("/LogIn")}
+        />
+        <CustomButton
+          type="secondary"
+          title="REGISTER"
+          onPress={() => router.push("/SignUp")}
+        />
       </View>
 
       <StatusBar style="dark" />
