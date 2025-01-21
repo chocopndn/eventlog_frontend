@@ -12,6 +12,9 @@ import user from "../assets/icons/user.png";
 import arrowDown from "../assets/icons/down-arrow.png";
 import arrowUp from "../assets/icons/up-arrow.png";
 import arrowLeft from "../assets/icons/left-arrow.png";
+import email from "../assets/icons/email.png";
+import facebook from "../assets/icons/facebook.png";
+import location from "../assets/icons/location.png";
 
 export default {
   logo,
@@ -26,4 +29,7 @@ export default {
   arrowDown,
   arrowUp,
   arrowLeft,
+  email,
+  facebook,
+  location,
 };
