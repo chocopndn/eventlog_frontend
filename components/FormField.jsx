@@ -21,9 +21,17 @@ const FormField = ({ type, placeholder, onChangeText, value }) => {
       <View className="w-[311px] h-[46px] bg-secondary rounded-xl justify-center pl-3 m-5">
         <View className="items-center flex-row w-full">
           {type === "password" ? (
-            <Image source={images.lock} className="h-[24px] w-[24px]" />
+            <Image
+              source={images.lock}
+              className="h-[24px] w-[24px]"
+              style={{ tintColor: "#333333" }}
+            />
           ) : (
-            <Image source={images.idBadge} className="h-[24px] w-[24px]" />
+            <Image
+              source={images.idBadge}
+              className="h-[24px] w-[24px]"
+              style={{ tintColor: "#333333" }}
+            />
           )}
 
           <TextInput
@@ -44,10 +52,12 @@ const FormField = ({ type, placeholder, onChangeText, value }) => {
             <TouchableOpacity
               onPress={() => setShowPassword(!showPassword)}
               className="pr-2"
+              style={{ tintColor: "#333333" }}
             >
               <Image
                 source={showPassword ? images.view : images.hide}
                 className="h-[24px] w-[24px]"
+                style={{ tintColor: "#333333" }}
               />
             </TouchableOpacity>
           )}
