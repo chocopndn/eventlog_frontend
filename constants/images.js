@@ -11,6 +11,7 @@ import calendar from "../assets/icons/calendar.png";
 import user from "../assets/icons/user.png";
 import arrowDown from "../assets/icons/down-arrow.png";
 import arrowUp from "../assets/icons/up-arrow.png";
+import arrowLeft from "../assets/icons/left-arrow.png";
 
 export default {
   logo,
@@ -24,4 +25,5 @@ export default {
   user,
   arrowDown,
   arrowUp,
+  arrowLeft,
 };
