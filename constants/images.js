@@ -15,6 +15,7 @@ import arrowLeft from "../assets/icons/left-arrow.png";
 import email from "../assets/icons/email.png";
 import facebook from "../assets/icons/facebook.png";
 import location from "../assets/icons/location.png";
+import email2 from "../assets/icons/email2.png";
 
 export default {
   logo,
@@ -32,4 +33,5 @@ export default {
   email,
   facebook,
   location,
+  email2,
 };
