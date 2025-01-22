@@ -5,6 +5,7 @@ const LoginLayout = () => {
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="ForgotPassword" options={{ headerShown: false }} />
+      <Stack.Screen name="VerifyCode" options={{ headerShown: false }} />
     </Stack>
   );
 };
