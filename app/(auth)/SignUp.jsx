@@ -199,11 +199,11 @@ const SignUp = () => {
           />
         </View>
         <View className="flex-row mt-5 justify-center mb-20">
-          <Text className="font-Arial text-white text-[12px]">
+          <Text className="font-Arial text-white text-[15px]">
             Already have an account?{" "}
           </Text>
           <TouchableOpacity onPress={navigateToLogin}>
-            <Text className="font-Arial font-bold text-white text-[12px]">
+            <Text className="font-Arial font-bold text-white text-[15px]">
               Log In.
             </Text>
           </TouchableOpacity>
