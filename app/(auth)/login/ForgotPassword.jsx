@@ -34,7 +34,7 @@ const ForgotPassword = () => {
 
     setErrorMessage("");
 
-    router.replace("./VerifyCode");
+    router.push("./VerifyCode");
 
     axios
       .post(`http://${API_URL}/api/auth/resetPassword`, { email })
