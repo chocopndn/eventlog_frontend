@@ -26,13 +26,19 @@ const FormField = ({ type, placeholder, onChangeText, value }) => {
               className="h-[24px] w-[24px]"
               style={{ tintColor: "#333333" }}
             />
-          ) : (
+          ) : type === "id" ? (
             <Image
               source={images.idBadge}
               className="h-[24px] w-[24px]"
               style={{ tintColor: "#333333" }}
             />
-          )}
+          ) : type === "email2" ? (
+            <Image
+              source={images.email2}
+              className="h-[24px] w-[24px]"
+              style={{ tintColor: "#333333" }}
+            />
+          ) : null}
 
           <TextInput
             className="font-Arial text-[18px] flex-1 pl-2"
