@@ -25,7 +25,7 @@ const SignUp = () => {
   const [departments, setDepartments] = useState([]);
   const [errorVisible, setErrorVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigateToLogin = () => {
     router.push("./LogIn");
@@ -33,22 +33,24 @@ const SignUp = () => {
 
   useEffect(() => {
     const fetchDepartments = async () => {
+      setIsLoading(true);
       try {
         const response = await axios.get(
           `http://${config.API_URL}/api/departments`
         );
 
-        if (response.data && Array.isArray(response.data.departments)) {
+        if (response.data?.departments?.length > 0) {
           const formattedData = response.data.departments.map((dept) => ({
             label: dept.department_name,
             value: dept.department_id,
           }));
           setDepartments(formattedData);
         } else {
-          throw new Error("Invalid department data format");
+          setErrorMessage("No departments found.");
+          setErrorVisible(true);
         }
       } catch (error) {
-        setErrorMessage("Failed to fetch departments. Please try again later.");
+        setErrorMessage("Failed to load departments. Please try again later.");
         setErrorVisible(true);
       } finally {
         setIsLoading(false);
@@ -77,31 +79,34 @@ const SignUp = () => {
       return;
     }
 
-    const payload = {
-      student_ID,
-      firstName,
-      middleName,
-      lastName,
+    const signUpData = {
+      student_id: student_ID,
+      first_name: firstName,
+      middle_name: middleName,
+      last_name: lastName,
       suffix: suffix || null,
       email,
       password,
-      department,
+      department_id: department,
     };
 
     try {
+      setIsLoading(true);
       const response = await axios.post(
         `http://${config.API_URL}/api/auth/signup`,
-        payload
+        signUpData
       );
 
       if (response.status === 200) {
         router.push("./LogIn");
       }
     } catch (error) {
-      setErrorMessage(
-        error.response?.data?.message || "Something went wrong during sign-up."
-      );
+      const message =
+        error.response?.data?.message || "Something went wrong during sign-up.";
+      setErrorMessage(message);
       setErrorVisible(true);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -196,6 +201,7 @@ const SignUp = () => {
             type="secondary"
             otherStyles="mt-6 mb-2"
             onPress={handleSignUp}
+            disabled={isLoading}
           />
         </View>
         <View className="flex-row mt-5 justify-center mb-20">
