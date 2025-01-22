@@ -31,13 +31,13 @@ const FormField2 = ({ type, title, onChangeText, value, sample }) => {
         <TextInput
           className="font-Arial text-[18px] flex-1 pl-2"
           value={value || ""}
-          onChangeText={handleInputChange} // Process input on change
+          onChangeText={handleInputChange}
           secureTextEntry={type === "password" && !showPassword}
           selectionColor={isFocused ? "#000" : "transparent"}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           keyboardType={title === "ID Number" ? "numeric" : "default"}
-          autoCapitalize="none"
+          autoCapitalize="words"
           autoCorrect={false}
         />
         {type === "password" && (
