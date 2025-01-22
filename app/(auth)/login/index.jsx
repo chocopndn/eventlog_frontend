@@ -25,7 +25,7 @@ const LogIn = () => {
     const checkAuthToken = async () => {
       const authToken = await AsyncStorage.getItem("authToken");
       if (authToken) {
-        router.replace("/(tabs)/Home");
+        router.replace("/home");
       }
     };
 
