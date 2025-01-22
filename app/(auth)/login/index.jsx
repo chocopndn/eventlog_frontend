@@ -7,10 +7,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Checkbox from "expo-checkbox";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import images from "../../constants/images";
-import FormField from "../../components/FormField";
-import CustomButton from "../../components/CustomButton";
-import config, { API_URL } from "../../config/config";
+import images from "../../../constants/images";
+import FormField from "../../../components/FormField";
+import CustomButton from "../../../components/CustomButton";
+import { API_URL } from "../../../config/config";
 
 const LogIn = () => {
   const [student_id, setStudentId] = useState("");
@@ -122,25 +122,37 @@ const LogIn = () => {
           onChangeText={setPassword}
         />
 
-        <View className="flex-row items-center ml-6 mt-3">
-          <Checkbox
-            value={rememberPassword}
-            onValueChange={setRememberPassword}
-            style={{
-              width: 20,
-              height: 20,
-              borderColor: "white",
-              borderWidth: 2,
-              backgroundColor: "white",
-            }}
-            color={rememberPassword ? "#81b0ff" : undefined}
-          />
-          <TouchableOpacity
-            className="ml-2"
-            onPress={() => setRememberPassword(!rememberPassword)}
-          >
-            <Text className="text-white">Remember Me</Text>
-          </TouchableOpacity>
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center ml-6">
+            <Checkbox
+              value={rememberPassword}
+              onValueChange={setRememberPassword}
+              style={{
+                width: 20,
+                height: 20,
+                borderColor: "white",
+                borderWidth: 2,
+                backgroundColor: "white",
+              }}
+              color={rememberPassword ? "#81b0ff" : undefined}
+            />
+            <TouchableOpacity
+              className="ml-2"
+              onPress={() => setRememberPassword(!rememberPassword)}
+            >
+              <Text className="text-white">Remember Me</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View className="mr-6">
+            <TouchableOpacity
+              onPress={() => router.push("/login/ForgotPassword")}
+            >
+              <Text className="font-Arial color-secondary font-[12px]">
+                Forgot Password?
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
