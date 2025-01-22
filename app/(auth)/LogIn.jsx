@@ -13,13 +13,13 @@ import CustomButton from "../../components/CustomButton";
 import config, { API_URL } from "../../config/config";
 
 const LogIn = () => {
-  const [idNumber, setIdNumber] = useState("");
+  const [student_id, setStudentId] = useState("");
   const [password, setPassword] = useState("");
   const [rememberPassword, setRememberPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const isButtonSecondary = idNumber.length > 0 && password.length > 0;
+  const isButtonSecondary = student_id.length > 0 && password.length > 0;
 
   useEffect(() => {
     const checkAuthToken = async () => {
@@ -34,10 +34,10 @@ const LogIn = () => {
 
   useEffect(() => {
     const loadCredentials = async () => {
-      const storedId = await AsyncStorage.getItem("storedIdNumber");
+      const storedId = await AsyncStorage.getItem("storedStudentId");
       const storedPassword = await AsyncStorage.getItem("storedPassword");
       if (storedId && storedPassword) {
-        setIdNumber(storedId);
+        setStudentId(storedId);
         setPassword(storedPassword);
         setRememberPassword(true);
       }
@@ -46,7 +46,7 @@ const LogIn = () => {
   }, []);
 
   const handleLogin = async () => {
-    if (!idNumber || !password) {
+    if (!student_id || !password) {
       setErrorMessage("ID Number and Password are required.");
       return;
     }
@@ -56,17 +56,17 @@ const LogIn = () => {
 
     try {
       const response = await axios.post(`http://${API_URL}/api/auth/login`, {
-        student_ID: idNumber,
+        student_id,
         password,
       });
 
       const { token } = response.data;
 
       if (rememberPassword) {
-        await AsyncStorage.setItem("storedIdNumber", idNumber);
+        await AsyncStorage.setItem("storedStudentId", student_id);
         await AsyncStorage.setItem("storedPassword", password);
       } else {
-        await AsyncStorage.removeItem("storedIdNumber");
+        await AsyncStorage.removeItem("storedStudentId");
         await AsyncStorage.removeItem("storedPassword");
       }
 
@@ -91,10 +91,6 @@ const LogIn = () => {
     }
   };
 
-  const signup = () => {
-    router.push("./SignUp");
-  };
-
   return (
     <SafeAreaView className="items-center justify-center h-full bg-primary">
       <View className="w-full h-50 items-center justify-center">
@@ -115,8 +111,8 @@ const LogIn = () => {
         <FormField
           type="id"
           placeholder="ID Number"
-          value={idNumber}
-          onChangeText={setIdNumber}
+          value={student_id}
+          onChangeText={setStudentId}
         />
 
         <FormField
@@ -159,9 +155,13 @@ const LogIn = () => {
       />
 
       <View className="flex-row mt-5">
-        <Text className="font-Arial text-white">Don't Have An Account? </Text>
-        <TouchableOpacity onPress={signup}>
-          <Text className="font-Arial font-bold text-white">Register.</Text>
+        <Text className="font-Arial text-white text-[15px]">
+          Don't Have An Account?{" "}
+        </Text>
+        <TouchableOpacity onPress={() => router.push("/SignUp")}>
+          <Text className="font-Arial font-bold text-white text-[15px]">
+            Register.
+          </Text>
         </TouchableOpacity>
       </View>
 
