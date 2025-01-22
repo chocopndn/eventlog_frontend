@@ -46,7 +46,7 @@ const App = () => {
         <CustomButton
           type="primary"
           title="LOG IN"
-          onPress={() => router.push("/LogIn")}
+          onPress={() => router.push("/login")}
         />
         <CustomButton
           type="secondary"

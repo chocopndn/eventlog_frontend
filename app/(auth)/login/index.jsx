@@ -25,7 +25,7 @@ const LogIn = () => {
     const checkAuthToken = async () => {
       const authToken = await AsyncStorage.getItem("authToken");
       if (authToken) {
-        router.replace("../(tabs)/Home");
+        router.replace("/(tabs)/Home");
       }
     };
 
@@ -72,7 +72,7 @@ const LogIn = () => {
 
       await AsyncStorage.setItem("authToken", token);
 
-      router.replace("../(tabs)/Home");
+      router.replace("/Home");
     } catch (error) {
       if (error.response) {
         setErrorMessage(
@@ -170,7 +170,7 @@ const LogIn = () => {
         <Text className="font-Arial text-white text-[15px]">
           Don't Have An Account?{" "}
         </Text>
-        <TouchableOpacity onPress={() => router.push("/SignUp")}>
+        <TouchableOpacity onPress={() => router.replace("/SignUp")}>
           <Text className="font-Arial font-bold text-white text-[15px]">
             Register.
           </Text>

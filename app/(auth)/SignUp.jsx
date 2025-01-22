@@ -27,10 +27,6 @@ const SignUp = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const navigateToLogin = () => {
-    router.push("./LogIn");
-  };
-
   useEffect(() => {
     const fetchDepartments = async () => {
       setIsLoading(true);
@@ -98,7 +94,7 @@ const SignUp = () => {
       );
 
       if (response.status === 200) {
-        router.push("./LogIn");
+        router.replace("/login");
       }
     } catch (error) {
       const message =
@@ -208,7 +204,7 @@ const SignUp = () => {
           <Text className="font-Arial text-white text-[15px]">
             Already have an account?{" "}
           </Text>
-          <TouchableOpacity onPress={navigateToLogin}>
+          <TouchableOpacity onPress={() => router.replace("/login")}>
             <Text className="font-Arial font-bold text-white text-[15px]">
               Log In.
             </Text>
