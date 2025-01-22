@@ -40,8 +40,8 @@ const SignUp = () => {
 
         if (response.data && Array.isArray(response.data.departments)) {
           const formattedData = response.data.departments.map((dept) => ({
-            label: dept.departmentName,
-            value: dept.department_ID,
+            label: dept.department_name,
+            value: dept.department_id,
           }));
           setDepartments(formattedData);
         } else {
