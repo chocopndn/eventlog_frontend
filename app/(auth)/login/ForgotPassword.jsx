@@ -8,54 +8,92 @@ import {
 import React, { useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { API_URL } from "../../../config/config";
 
 import FormField from "../../../components/FormField";
 import CustomButton from "../../../components/CustomButton";
+import ErrorModal from "../../../components/ErrorModal";
 
 import images from "../../../constants/images";
 
-const handleDismissAll = () => {
-  router.dismissAll();
+const clearResetEmail = async () => {
+  try {
+    await AsyncStorage.removeItem("resetEmail");
+  } catch (error) {}
+};
+
+const handleDismissAll = async () => {
+  await clearResetEmail();
+  router.dismiss();
+};
+
+const isValidEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 };
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorVisible, setErrorVisible] = useState(false);
+  const [errorDetails, setErrorDetails] = useState({ title: "", message: "" });
 
   const isButtonSecondary = email.length > 0;
 
-  const handleResetPassword = () => {
+  const handleResetPassword = async () => {
     if (!email) {
-      setErrorMessage("Email is required.");
+      setErrorDetails({ title: "Input Error", message: "Email is required." });
+      setErrorVisible(true);
       return;
     }
 
-    setErrorMessage("");
-
-    router.push("./VerifyCode");
-
-    axios
-      .post(`http://${API_URL}/api/auth/resetPassword`, { email })
-      .then((response) => {
-        console.log("API response:", response.data);
-      })
-      .catch((error) => {
-        console.error("API error:", error);
-        if (error.response) {
-          setErrorMessage(
-            error.response.data?.message ||
-              "Something went wrong. Please try again."
-          );
-        } else if (error.request) {
-          setErrorMessage(
-            "Unable to connect to the server. Check your internet connection."
-          );
-        } else {
-          setErrorMessage("An unexpected error occurred. Please try again.");
-        }
+    if (!isValidEmail(email)) {
+      setErrorDetails({
+        title: "Validation Error",
+        message: "Please enter a valid email address.",
       });
+      setErrorVisible(true);
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `http://${API_URL}/api/auth/resetPassword`,
+        { email }
+      );
+
+      if (response.status === 200) {
+        await AsyncStorage.setItem("resetEmail", email);
+        router.push("./VerifyCode");
+      }
+    } catch (error) {
+      let title = "Error";
+      let message = "An unexpected error occurred. Please try again.";
+
+      if (error.response) {
+        const statusCode = error.response.status;
+
+        if (statusCode === 404) {
+          title = "User Not Found";
+          message =
+            "The email address entered is not associated with any account.";
+        } else if (statusCode === 500) {
+          title = "Server Error";
+          message = "The server encountered an error. Please try again later.";
+        } else {
+          message =
+            error.response.data?.message ||
+            "Something went wrong. Please try again.";
+        }
+      } else if (error.request) {
+        message =
+          "Unable to connect to the server. Check your internet connection.";
+      }
+
+      setErrorDetails({ title, message });
+      setErrorVisible(true);
+    }
   };
 
   return (
@@ -86,7 +124,6 @@ const ForgotPassword = () => {
           value={email}
           onChangeText={setEmail}
         />
-
         <CustomButton
           type={isButtonSecondary ? "secondary" : "disabled"}
           title="RESET PASSWORD"
@@ -95,8 +132,14 @@ const ForgotPassword = () => {
           className="mt-5"
         />
       </View>
-
       <StatusBar style="light" />
+
+      <ErrorModal
+        visible={errorVisible}
+        onClose={() => setErrorVisible(false)}
+        title={errorDetails.title}
+        message={errorDetails.message}
+      />
     </SafeAreaView>
   );
 };
