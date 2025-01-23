@@ -21,9 +21,8 @@ import images from "../../../constants/images";
 const clearResetEmail = async () => {
   try {
     await AsyncStorage.removeItem("resetEmail");
-  } catch (error) {
-    console.error("Error clearing reset email:", error);
-  }
+    router.replace("/login/ForgotPassword");
+  } catch (error) {}
 };
 
 const VerifyCode = () => {
@@ -87,7 +86,7 @@ const VerifyCode = () => {
       );
 
       if (response.status === 200 && response.data.message) {
-        router.replace("./SetPassword");
+        router.replace("/login/SetPassword");
       } else {
         setErrorMessage("Verification failed. Please try again.");
         setModalVisible(true);
