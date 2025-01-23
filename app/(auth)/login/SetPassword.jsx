@@ -39,6 +39,15 @@ const SetPassword = () => {
       return;
     }
 
+    if (password.length < 8) {
+      setErrorDetails({
+        title: "Validation Error",
+        message: "Password must be at least 8 characters long.",
+      });
+      setErrorVisible(true);
+      return;
+    }
+
     if (password !== confirmPassword) {
       setErrorDetails({
         title: "Validation Error",
@@ -81,7 +90,11 @@ const SetPassword = () => {
     }
   };
 
-  const isButtonDisabled = !password || !confirmPassword;
+  const isButtonDisabled =
+    !password ||
+    !confirmPassword ||
+    password.length < 8 ||
+    confirmPassword.length < 8;
 
   return (
     <SafeAreaView className="flex-1 items-center justify-center h-full bg-primary pt-5">
@@ -125,6 +138,7 @@ const SetPassword = () => {
             type={isButtonDisabled ? "disabled" : "secondary"}
             title="UPDATE PASSWORD"
             onPress={handleSavePassword}
+            disabled={isButtonDisabled}
           />
         </View>
       </View>
