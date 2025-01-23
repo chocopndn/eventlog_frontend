@@ -1,7 +1,7 @@
 import React from "react";
 import { Modal, View, Text, TouchableOpacity } from "react-native";
 
-const ErrorModal = ({ visible, onClose, title, message }) => {
+const CustomModal = ({ visible, onClose, title, message }) => {
   return (
     <Modal
       animationType="none"
@@ -26,4 +26,4 @@ const ErrorModal = ({ visible, onClose, title, message }) => {
   );
 };
 
-export default ErrorModal;
+export default CustomModal;
