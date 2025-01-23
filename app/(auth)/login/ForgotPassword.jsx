@@ -139,6 +139,8 @@ const ForgotPassword = () => {
         onClose={() => setErrorVisible(false)}
         title={errorDetails.title}
         message={errorDetails.message}
+        buttonText="Close"
+        type="error"
       />
     </SafeAreaView>
   );
