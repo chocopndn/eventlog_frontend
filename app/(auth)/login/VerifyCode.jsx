@@ -116,15 +116,15 @@ const VerifyCode = () => {
       </View>
       <View className="w-full justify-center items-center">
         <View className="w-[85%] items-start">
-          <Text className="color-secondary font-SquadaOne text-[30px]">
+          <Text className="color-secondary font-SquadaOne text-[35px]">
             CHECK YOUR EMAIL
           </Text>
-          <Text className="font-Arial text-[12px] color-secondary">
+          <Text className="font-Arial text-[14px] color-secondary">
             Enter the 5-digit code sent to {email}
           </Text>
         </View>
 
-        <View className="flex-row mt-5">
+        <View className="flex-row">
           {code.map((char, index) => (
             <TextInput
               key={index}
@@ -138,7 +138,9 @@ const VerifyCode = () => {
               }}
               keyboardType="numeric"
               maxLength={1}
-              className="w-[50px] h-[55px] bg-secondary rounded-lg m-2 mt-10 mb-10 text-[35px] font-ArialBold text-center text-primary leading-none pb-2"
+              className={`w-[50px] h-[55px] rounded-lg m-2 mb-10 text-[35px] font-ArialBold text-center text-primary leading-none pb-2 ${
+                char ? "bg-secondary" : "bg-[#FBF1E580]"
+              }`}
             />
           ))}
         </View>
