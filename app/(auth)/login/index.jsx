@@ -10,13 +10,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import images from "../../../constants/images";
 import FormField from "../../../components/FormField";
 import CustomButton from "../../../components/CustomButton";
+import CustomModal from "../../../components/CustomModal";
 import { API_URL } from "../../../config/config";
 
 const LogIn = () => {
   const [student_id, setStudentId] = useState("");
   const [password, setPassword] = useState("");
   const [rememberPassword, setRememberPassword] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorVisible, setErrorVisible] = useState(false);
+  const [errorDetails, setErrorDetails] = useState({ title: "", message: "" });
   const [loading, setLoading] = useState(false);
 
   const isButtonSecondary = student_id.length > 0 && password.length > 0;
@@ -47,11 +49,14 @@ const LogIn = () => {
 
   const handleLogin = async () => {
     if (!student_id || !password) {
-      setErrorMessage("ID Number and Password are required.");
+      setErrorDetails({
+        title: "Input Error",
+        message: "ID Number and Password are required.",
+      });
+      setErrorVisible(true);
       return;
     }
 
-    setErrorMessage("");
     setLoading(true);
 
     try {
@@ -75,17 +80,25 @@ const LogIn = () => {
       router.replace("/home");
     } catch (error) {
       if (error.response) {
-        setErrorMessage(
-          error.response.data?.message ||
-            "Something went wrong. Please try again."
-        );
+        setErrorDetails({
+          title: "Login Failed",
+          message:
+            error.response.data?.message ||
+            "Something went wrong. Please try again.",
+        });
       } else if (error.request) {
-        setErrorMessage(
-          "Unable to connect to the server. Please check your internet connection."
-        );
+        setErrorDetails({
+          title: "Network Error",
+          message:
+            "Unable to connect to the server. Please check your internet connection.",
+        });
       } else {
-        setErrorMessage("An error occurred. Please try again later.");
+        setErrorDetails({
+          title: "Unexpected Error",
+          message: "An error occurred. Please try again later.",
+        });
       }
+      setErrorVisible(true);
     } finally {
       setLoading(false);
     }
@@ -156,8 +169,6 @@ const LogIn = () => {
         </View>
       </View>
 
-      <Text className="text-red-500 text-s mt-2">{errorMessage}</Text>
-
       <CustomButton
         type={isButtonSecondary ? "secondary" : "disabled"}
         title={loading ? "Loading..." : "LOG IN"}
@@ -176,6 +187,13 @@ const LogIn = () => {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <CustomModal
+        visible={errorVisible}
+        onClose={() => setErrorVisible(false)}
+        title={errorDetails.title}
+        message={errorDetails.message}
+      />
 
       <StatusBar style="dark" />
     </SafeAreaView>
