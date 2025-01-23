@@ -26,45 +26,53 @@ const clearResetEmail = async () => {
 const SetPassword = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [errorVisible, setErrorVisible] = useState(false);
-  const [errorDetails, setErrorDetails] = useState({ title: "", message: "" });
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalDetails, setModalDetails] = useState({
+    title: "",
+    message: "",
+    type: "error",
+  });
 
   const handleSavePassword = async () => {
     if (!password || !confirmPassword) {
-      setErrorDetails({
+      setModalDetails({
         title: "Input Error",
         message: "Both password fields are required.",
+        type: "error",
       });
-      setErrorVisible(true);
+      setModalVisible(true);
       return;
     }
 
     if (password.length < 8) {
-      setErrorDetails({
+      setModalDetails({
         title: "Validation Error",
         message: "Password must be at least 8 characters long.",
+        type: "error",
       });
-      setErrorVisible(true);
+      setModalVisible(true);
       return;
     }
 
     if (password !== confirmPassword) {
-      setErrorDetails({
+      setModalDetails({
         title: "Validation Error",
         message: "Passwords do not match.",
+        type: "error",
       });
-      setErrorVisible(true);
+      setModalVisible(true);
       return;
     }
 
     try {
       const email = await AsyncStorage.getItem("resetEmail");
       if (!email) {
-        setErrorDetails({
+        setModalDetails({
           title: "Missing Email",
           message: "No email found. Please restart the process.",
+          type: "error",
         });
-        setErrorVisible(true);
+        setModalVisible(true);
         return;
       }
 
@@ -77,16 +85,22 @@ const SetPassword = () => {
       );
 
       if (response.status === 200) {
-        router.replace("/");
+        setModalDetails({
+          title: "Success",
+          message: "Your password has been updated successfully.",
+          type: "success",
+        });
+        setModalVisible(true);
       }
     } catch (error) {
       const errorMessage =
         error.response?.data?.message || "An error occurred. Please try again.";
-      setErrorDetails({
+      setModalDetails({
         title: "Error",
         message: errorMessage,
+        type: "error",
       });
-      setErrorVisible(true);
+      setModalVisible(true);
     }
   };
 
@@ -95,6 +109,14 @@ const SetPassword = () => {
     !confirmPassword ||
     password.length < 8 ||
     confirmPassword.length < 8;
+
+  const handleModalButtonPress = () => {
+    if (modalDetails.type === "success") {
+      router.replace("/login");
+    } else {
+      setModalVisible(false);
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 items-center justify-center h-full bg-primary pt-5">
@@ -143,10 +165,14 @@ const SetPassword = () => {
         </View>
       </View>
       <CustomModal
-        visible={errorVisible}
-        onClose={() => setErrorVisible(false)}
-        title={errorDetails.title}
-        message={errorDetails.message}
+        visible={modalVisible}
+        onClose={handleModalButtonPress}
+        title={modalDetails.title}
+        message={modalDetails.message}
+        type={modalDetails.type}
+        buttonText={
+          modalDetails.type === "success" ? "Go to Login" : "Try Again"
+        }
       />
     </SafeAreaView>
   );
