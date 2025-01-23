@@ -34,7 +34,11 @@ const FormField2 = ({
           <Text className="color-secondary font-ArialItalic text-[12px]">{`(Ex. ${sample})`}</Text>
         )}
       </Text>
-      <View className="w-[311px] h-[46px] bg-secondary rounded-xl flex-row items-center">
+
+      <View
+        className={`w-[311px] h-[46px] bg-secondary rounded-xl flex-row items-center
+        }`}
+      >
         <TextInput
           className="font-Arial text-[18px] flex-1 pl-3"
           value={value || ""}
@@ -44,10 +48,11 @@ const FormField2 = ({
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           keyboardType={title === "ID Number" ? "numeric" : "default"}
-          autoCapitalize="words"
+          autoCapitalize={type === "password" ? "none" : "words"}
           autoCorrect={false}
           placeholder={placeholder}
         />
+
         {type === "password" && (
           <TouchableOpacity
             onPress={() => setShowPassword(!showPassword)}
