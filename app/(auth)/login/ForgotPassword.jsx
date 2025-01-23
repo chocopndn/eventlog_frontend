@@ -111,10 +111,10 @@ const ForgotPassword = () => {
       </View>
       <View className="w-full justify-center items-center">
         <View className="w-[85%] items-start">
-          <Text className="color-secondary font-SquadaOne text-[30px]">
+          <Text className="color-secondary font-SquadaOne text-[35px]">
             FORGOT PASSWORD?
           </Text>
-          <Text className="font-Arial text-[12px] color-secondary">
+          <Text className="font-Arial text-[14px] color-secondary">
             Please enter your email to reset the password
           </Text>
         </View>
