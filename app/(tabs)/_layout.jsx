@@ -10,7 +10,7 @@ const TabsLayout = () => {
       <TabSlot />
 
       <TabList className="flex-row justify-around items-center pl-3 pr-3 bg-primary h-20">
-        <TabTrigger name="Home" href="/(tabs)/Home">
+        <TabTrigger name="Home" href="/(tabs)/home">
           <View className="items-center">
             <Image
               source={images.home}

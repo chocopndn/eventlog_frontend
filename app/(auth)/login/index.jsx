@@ -72,7 +72,7 @@ const LogIn = () => {
 
       await AsyncStorage.setItem("authToken", token);
 
-      router.replace("/Home");
+      router.replace("/home");
     } catch (error) {
       if (error.response) {
         setErrorMessage(
@@ -145,9 +145,7 @@ const LogIn = () => {
           </View>
 
           <View className="mr-6">
-            <TouchableOpacity
-              onPress={() => router.push("/login/ForgotPassword")}
-            >
+            <TouchableOpacity onPress={() => router.push("/login/SetPassword")}>
               <Text className="font-Arial color-secondary font-[12px]">
                 Forgot Password?
               </Text>
