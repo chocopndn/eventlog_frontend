@@ -3,7 +3,14 @@ import React, { useState, useCallback } from "react";
 
 import images from "../constants/images";
 
-const FormField2 = ({ type, title, onChangeText, value, sample }) => {
+const FormField2 = ({
+  type,
+  title,
+  onChangeText,
+  value,
+  sample,
+  placeholder,
+}) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -29,7 +36,7 @@ const FormField2 = ({ type, title, onChangeText, value, sample }) => {
       </Text>
       <View className="w-[311px] h-[46px] bg-secondary rounded-xl flex-row items-center">
         <TextInput
-          className="font-Arial text-[18px] flex-1 pl-2"
+          className="font-Arial text-[18px] flex-1 pl-3"
           value={value || ""}
           onChangeText={handleInputChange}
           secureTextEntry={type === "password" && !showPassword}
@@ -39,6 +46,7 @@ const FormField2 = ({ type, title, onChangeText, value, sample }) => {
           keyboardType={title === "ID Number" ? "numeric" : "default"}
           autoCapitalize="words"
           autoCorrect={false}
+          placeholder={placeholder}
         />
         {type === "password" && (
           <TouchableOpacity
