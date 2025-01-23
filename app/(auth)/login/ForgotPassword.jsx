@@ -26,7 +26,7 @@ const clearResetEmail = async () => {
 
 const handleDismissAll = async () => {
   await clearResetEmail();
-  router.dismiss();
+  router.replace("/login");
 };
 
 const isValidEmail = (email) => {
@@ -65,7 +65,7 @@ const ForgotPassword = () => {
 
       if (response.status === 200) {
         await AsyncStorage.setItem("resetEmail", email);
-        router.push("./VerifyCode");
+        router.push("/login/VerifyCode");
       }
     } catch (error) {
       let title = "Error";
