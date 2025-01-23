@@ -59,7 +59,7 @@ const ForgotPassword = () => {
 
     try {
       const response = await axios.post(
-        `http://${API_URL}/api/auth/resetPassword`,
+        `http://${API_URL}/api/auth/forgotPassword`,
         { email }
       );
 
