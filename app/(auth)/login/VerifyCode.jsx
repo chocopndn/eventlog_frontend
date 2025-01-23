@@ -14,7 +14,7 @@ import axios from "axios";
 import { API_URL } from "../../../config/config";
 
 import CustomButton from "../../../components/CustomButton";
-import ErrorModal from "../../../components/ErrorModal";
+import CustomModal from "../../../components/CustomModal";
 
 import images from "../../../constants/images";
 
@@ -154,7 +154,7 @@ const VerifyCode = () => {
       </View>
       <StatusBar style="light" />
 
-      <ErrorModal
+      <CustomModal
         visible={isModalVisible}
         onClose={() => setModalVisible(false)}
         title="Verification Error"

@@ -8,7 +8,7 @@ import axios from "axios";
 import FormField2 from "../../components/FormField2";
 import CustomButton from "../../components/CustomButton";
 import CustomDropdown from "../../components/CustomDropdown";
-import ErrorModal from "../../components/ErrorModal";
+import CustomModal from "../../components/CustomModal";
 import images from "../../constants/images";
 import config from "../../config/config";
 
@@ -211,7 +211,7 @@ const SignUp = () => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-      <ErrorModal
+      <CustomModal
         visible={errorVisible}
         onClose={() => setErrorVisible(false)}
         title="Error"

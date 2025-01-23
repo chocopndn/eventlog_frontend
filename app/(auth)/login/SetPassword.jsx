@@ -13,7 +13,7 @@ import { API_URL } from "../../../config/config";
 
 import FormField2 from "../../../components/FormField2";
 import CustomButton from "../../../components/CustomButton";
-import ErrorModal from "../../../components/ErrorModal";
+import CustomModal from "../../../components/CustomModal";
 import images from "../../../constants/images";
 
 const clearResetEmail = async () => {
@@ -142,7 +142,7 @@ const SetPassword = () => {
           />
         </View>
       </View>
-      <ErrorModal
+      <CustomModal
         visible={errorVisible}
         onClose={() => setErrorVisible(false)}
         title={errorDetails.title}
