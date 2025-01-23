@@ -21,12 +21,9 @@ import images from "../../../constants/images";
 const clearResetEmail = async () => {
   try {
     await AsyncStorage.removeItem("resetEmail");
-  } catch {}
-};
-
-const handleDismissAll = async () => {
-  await clearResetEmail();
-  router.dismiss();
+  } catch (error) {
+    console.error("Error clearing reset email:", error);
+  }
 };
 
 const VerifyCode = () => {
@@ -90,7 +87,6 @@ const VerifyCode = () => {
       );
 
       if (response.status === 200 && response.data.message) {
-        await clearResetEmail();
         router.replace("./SetPassword");
       } else {
         setErrorMessage("Verification failed. Please try again.");
@@ -108,7 +104,7 @@ const VerifyCode = () => {
   return (
     <SafeAreaView className="flex-1 items-center justify-center h-full bg-primary pt-5">
       <View className="p-5 absolute top-5 justify-start w-full">
-        <TouchableOpacity onPress={handleDismissAll}>
+        <TouchableOpacity onPress={clearResetEmail}>
           <View className="w-[40px] h-[40px] items-center justify-center border-[3px] border-secondary rounded-full">
             <Image
               source={images.arrowLeft}
