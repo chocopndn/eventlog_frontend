@@ -145,7 +145,9 @@ const LogIn = () => {
           </View>
 
           <View className="mr-6">
-            <TouchableOpacity onPress={() => router.push("/login/SetPassword")}>
+            <TouchableOpacity
+              onPress={() => router.push("/login/ForgotPassword")}
+            >
               <Text className="font-Arial color-secondary font-[12px]">
                 Forgot Password?
               </Text>
