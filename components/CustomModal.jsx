@@ -1,24 +1,41 @@
 import React from "react";
-import { Modal, View, Text, TouchableOpacity } from "react-native";
+import { Modal, View, Text, TouchableOpacity, StatusBar } from "react-native";
 
-const CustomModal = ({ visible, onClose, title, message }) => {
+const CustomModal = ({
+  visible,
+  onClose,
+  title = "Error",
+  message = "An unexpected error occurred.",
+  type = "error",
+  buttonText = "Okay",
+  buttonAction = onClose,
+}) => {
   return (
     <Modal
-      animationType="none"
+      animationType="fade"
       transparent={true}
       visible={visible}
       onRequestClose={onClose}
     >
-      <View className="flex-1 justify-center items-center bg-black/50">
-        <View className="w-4/5 bg-white p-6 border-2 border-primary shadow-lg items-center">
-          <Text className="text-lg font-bold text-red-600 mb-4">
-            {title || "Error"}
+      <StatusBar
+        backgroundColor="rgba(0, 0, 0, 0.5)"
+        barStyle="light-content"
+        translucent
+      />
+
+      <View className="absolute top-0 left-0 right-0 bottom-0 flex-1 bg-black/50 justify-center items-center">
+        <View className="w-4/5 bg-secondary p-6 rounded-lg items-center shadow-xl">
+          <Text className="font-SquadaOne text-4xl mb-4 text-primary">
+            {title}
           </Text>
-          <Text className="text-base text-gray-700 text-center mb-6">
-            {message}
-          </Text>
-          <TouchableOpacity className="bg-red-600 px-4 py-2" onPress={onClose}>
-            <Text className="text-white font-bold">Close</Text>
+          <Text className="mb-6 font-Arial text-lg">{message}</Text>
+          <TouchableOpacity
+            onPress={buttonAction}
+            className={`px-5 py-3 rounded-md ${
+              type === "success" ? "bg-green-500" : "bg-red-500"
+            }`}
+          >
+            <Text className="text-white font-bold">{buttonText}</Text>
           </TouchableOpacity>
         </View>
       </View>
