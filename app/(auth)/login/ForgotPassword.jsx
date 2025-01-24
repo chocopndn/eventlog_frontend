@@ -36,7 +36,7 @@ const isValidEmail = (email) => {
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
-  const [errorVisible, setErrorVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
   const [errorDetails, setErrorDetails] = useState({ title: "", message: "" });
 
   const isButtonSecondary = email.length > 0;
@@ -44,7 +44,7 @@ const ForgotPassword = () => {
   const handleResetPassword = async () => {
     if (!email) {
       setErrorDetails({ title: "Input Error", message: "Email is required." });
-      setErrorVisible(true);
+      setModalVisible(true);
       return;
     }
 
@@ -53,7 +53,7 @@ const ForgotPassword = () => {
         title: "Validation Error",
         message: "Please enter a valid email address.",
       });
-      setErrorVisible(true);
+      setModalVisible(true);
       return;
     }
 
@@ -73,10 +73,9 @@ const ForgotPassword = () => {
 
       if (error.response) {
         const statusCode = error.response.status;
-        const serverMessage = error.response?.data?.message;
 
         if (statusCode === 404) {
-          title = serverMessage;
+          title = "User Not Found";
           message =
             "The email address entered is not associated with any account.";
         } else if (statusCode === 500) {
@@ -93,7 +92,7 @@ const ForgotPassword = () => {
       }
 
       setErrorDetails({ title, message });
-      setErrorVisible(true);
+      setModalVisible(true);
     }
   };
 
@@ -136,12 +135,13 @@ const ForgotPassword = () => {
       <StatusBar style="light" />
 
       <CustomModal
-        visible={errorVisible}
-        onClose={() => setErrorVisible(false)}
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
         title={errorDetails.title}
         message={errorDetails.message}
-        buttonText="Close"
         type="error"
+        buttonText="Close"
+        buttonAction={() => setModalVisible(false)}
       />
     </SafeAreaView>
   );
