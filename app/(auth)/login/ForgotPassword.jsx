@@ -73,9 +73,10 @@ const ForgotPassword = () => {
 
       if (error.response) {
         const statusCode = error.response.status;
+        const serverMessage = error.response?.data?.message;
 
         if (statusCode === 404) {
-          title = "User Not Found";
+          title = serverMessage;
           message =
             "The email address entered is not associated with any account.";
         } else if (statusCode === 500) {
