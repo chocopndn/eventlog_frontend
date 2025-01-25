@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -5,8 +6,6 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import React, { useState } from "react";
-import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
@@ -15,8 +14,8 @@ import { API_URL } from "../../../config/config";
 import FormField from "../../../components/FormField";
 import CustomButton from "../../../components/CustomButton";
 import CustomModal from "../../../components/CustomModal";
-
 import images from "../../../constants/images";
+import useModal from "../../../hooks/useModal";
 
 const clearResetEmail = async () => {
   try {
@@ -36,24 +35,26 @@ const isValidEmail = (email) => {
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
-  const [modalVisible, setModalVisible] = useState(false);
-  const [errorDetails, setErrorDetails] = useState({ title: "", message: "" });
+  const { modalVisible, modalDetails, showModal, hideModal } = useModal();
 
   const isButtonSecondary = email.length > 0;
 
   const handleResetPassword = async () => {
     if (!email) {
-      setErrorDetails({ title: "Input Error", message: "Email is required." });
-      setModalVisible(true);
+      showModal({
+        title: "Input Error",
+        message: "Email is required.",
+        type: "error",
+      });
       return;
     }
 
     if (!isValidEmail(email)) {
-      setErrorDetails({
+      showModal({
         title: "Validation Error",
         message: "Please enter a valid email address.",
+        type: "error",
       });
-      setModalVisible(true);
       return;
     }
 
@@ -75,11 +76,11 @@ const ForgotPassword = () => {
         const statusCode = error.response.status;
 
         if (statusCode === 404) {
-          title = "User Not Found";
+          title = "USER NOT FOUND";
           message =
             "The email address entered is not associated with any account.";
         } else if (statusCode === 500) {
-          title = "Server Error";
+          title = "SERVER ERROR";
           message = "The server encountered an error. Please try again later.";
         } else {
           message =
@@ -91,8 +92,7 @@ const ForgotPassword = () => {
           "Unable to connect to the server. Check your internet connection.";
       }
 
-      setErrorDetails({ title, message });
-      setModalVisible(true);
+      showModal({ title, message, type: "error" });
     }
   };
 
@@ -132,16 +132,15 @@ const ForgotPassword = () => {
           className="mt-5"
         />
       </View>
-      <StatusBar style="light" />
 
       <CustomModal
         visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        title={errorDetails.title}
-        message={errorDetails.message}
-        type="error"
+        onClose={hideModal}
+        title={modalDetails.title}
+        message={modalDetails.message}
+        type={modalDetails.type}
         buttonText="Close"
-        buttonAction={() => setModalVisible(false)}
+        buttonAction={hideModal}
       />
     </SafeAreaView>
   );
