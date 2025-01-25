@@ -28,7 +28,7 @@ const CustomModal = ({
           <Text className="font-SquadaOne text-4xl mb-4 text-primary">
             {title}
           </Text>
-          <Text className="mb-6 font-Arial text-lg">{message}</Text>
+          <Text className="mb-6 font-Arial text-lg text-center">{message}</Text>
           <TouchableOpacity
             onPress={buttonAction}
             className={`px-5 py-3 rounded-md ${

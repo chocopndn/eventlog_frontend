@@ -12,14 +12,15 @@ import FormField from "../../../components/FormField";
 import CustomButton from "../../../components/CustomButton";
 import CustomModal from "../../../components/CustomModal";
 import { API_URL } from "../../../config/config";
+import useModal from "../../../hooks/useModal";
 
 const LogIn = () => {
   const [student_id, setStudentId] = useState("");
   const [password, setPassword] = useState("");
   const [rememberPassword, setRememberPassword] = useState(false);
-  const [errorVisible, setErrorVisible] = useState(false);
-  const [errorDetails, setErrorDetails] = useState({ title: "", message: "" });
   const [loading, setLoading] = useState(false);
+
+  const { modalVisible, modalDetails, showModal, hideModal } = useModal();
 
   const isButtonSecondary = student_id.length > 0 && password.length > 0;
 
@@ -49,11 +50,11 @@ const LogIn = () => {
 
   const handleLogin = async () => {
     if (!student_id || !password) {
-      setErrorDetails({
+      showModal({
         title: "Input Error",
         message: "ID Number and Password are required.",
+        type: "error",
       });
-      setErrorVisible(true);
       return;
     }
 
@@ -80,25 +81,30 @@ const LogIn = () => {
       router.replace("/home");
     } catch (error) {
       if (error.response) {
-        setErrorDetails({
+        showModal({
           title: "Login Failed",
           message:
             error.response.data?.message ||
             "Something went wrong. Please try again.",
+          type: "error",
+          buttonText: "Retry",
         });
       } else if (error.request) {
-        setErrorDetails({
+        showModal({
           title: "Network Error",
           message:
             "Unable to connect to the server. Please check your internet connection.",
+          type: "error",
+          buttonText: "Retry",
         });
       } else {
-        setErrorDetails({
+        showModal({
           title: "Unexpected Error",
           message: "An error occurred. Please try again later.",
+          type: "error",
+          buttonText: "Retry",
         });
       }
-      setErrorVisible(true);
     } finally {
       setLoading(false);
     }
@@ -143,9 +149,9 @@ const LogIn = () => {
               style={{
                 width: 20,
                 height: 20,
-                borderColor: "white",
+                borderColor: "#FBF1E5",
                 borderWidth: 2,
-                backgroundColor: "white",
+                backgroundColor: "#FBF1E5",
               }}
               color={rememberPassword ? "#81b0ff" : undefined}
             />
@@ -178,21 +184,22 @@ const LogIn = () => {
       />
 
       <View className="flex-row mt-5">
-        <Text className="font-Arial text-white text-[15px]">
+        <Text className="font-Arial text-secondary text-[15px]">
           Don't Have An Account?{" "}
         </Text>
         <TouchableOpacity onPress={() => router.replace("/SignUp")}>
-          <Text className="font-Arial font-bold text-white text-[15px]">
+          <Text className="font-Arial font-bold text-secondary text-[15px]">
             Register.
           </Text>
         </TouchableOpacity>
       </View>
 
       <CustomModal
-        visible={errorVisible}
-        onClose={() => setErrorVisible(false)}
-        title={errorDetails.title}
-        message={errorDetails.message}
+        visible={modalVisible}
+        onClose={hideModal}
+        title={modalDetails.title}
+        message={modalDetails.message}
+        buttonText={modalDetails.buttonText}
       />
 
       <StatusBar style="dark" />

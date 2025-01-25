@@ -20,7 +20,7 @@ const clearResetEmail = async () => {
   try {
     await AsyncStorage.removeItem("resetEmail");
     router.push("./ForgotPassword");
-  } catch {}
+  } catch (error) {}
 };
 
 const SetPassword = () => {
@@ -31,6 +31,7 @@ const SetPassword = () => {
     title: "",
     message: "",
     type: "error",
+    buttonText: "Retry",
   });
 
   const handleSavePassword = async () => {
@@ -39,6 +40,7 @@ const SetPassword = () => {
         title: "Input Error",
         message: "Both password fields are required.",
         type: "error",
+        buttonText: "Retry",
       });
       setModalVisible(true);
       return;
@@ -49,6 +51,7 @@ const SetPassword = () => {
         title: "Validation Error",
         message: "Password must be at least 8 characters long.",
         type: "error",
+        buttonText: "Retry",
       });
       setModalVisible(true);
       return;
@@ -59,6 +62,7 @@ const SetPassword = () => {
         title: "Validation Error",
         message: "Passwords do not match.",
         type: "error",
+        buttonText: "Retry",
       });
       setModalVisible(true);
       return;
@@ -71,6 +75,7 @@ const SetPassword = () => {
           title: "Missing Email",
           message: "No email found. Please restart the process.",
           type: "error",
+          buttonText: "Retry",
         });
         setModalVisible(true);
         return;
@@ -89,6 +94,7 @@ const SetPassword = () => {
           title: "Success",
           message: "Your password has been updated successfully.",
           type: "success",
+          buttonText: "Go to Login",
         });
         setModalVisible(true);
       }
@@ -99,6 +105,7 @@ const SetPassword = () => {
         title: "Error",
         message: errorMessage,
         type: "error",
+        buttonText: "Retry",
       });
       setModalVisible(true);
     }
@@ -170,9 +177,7 @@ const SetPassword = () => {
         title={modalDetails.title}
         message={modalDetails.message}
         type={modalDetails.type}
-        buttonText={
-          modalDetails.type === "success" ? "Go to Login" : "Try Again"
-        }
+        buttonText={modalDetails.buttonText}
       />
     </SafeAreaView>
   );

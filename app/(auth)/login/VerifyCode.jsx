@@ -15,6 +15,7 @@ import { API_URL } from "../../../config/config";
 
 import CustomButton from "../../../components/CustomButton";
 import CustomModal from "../../../components/CustomModal";
+import useModal from "../../../hooks/useModal";
 
 import images from "../../../constants/images";
 
@@ -28,9 +29,9 @@ const clearResetEmail = async () => {
 const VerifyCode = () => {
   const [code, setCode] = useState(["", "", "", "", ""]);
   const [email, setEmail] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [isModalVisible, setModalVisible] = useState(false);
   const inputs = useRef([]);
+
+  const { modalVisible, modalDetails, showModal, hideModal } = useModal();
 
   useEffect(() => {
     const fetchResetEmail = async () => {
@@ -71,8 +72,11 @@ const VerifyCode = () => {
     const verificationCode = code.join("");
 
     if (!email || verificationCode.length !== 5) {
-      setErrorMessage("Invalid email or code.");
-      setModalVisible(true);
+      showModal({
+        title: "Verification Error",
+        message: "Invalid email or code.",
+        type: "error",
+      });
       return;
     }
 
@@ -88,15 +92,21 @@ const VerifyCode = () => {
       if (response.status === 200 && response.data.message) {
         router.replace("/login/SetPassword");
       } else {
-        setErrorMessage("Verification failed. Please try again.");
-        setModalVisible(true);
+        showModal({
+          title: "Verification Failed",
+          message: "Verification failed. Please try again.",
+          type: "error",
+        });
       }
     } catch (error) {
       const errorMsg =
         error.response?.data?.message ||
         "Unable to verify the code. Please try again later.";
-      setErrorMessage(errorMsg);
-      setModalVisible(true);
+      showModal({
+        title: "Error",
+        message: errorMsg,
+        type: "error",
+      });
     }
   };
 
@@ -155,10 +165,11 @@ const VerifyCode = () => {
       <StatusBar style="light" />
 
       <CustomModal
-        visible={isModalVisible}
-        onClose={() => setModalVisible(false)}
-        title="Verification Error"
-        message={errorMessage}
+        visible={modalVisible}
+        onClose={hideModal}
+        title={modalDetails.title}
+        message={modalDetails.message}
+        type={modalDetails.type}
       />
     </SafeAreaView>
   );

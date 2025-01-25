@@ -6,22 +6,17 @@ const useModal = (initialType = "error") => {
     title: "",
     message: "",
     type: initialType,
+    buttonText: "Okay",
   });
 
-  const showModal = ({ title, message, type }) => {
-    setModalDetails({ title, message, type });
+  const showModal = ({ title, message, type, buttonText = "Okay" }) => {
+    setModalDetails({ title, message, type, buttonText });
     setModalVisible(true);
   };
 
   const hideModal = () => {
     setModalVisible(false);
   };
-
-  useEffect(() => {
-    if (!modalVisible) {
-      setModalDetails((prev) => ({ ...prev, type: initialType }));
-    }
-  }, [modalVisible, initialType]);
 
   return {
     modalVisible,
