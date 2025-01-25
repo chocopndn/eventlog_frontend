@@ -16,26 +16,27 @@ const handleDismissAll = () => {
 
 const Welcome = () => {
   return (
-    <SafeAreaView className="flex-1 items-center justify-center bg-secondary pt-5">
-      <View className="items-start">
-        <View className="pb-3">
-          <TouchableOpacity onPress={handleDismissAll}>
-            <View className="w-[40px] h-[40px] items-center justify-center border-[3px] border-primary rounded-full">
-              <Image
-                source={images.arrowLeft}
-                className="w-[24px] h-[24px]"
-                style={{ tintColor: "#255586" }}
-              />
-            </View>
-          </TouchableOpacity>
-        </View>
+    <SafeAreaView className="flex-1 items-center justify-center h-full bg-secondary pt-5">
+      <View className="p-5 absolute top-5 justify-start w-full">
+        <TouchableOpacity onPress={handleDismissAll}>
+          <View className="w-[40px] h-[40px] items-center justify-center border-[3px] border-primary rounded-full">
+            <Image
+              source={images.arrowLeft}
+              className="w-[24px] h-[24px]"
+              style={{ tintColor: "#255586" }}
+            />
+          </View>
+        </TouchableOpacity>
+      </View>
+
+      <View className="w-full justify-center items-center h-[90%] mt-12">
         <View className="w-[327px] bg-primary items-center justify-center">
           <Text className="color-secondary font-SquadaOne text-[25px] m-3">
             WELCOME EVENTLOG USERS
           </Text>
         </View>
-        <View className="w-[327px] h-[81%] bg-primary items-center justify-center mt-1">
-          <View className="w-[90%] h-[93%] bg-secondary items-start justify-center">
+        <View className="w-[327px] h-[83%] bg-primary items-center justify-center mt-1">
+          <View className="w-[90%] p-2 bg-secondary items-start justify-center">
             <Text className="font-SquadaOne text-[18px] color-primary p-3 pt-0">
               The College of Information Technology proudly introduce EVENTLOG,
               the new mobile application - event attendance monitoring system,
