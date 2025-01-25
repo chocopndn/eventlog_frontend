@@ -27,7 +27,7 @@ const HomeIndex = () => {
           </View>
           <TouchableOpacity
             className="border-2 w-[303px] h-[52px] border-primary justify-center pl-3"
-            onPress={() => router.push("/Home/Welcome")}
+            onPress={() => router.push("/home/Welcome")}
           >
             <Text className="font-SquadaOne color-primary text-[20px] text-center">
               WELCOME EVENTLOG USERS!
