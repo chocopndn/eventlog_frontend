@@ -15,7 +15,7 @@ const App = () => {
     const checkAuthToken = async () => {
       const authToken = await AsyncStorage.getItem("authToken");
       if (authToken) {
-        router.replace("/Home");
+        router.replace("/home");
       } else {
         setLoading(false);
       }
