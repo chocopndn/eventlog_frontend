@@ -119,7 +119,7 @@ const LogIn = () => {
         <View className="absolute w-[70%] h-10 bg-primary"></View>
 
         <View className="mt-5 mb-7">
-          <Image source={images.logo} className="w-[196px] h-[196px]" />
+          <Image source={images.logo} style={{ width: 160, height: 160 }} />
         </View>
       </View>
 

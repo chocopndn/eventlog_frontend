@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Text, View, Image, ActivityIndicator } from "react-native";
+import {
+  Text,
+  View,
+  Image,
+  ActivityIndicator,
+  SafeAreaView,
+} from "react-native";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -33,7 +39,7 @@ const App = () => {
   }
 
   return (
-    <View className="items-center justify-center h-full bg-secondary">
+    <SafeAreaView className="items-center justify-center h-full bg-secondary">
       <Text className="text-[80px] font-SquadaOne color-primary">EVENTLOG</Text>
       <View className="mt-5 mb-7">
         <Image source={images.logo} className="w-[196px] h-[196px]" />
@@ -42,11 +48,11 @@ const App = () => {
         Every CIT Event's Companion
       </Text>
 
-      <View className="mt-5">
+      <View className="mt-5" pointerEvents="box-none">
         <CustomButton
           type="primary"
           title="LOG IN"
-          onPress={() => router.push("/login")}
+          onPress={() => router.push("./login")}
         />
         <CustomButton
           type="secondary"
@@ -56,7 +62,7 @@ const App = () => {
       </View>
 
       <StatusBar style="dark" />
-    </View>
+    </SafeAreaView>
   );
 };
 

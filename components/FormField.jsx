@@ -62,7 +62,7 @@ const FormField = ({ type, placeholder, onChangeText, value }) => {
             >
               <Image
                 source={showPassword ? images.view : images.hide}
-                className="h-[24px] w-[24px]"
+                className="h-[24px] w-[24px] mr-2"
                 style={{ tintColor: "#333333" }}
               />
             </TouchableOpacity>

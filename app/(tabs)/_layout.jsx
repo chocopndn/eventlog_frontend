@@ -9,7 +9,7 @@ const TabsLayout = () => {
     <Tabs>
       <TabSlot />
 
-      <TabList className="flex-row justify-around items-center pl-3 pr-3 bg-primary h-20">
+      <TabList className="flex-row justify-around items-center pl-4 pr-4 bg-primary h-25">
         <TabTrigger name="Home" href="/(tabs)/home">
           <View className="items-center">
             <Image
@@ -18,7 +18,7 @@ const TabsLayout = () => {
               style={{ tintColor: "#FBF1E5" }}
             />
             <View className="w-12 items-center">
-              <Text className="color-secondary text-xs pt-1">Home</Text>
+              <Text className="color-secondary text-[10px] pt-1">Home</Text>
             </View>
           </View>
         </TabTrigger>
@@ -30,8 +30,8 @@ const TabsLayout = () => {
               className="h-8 w-8"
               style={{ tintColor: "#FBF1E5" }}
             />
-            <View className="w-12">
-              <Text className="color-secondary text-xs pt-1">QR Code</Text>
+            <View className="w-13">
+              <Text className="color-secondary text-[10px] pt-1">QR Code</Text>
             </View>
           </View>
         </TabTrigger>
@@ -50,8 +50,8 @@ const TabsLayout = () => {
               className="h-8 w-8"
               style={{ tintColor: "#FBF1E5" }}
             />
-            <View className="w-12">
-              <Text className="color-secondary text-xs  pt-1">Records</Text>
+            <View className="w-13">
+              <Text className="color-secondary text-[10px]  pt-1">Records</Text>
             </View>
           </View>
         </TabTrigger>
@@ -63,8 +63,8 @@ const TabsLayout = () => {
               className="h-8 w-8"
               style={{ tintColor: "#FBF1E5" }}
             />
-            <View className="w-12">
-              <Text className="color-secondary text-xs pt-1">Account</Text>
+            <View className="w-13">
+              <Text className="color-secondary text-[10px] pt-1">Account</Text>
             </View>
           </View>
         </TabTrigger>

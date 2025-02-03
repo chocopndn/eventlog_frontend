@@ -82,7 +82,7 @@ const VerifyCode = () => {
 
     try {
       const response = await axios.post(
-        `http://${API_URL}/api/auth/verifyResetCode`,
+        `http://${API_URL}/api/auth/reset-password/confirm`,
         {
           email,
           reset_code: verificationCode,
