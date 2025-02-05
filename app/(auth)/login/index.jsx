@@ -8,7 +8,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { saveUser, getStoredUser } from "../../database/queries";
-
 import images from "../../../constants/images";
 import FormField from "../../../components/FormField";
 import CustomButton from "../../../components/CustomButton";
@@ -24,6 +23,26 @@ const LogIn = () => {
 
   const { modalVisible, modalDetails, showModal, hideModal } = useModal();
   const isButtonEnabled = id_number.length > 0 && password.length > 0;
+
+  useEffect(() => {
+    const loadStoredCredentials = async () => {
+      try {
+        const storedId = await AsyncStorage.getItem("storedIdNumber");
+        const storedPass = await AsyncStorage.getItem("storedPassword");
+        const rememberMe = await AsyncStorage.getItem("rememberMe");
+
+        if (rememberMe === "true" && storedId && storedPass) {
+          setIdNumber(storedId);
+          setPassword(storedPass);
+          setRememberPassword(true);
+        }
+      } catch (error) {
+        console.error("Error loading stored credentials:", error);
+      }
+    };
+
+    loadStoredCredentials();
+  }, []);
 
   useEffect(() => {
     const checkStoredUser = async () => {
@@ -59,6 +78,16 @@ const LogIn = () => {
       await AsyncStorage.setItem("authToken", token);
 
       await saveUser(user);
+
+      if (rememberPassword) {
+        await AsyncStorage.setItem("storedIdNumber", id_number);
+        await AsyncStorage.setItem("storedPassword", password);
+        await AsyncStorage.setItem("rememberMe", "true");
+      } else {
+        await AsyncStorage.removeItem("storedIdNumber");
+        await AsyncStorage.removeItem("storedPassword");
+        await AsyncStorage.setItem("rememberMe", "false");
+      }
 
       router.replace("/home");
     } catch (error) {
