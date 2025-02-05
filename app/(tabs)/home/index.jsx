@@ -17,7 +17,7 @@ import {
   getStoredUser,
   saveEvent,
   getStoredEvents,
-} from "../../database/queries";
+} from "../../../src/database/queries";
 
 const HomeIndex = () => {
   const [isLoading, setIsLoading] = useState(true);

@@ -11,7 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import images from "../constants/images";
 import { StatusBar } from "expo-status-bar";
-import { setupDatabase } from "./database/database";
+import { setupDatabase } from "../src/database/database";
 
 import CustomButton from "../components/CustomButton";
 

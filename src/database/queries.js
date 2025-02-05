@@ -8,7 +8,7 @@ const initDB = async () => {
   }
 };
 
-export const saveUser = async (user) => {
+const saveUser = async (user) => {
   try {
     await initDB();
     await db.runAsync("DELETE FROM users;");
@@ -33,7 +33,7 @@ export const saveUser = async (user) => {
   }
 };
 
-export const getStoredUser = async () => {
+const getStoredUser = async () => {
   try {
     await initDB();
     const user = await db.getFirstAsync("SELECT * FROM users;");
@@ -43,7 +43,7 @@ export const getStoredUser = async () => {
   }
 };
 
-export const clearUser = async () => {
+const clearUser = async () => {
   try {
     await initDB();
     await db.runAsync("DELETE FROM users;");
@@ -52,7 +52,7 @@ export const clearUser = async () => {
   }
 };
 
-export const saveEvent = async (event) => {
+const saveEvent = async (event) => {
   try {
     await initDB();
 
@@ -87,7 +87,7 @@ export const saveEvent = async (event) => {
   }
 };
 
-export const getStoredEvents = async () => {
+const getStoredEvents = async () => {
   try {
     await initDB();
     const events = await db.getAllAsync("SELECT * FROM events;");
@@ -102,7 +102,7 @@ export const getStoredEvents = async () => {
   }
 };
 
-export const getEventsByDate = async (date) => {
+const getEventsByDate = async (date) => {
   try {
     await initDB();
     const events = await getStoredEvents();
@@ -115,4 +115,13 @@ export const getEventsByDate = async (date) => {
   } catch (error) {
     throw error;
   }
+};
+
+export {
+  saveUser,
+  getStoredUser,
+  clearUser,
+  saveEvent,
+  getStoredEvents,
+  getEventsByDate,
 };

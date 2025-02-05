@@ -7,7 +7,7 @@ import Checkbox from "expo-checkbox";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { saveUser, getStoredUser } from "../../database/queries";
+import { saveUser, getStoredUser } from "../../../src/database/queries";
 import images from "../../../constants/images";
 import FormField from "../../../components/FormField";
 import CustomButton from "../../../components/CustomButton";
