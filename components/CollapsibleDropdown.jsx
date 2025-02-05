@@ -39,7 +39,7 @@ const CollapsibleDropdown = ({
   });
 
   return (
-    <View className="w-full mb-4">
+    <View className="w-full mb-3">
       <Pressable
         className="flex-row justify-between items-center p-4 bg-[#FBF1E5] border-primary border-2 w-[303px] h-[52px]"
         onPress={toggleDropdown}
