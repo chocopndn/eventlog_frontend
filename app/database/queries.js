@@ -64,25 +64,24 @@ export const saveEvent = async (event) => {
       event.event_name_id,
     ]);
 
-    for (const event_id of event.event_ids) {
-      await db.runAsync(
-        `INSERT OR REPLACE INTO events 
-        (event_id, event_name_id, event_name, venue, scan_personnel, event_dates, am_in, am_out, pm_in, pm_out) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          parseInt(event_id, 10),
-          parseInt(event.event_name_id, 10),
-          String(event.event_name),
-          String(event.venue),
-          String(event.scan_personnel),
-          String(event.event_dates),
-          event.am_in ? String(event.am_in) : null,
-          event.am_out ? String(event.am_out) : null,
-          event.pm_in ? String(event.pm_in) : null,
-          event.pm_out ? String(event.pm_out) : null,
-        ]
-      );
-    }
+    await db.runAsync(
+      `INSERT OR REPLACE INTO events 
+      (event_name_id, event_name, venue, scan_personnel, event_dates, event_date_list, event_ids, am_in, am_out, pm_in, pm_out) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        event.event_name_id,
+        event.event_name,
+        event.venue,
+        event.scan_personnel,
+        event.event_dates,
+        JSON.stringify(event.event_date_list),
+        JSON.stringify(event.event_ids),
+        event.am_in || null,
+        event.am_out || null,
+        event.pm_in || null,
+        event.pm_out || null,
+      ]
+    );
   } catch (error) {
     throw error;
   }
@@ -92,7 +91,27 @@ export const getStoredEvents = async () => {
   try {
     await initDB();
     const events = await db.getAllAsync("SELECT * FROM events;");
-    return events || [];
+
+    return events.map((event) => ({
+      ...event,
+      event_ids: JSON.parse(event.event_ids),
+      event_date_list: JSON.parse(event.event_date_list),
+    }));
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getEventsByDate = async (date) => {
+  try {
+    await initDB();
+    const events = await getStoredEvents();
+
+    return events.filter((event) => {
+      if (!event.event_date_list) return false;
+      const eventDates = JSON.parse(event.event_date_list);
+      return eventDates.includes(date);
+    });
   } catch (error) {
     throw error;
   }

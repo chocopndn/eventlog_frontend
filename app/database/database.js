@@ -6,8 +6,6 @@ const setupDatabase = async () => {
   await db.execAsync(`
     PRAGMA journal_mode = WAL;
 
-    DROP TABLE IF EXISTS events;
-
     CREATE TABLE IF NOT EXISTS users (
       id_number INTEGER PRIMARY KEY,
       first_name TEXT NOT NULL,
@@ -25,6 +23,8 @@ const setupDatabase = async () => {
       venue TEXT NOT NULL,
       scan_personnel TEXT NOT NULL,
       event_dates TEXT NOT NULL, 
+      event_date_list TEXT NOT NULL,
+      event_ids TEXT NOT NULL,
       am_in TEXT,
       am_out TEXT,
       pm_in TEXT,

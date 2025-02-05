@@ -35,29 +35,28 @@ const HomeIndex = () => {
         { block_id: user.block_id }
       );
 
+      console.log("🔵 API Response:", JSON.stringify(response.data, null, 2));
+
       const events = response.data.events || [];
+
+      if (events.length === 0) {
+        console.warn("⚠️ No events returned from API");
+      }
 
       for (const event of events) {
         await saveEvent(event);
       }
 
-      let storedEvents = await getStoredEvents();
+      const storedEvents = await getStoredEvents();
 
-      const groupedEvents = {};
-      storedEvents.forEach((event) => {
-        const groupKey = `${event.event_name_id}-${event.venue}-${event.scan_personnel}`;
+      console.log(
+        "📂 Events from SQLite:",
+        JSON.stringify(storedEvents, null, 2)
+      );
 
-        if (!groupedEvents[groupKey]) {
-          groupedEvents[groupKey] = {
-            ...event,
-            event_dates: event.event_dates,
-            event_ids: [event.event_id],
-          };
-        }
-      });
-
-      setUpcomingEvents(Object.values(groupedEvents));
+      setUpcomingEvents(storedEvents);
     } catch (error) {
+      console.error("❌ API Fetch Error:", error);
       setError("Failed to load events");
     } finally {
       setIsLoading(false);
@@ -110,7 +109,7 @@ const HomeIndex = () => {
               >
                 <CollapsibleDropdown
                   title={event.event_name}
-                  date={event.event_dates}
+                  date={event.event_dates} // ✅ Already formatted in SQLite
                   venue={event.venue}
                   morningIn={event.am_in}
                   afternoonIn={event.pm_in}
