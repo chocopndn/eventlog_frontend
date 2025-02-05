@@ -35,28 +35,15 @@ const HomeIndex = () => {
         { block_id: user.block_id }
       );
 
-      console.log("🔵 API Response:", JSON.stringify(response.data, null, 2));
-
       const events = response.data.events || [];
-
-      if (events.length === 0) {
-        console.warn("⚠️ No events returned from API");
-      }
 
       for (const event of events) {
         await saveEvent(event);
       }
 
       const storedEvents = await getStoredEvents();
-
-      console.log(
-        "📂 Events from SQLite:",
-        JSON.stringify(storedEvents, null, 2)
-      );
-
       setUpcomingEvents(storedEvents);
     } catch (error) {
-      console.error("❌ API Fetch Error:", error);
       setError("Failed to load events");
     } finally {
       setIsLoading(false);
@@ -109,7 +96,7 @@ const HomeIndex = () => {
               >
                 <CollapsibleDropdown
                   title={event.event_name}
-                  date={event.event_dates} // ✅ Already formatted in SQLite
+                  date={event.event_dates}
                   venue={event.venue}
                   morningIn={event.am_in}
                   afternoonIn={event.pm_in}
