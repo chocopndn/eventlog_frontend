@@ -13,7 +13,11 @@ import axios from "axios";
 
 import CollapsibleDropdown from "../../../components/CollapsibleDropdown";
 import config from "../../../config/config";
-import { getStoredUser } from "../../database/queries";
+import {
+  getStoredUser,
+  saveEvent,
+  getStoredEvents,
+} from "../../database/queries";
 
 const HomeIndex = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -23,6 +27,7 @@ const HomeIndex = () => {
 
   const fetchUpcomingEvents = async () => {
     try {
+      setIsLoading(true);
       const user = await getStoredUser();
 
       const response = await axios.post(
@@ -30,13 +35,33 @@ const HomeIndex = () => {
         { block_id: user.block_id }
       );
 
-      console.log("API Response:", response.data.events);
-      setUpcomingEvents(response.data?.events || []);
+      const events = response.data.events || [];
+
+      for (const event of events) {
+        await saveEvent(event);
+      }
+
+      let storedEvents = await getStoredEvents();
+
+      const groupedEvents = {};
+      storedEvents.forEach((event) => {
+        const groupKey = `${event.event_name_id}-${event.venue}-${event.scan_personnel}`;
+
+        if (!groupedEvents[groupKey]) {
+          groupedEvents[groupKey] = {
+            ...event,
+            event_dates: event.event_dates,
+            event_ids: [event.event_id],
+          };
+        }
+      });
+
+      setUpcomingEvents(Object.values(groupedEvents));
     } catch (error) {
-      console.error("API Error:", error);
       setError("Failed to load events");
     } finally {
       setIsLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -44,10 +69,9 @@ const HomeIndex = () => {
     fetchUpcomingEvents();
   }, []);
 
-  const onRefresh = useCallback(async () => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
-    await fetchUpcomingEvents();
-    setRefreshing(false);
+    fetchUpcomingEvents();
   }, []);
 
   return (
@@ -78,27 +102,27 @@ const HomeIndex = () => {
             </Text>
           </TouchableOpacity>
 
-          {upcomingEvents.length > 0
-            ? upcomingEvents.map((event, index) => (
-                <View
-                  key={event.event_name_id || `event-${index}`}
-                  className="w-[303px]"
-                >
-                  <CollapsibleDropdown
-                    title={event.event_name}
-                    date={event.event_dates}
-                    venue={event.venue}
-                    morningIn={event.am_in}
-                    afternoonIn={event.pm_in}
-                    morningOut={event.am_out}
-                    afternoonOut={event.pm_out}
-                    personnel={event.scan_personnel}
-                  />
-                </View>
-              ))
-            : !isLoading && (
-                <Text className="text-gray-500">No upcoming events</Text>
-              )}
+          {upcomingEvents.length > 0 ? (
+            upcomingEvents.map((event, index) => (
+              <View
+                key={`${event.event_name_id}-${index}`}
+                className="w-[303px]"
+              >
+                <CollapsibleDropdown
+                  title={event.event_name}
+                  date={event.event_dates}
+                  venue={event.venue}
+                  morningIn={event.am_in}
+                  afternoonIn={event.pm_in}
+                  morningOut={event.am_out}
+                  afternoonOut={event.pm_out}
+                  personnel={event.scan_personnel}
+                />
+              </View>
+            ))
+          ) : (
+            <Text className="text-gray-500">No upcoming events</Text>
+          )}
         </View>
         <StatusBar style="dark" />
       </ScrollView>
