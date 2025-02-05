@@ -6,8 +6,6 @@ const setupDatabase = async () => {
   await db.execAsync(`
     PRAGMA journal_mode = WAL;
     
-    DROP TABLE IF EXISTS users; -- 💥 Fix: Remove incorrect table first
-
     CREATE TABLE IF NOT EXISTS users (
       id_number INTEGER PRIMARY KEY,
       first_name TEXT NOT NULL,
