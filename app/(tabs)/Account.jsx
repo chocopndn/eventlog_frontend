@@ -3,10 +3,14 @@ import React from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 
+import { clearUser } from "../database/queries";
 const Account = () => {
   const handleLogout = async () => {
-    await AsyncStorage.removeItem("authToken");
-    router.replace("/login");
+    try {
+      await AsyncStorage.removeItem("authToken");
+      await clearUser();
+      router.replace("/login");
+    } catch (error) {}
   };
 
   return (

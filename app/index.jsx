@@ -11,11 +11,16 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import images from "../constants/images";
 import { StatusBar } from "expo-status-bar";
+import { setupDatabase } from "./database/database";
 
 import CustomButton from "../components/CustomButton";
 
 const App = () => {
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setupDatabase();
+  }, []);
 
   useEffect(() => {
     const checkAuthToken = async () => {

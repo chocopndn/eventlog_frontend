@@ -3,9 +3,11 @@ import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Checkbox from "expo-checkbox";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import { saveUser, getStoredUser } from "../../database/queries";
 
 import images from "../../../constants/images";
 import FormField from "../../../components/FormField";
@@ -15,41 +17,27 @@ import { API_URL } from "../../../config/config";
 import useModal from "../../../hooks/useModal";
 
 const LogIn = () => {
-  const [student_id, setStudentId] = useState("");
+  const [id_number, setIdNumber] = useState("");
   const [password, setPassword] = useState("");
   const [rememberPassword, setRememberPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { modalVisible, modalDetails, showModal, hideModal } = useModal();
-
-  const isButtonSecondary = student_id.length > 0 && password.length > 0;
+  const isButtonEnabled = id_number.length > 0 && password.length > 0;
 
   useEffect(() => {
-    const checkAuthToken = async () => {
-      const authToken = await AsyncStorage.getItem("authToken");
-      if (authToken) {
+    const checkStoredUser = async () => {
+      const storedUser = await getStoredUser();
+      if (storedUser) {
         router.replace("/home");
       }
     };
 
-    checkAuthToken();
-  }, []);
-
-  useEffect(() => {
-    const loadCredentials = async () => {
-      const storedId = await AsyncStorage.getItem("storedStudentId");
-      const storedPassword = await AsyncStorage.getItem("storedPassword");
-      if (storedId && storedPassword) {
-        setStudentId(storedId);
-        setPassword(storedPassword);
-        setRememberPassword(true);
-      }
-    };
-    loadCredentials();
+    checkStoredUser();
   }, []);
 
   const handleLogin = async () => {
-    if (!student_id || !password) {
+    if (!id_number || !password) {
       showModal({
         title: "Input Error",
         message: "ID Number and Password are required.",
@@ -62,49 +50,24 @@ const LogIn = () => {
 
     try {
       const response = await axios.post(`http://${API_URL}/api/auth/login`, {
-        student_id,
+        id_number,
         password,
       });
 
-      const { token } = response.data;
-
-      if (rememberPassword) {
-        await AsyncStorage.setItem("storedStudentId", student_id);
-        await AsyncStorage.setItem("storedPassword", password);
-      } else {
-        await AsyncStorage.removeItem("storedStudentId");
-        await AsyncStorage.removeItem("storedPassword");
-      }
+      const { token, user } = response.data;
 
       await AsyncStorage.setItem("authToken", token);
 
+      await saveUser(user);
+
       router.replace("/home");
     } catch (error) {
-      if (error.response) {
-        showModal({
-          title: "Login Failed",
-          message:
-            error.response.data?.message ||
-            "Something went wrong. Please try again.",
-          type: "error",
-          buttonText: "Retry",
-        });
-      } else if (error.request) {
-        showModal({
-          title: "Network Error",
-          message:
-            "Unable to connect to the server. Please check your internet connection.",
-          type: "error",
-          buttonText: "Retry",
-        });
-      } else {
-        showModal({
-          title: "Unexpected Error",
-          message: "An error occurred. Please try again later.",
-          type: "error",
-          buttonText: "Retry",
-        });
-      }
+      showModal({
+        title: "Login Failed",
+        message: error.response?.data?.message || "Something went wrong.",
+        type: "error",
+        buttonText: "Retry",
+      });
     } finally {
       setLoading(false);
     }
@@ -130,8 +93,8 @@ const LogIn = () => {
         <FormField
           type="id"
           placeholder="ID Number"
-          value={student_id}
-          onChangeText={setStudentId}
+          value={id_number}
+          onChangeText={setIdNumber}
         />
 
         <FormField
@@ -176,11 +139,10 @@ const LogIn = () => {
       </View>
 
       <CustomButton
-        type={isButtonSecondary ? "secondary" : "disabled"}
+        type={isButtonEnabled ? "secondary" : "disabled"}
         title={loading ? "Loading..." : "LOG IN"}
         onPress={handleLogin}
-        disabled={loading || !isButtonSecondary}
-        className="mt-5"
+        disabled={loading || !isButtonEnabled}
       />
 
       <View className="flex-row mt-5">
