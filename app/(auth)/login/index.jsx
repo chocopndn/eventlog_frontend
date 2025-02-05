@@ -68,7 +68,7 @@ const LogIn = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`http://${API_URL}/api/auth/login`, {
+      const response = await axios.post(`${API_URL}/api/auth/login`, {
         id_number,
         password,
       });

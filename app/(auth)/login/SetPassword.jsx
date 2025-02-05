@@ -82,7 +82,7 @@ const SetPassword = () => {
       }
 
       const response = await axios.post(
-        `http://${API_URL}/api/users/change-password`,
+        `${API_URL}/api/users/change-password`,
         {
           email,
           newPassword: password,

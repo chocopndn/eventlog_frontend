@@ -31,9 +31,7 @@ const SignUp = () => {
     const fetchDepartments = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get(
-          `http://${config.API_URL}/api/departments`
-        );
+        const response = await axios.get(`${config.API_URL}/api/departments`);
 
         if (response.data?.departments?.length > 0) {
           const formattedData = response.data.departments.map((dept) => ({
@@ -89,7 +87,7 @@ const SignUp = () => {
     try {
       setIsLoading(true);
       const response = await axios.post(
-        `http://${config.API_URL}/api/auth/signup`,
+        `${config.API_URL}/api/auth/signup`,
         signUpData
       );
 

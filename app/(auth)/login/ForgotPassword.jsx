@@ -59,10 +59,9 @@ const ForgotPassword = () => {
     }
 
     try {
-      const response = await axios.post(
-        `http://${API_URL}/api/auth/reset-password`,
-        { email }
-      );
+      const response = await axios.post(`${API_URL}/api/auth/reset-password`, {
+        email,
+      });
 
       if (response.status === 200) {
         await AsyncStorage.setItem("resetEmail", email);
