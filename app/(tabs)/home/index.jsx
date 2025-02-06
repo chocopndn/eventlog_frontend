@@ -10,61 +10,106 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import axios from "axios";
-
+import NetInfo from "@react-native-community/netinfo";
 import CollapsibleDropdown from "../../../components/CollapsibleDropdown";
 import config from "../../../config/config";
-import {
-  getStoredUser,
-  saveEvent,
-  getStoredEvents,
-} from "../../../src/database/queries";
+import { getStoredUser, saveEvent } from "../../../src/database/queries";
+import CustomModal from "../../../components/CustomModal";
+
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
 
 const HomeIndex = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
-  const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [isConnected, setIsConnected] = useState(true);
+  const [error, setError] = useState(null);
 
-  const fetchUpcomingEvents = async () => {
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsConnected(state.isConnected);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const fetchUpcomingEvents = async (isRefreshing = false) => {
     try {
-      setIsLoading(true);
+      if (!isRefreshing) {
+        setIsLoading(true);
+      }
+
+      const netInfo = await NetInfo.fetch();
+      if (!netInfo.isConnected) {
+        setIsLoading(false);
+        setRefreshing(false);
+        return;
+      }
+
       const user = await getStoredUser();
+      if (!user) {
+        setIsLoading(false);
+        setRefreshing(false);
+        return;
+      }
 
       const response = await axios.post(
-        `${config.API_URL}/api/events/user/upcoming`,
-        { block_id: user.block_id }
+        `${config.API_URL}/api/events/user/upcoming?block_id=${user.block_id}`
       );
 
       const events = response.data.events || [];
 
+      const savedEvents = [];
       for (const event of events) {
+        event.dates = event.dates.map(formatDate);
         await saveEvent(event);
+        savedEvents.push(event);
       }
 
-      const storedEvents = await getStoredEvents();
-      setUpcomingEvents(storedEvents);
-    } catch (error) {
-      setError("Failed to load events");
+      setUpcomingEvents(savedEvents);
+    } catch (err) {
+      setError({
+        title: "Error",
+        message: "An unexpected error occurred. Please try again later.",
+      });
     } finally {
       setIsLoading(false);
       setRefreshing(false);
     }
   };
 
-  useEffect(() => {
-    fetchUpcomingEvents();
+  const onRefresh = useCallback(async () => {
+    const netInfo = await NetInfo.fetch();
+
+    if (!netInfo.isConnected) {
+      setRefreshing(false);
+      return;
+    }
+
+    setRefreshing(true);
+    fetchUpcomingEvents(true);
   }, []);
 
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchUpcomingEvents();
+  useEffect(() => {
+    fetchUpcomingEvents(false);
   }, []);
 
   return (
     <SafeAreaView className="bg-secondary h-full">
       <ScrollView
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            enabled={isConnected}
+            colors={["#6200ea"]}
+            tintColor={isConnected ? "#6200ea" : "#999999"}
+          />
         }
         showsVerticalScrollIndicator={false}
       >
@@ -88,15 +133,14 @@ const HomeIndex = () => {
             </Text>
           </TouchableOpacity>
 
-          {upcomingEvents.length > 0 ? (
+          {isLoading && upcomingEvents.length === 0 ? (
+            <Text className="text-gray-500">Loading...</Text>
+          ) : upcomingEvents.length > 0 ? (
             upcomingEvents.map((event, index) => (
-              <View
-                key={`${event.event_name_id}-${index}`}
-                className="w-[303px]"
-              >
+              <View key={`${event.event_id}-${index}`} className="w-[303px]">
                 <CollapsibleDropdown
                   title={event.event_name}
-                  date={event.event_dates}
+                  date={event.dates.join(", ")}
                   venue={event.venue}
                   morningIn={event.am_in}
                   afternoonIn={event.pm_in}
@@ -112,6 +156,18 @@ const HomeIndex = () => {
         </View>
         <StatusBar style="dark" />
       </ScrollView>
+
+      {error && (
+        <CustomModal
+          visible={!!error}
+          onClose={() => setError(null)}
+          title={error.title}
+          message={error.message}
+          type="error"
+          buttonText="Okay"
+          buttonAction={() => setError(null)}
+        />
+      )}
     </SafeAreaView>
   );
 };
