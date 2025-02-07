@@ -49,6 +49,21 @@ const getStoredUser = async () => {
   }
 };
 
+const clearUser = async () => {
+  try {
+    await initDB();
+
+    await db.execAsync(`DROP TABLE IF EXISTS users;`);
+    await db.execAsync(`DROP TABLE IF EXISTS events;`);
+    await db.execAsync(`DROP TABLE IF EXISTS event_dates;`);
+
+    await setupDatabase();
+  } catch (error) {
+    console.error("Error clearing user and resetting database:", error);
+    throw error;
+  }
+};
+
 const saveEvent = async (event) => {
   try {
     await initDB();
@@ -75,21 +90,21 @@ const saveEvent = async (event) => {
         event.event_name,
         event.venue || "",
         event.scan_personnel || "",
-        event.am_in || "",
-        event.am_out || "",
-        event.pm_in || "",
-        event.pm_out || "",
+        event.am_in || null,
+        event.am_out || null,
+        event.pm_in || null,
+        event.pm_out || null,
       ]
     );
 
-    const uniqueDates = [...new Set(event.dates)];
-
-    for (let eventDate of uniqueDates) {
-      if (event.event_id && eventDate) {
-        await db.runAsync(
-          `INSERT INTO event_dates (event_id, event_date) VALUES (?, ?);`,
-          [event.event_id, eventDate]
-        );
+    if (Array.isArray(event.dates)) {
+      for (let eventDate of event.dates) {
+        if (event.event_id && eventDate) {
+          await db.runAsync(
+            `INSERT INTO event_dates (event_id, event_date) VALUES (?, ?);`,
+            [event.event_id, eventDate]
+          );
+        }
       }
     }
   } catch (error) {
@@ -131,11 +146,34 @@ const getStoredEvents = async () => {
   }
 };
 
+const removeEvent = async (event_id) => {
+  try {
+    await initDB();
+    await db.runAsync(`DELETE FROM events WHERE event_id = ?;`, [event_id]);
+    await db.runAsync(`DELETE FROM event_dates WHERE event_id = ?;`, [
+      event_id,
+    ]);
+  } catch (error) {
+    console.error(`Error removing event with ID ${event_id}:`, error);
+  }
+};
+
+const syncDatabaseWithAPI = async (apiEvents) => {
+  if (!Array.isArray(apiEvents)) return;
+
+  await clearEventsTable();
+
+  for (const event of apiEvents) {
+    await saveEvent(event);
+  }
+
+  await loadStoredEvents();
+};
+
 const getEventsByDate = async (date) => {
   try {
     await initDB();
     const events = await getStoredEvents();
-
     return events.filter((event) => event.dates.includes(date));
   } catch (error) {
     console.error("Error fetching events by date:", error);
@@ -143,18 +181,13 @@ const getEventsByDate = async (date) => {
   }
 };
 
-const clearUser = async () => {
+const clearEventsTable = async () => {
   try {
     await initDB();
-
-    await db.execAsync(`DROP TABLE IF EXISTS users;`);
-    await db.execAsync(`DROP TABLE IF EXISTS events;`);
-    await db.execAsync(`DROP TABLE IF EXISTS event_dates;`);
-
-    await setupDatabase();
+    await db.runAsync("DELETE FROM events;");
+    await db.runAsync("DELETE FROM event_dates;");
   } catch (error) {
-    console.error("Error clearing user and resetting database:", error);
-    throw error;
+    console.error("Error clearing events:", error);
   }
 };
 
@@ -165,4 +198,7 @@ export {
   saveEvent,
   getStoredEvents,
   getEventsByDate,
+  removeEvent,
+  syncDatabaseWithAPI,
+  clearEventsTable,
 };
