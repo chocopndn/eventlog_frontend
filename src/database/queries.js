@@ -1,10 +1,11 @@
+import * as SQLite from "expo-sqlite";
 import { setupDatabase } from "./database";
 
 let db;
 
 const initDB = async () => {
   if (!db) {
-    db = await setupDatabase();
+    db = await SQLite.openDatabaseAsync("eventlog.db");
   }
 };
 
