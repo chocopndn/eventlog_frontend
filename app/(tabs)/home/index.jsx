@@ -110,12 +110,17 @@ const HomeIndex = () => {
   const [isConnected, setIsConnected] = useState(true);
 
   useEffect(() => {
-    NetInfo.addEventListener((state) => setIsConnected(state.isConnected));
+    NetInfo.addEventListener((state) => {
+      setIsConnected(state.isConnected);
+      if (state.isConnected) {
+        updateSQLiteFromAPI();
+      }
+    });
     loadStoredEvents();
     if (isConnected) {
       updateSQLiteFromAPI();
     }
-  }, []);
+  }, [isConnected]);
 
   const loadStoredEvents = async () => {
     setIsLoading(true);
@@ -168,6 +173,7 @@ const HomeIndex = () => {
             WELCOME EVENTLOG USERS!
           </Text>
         </TouchableOpacity>
+
         <ScrollView
           refreshControl={
             <RefreshControl
@@ -208,8 +214,8 @@ const HomeIndex = () => {
         <CustomModal
           visible={!!error}
           onClose={() => setError(null)}
-          title={error.title}
-          message={error.message}
+          title={<Text>{error.title}</Text>}
+          message={<Text>{error.message}</Text>}
           type="error"
           buttonText="Okay"
           buttonAction={() => setError(null)}
