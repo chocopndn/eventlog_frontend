@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, ScrollView, Text, Image, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -24,21 +24,30 @@ const SignUp = () => {
   const [department, setDepartment] = useState(null);
   const [departments, setDepartments] = useState([]);
   const [errorVisible, setErrorVisible] = useState(false);
+  const [successVisible, setSuccessVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
     const fetchDepartments = async () => {
+      if (hasFetched.current) return;
+      hasFetched.current = true;
+
       setIsLoading(true);
       try {
         const response = await axios.get(`${config.API_URL}/api/departments`);
 
         if (response.data?.departments?.length > 0) {
-          const formattedData = response.data.departments.map((dept) => ({
-            label: dept.department_name,
-            value: dept.department_id,
-          }));
-          setDepartments(formattedData);
+          setDepartments((prev) =>
+            prev.length === 0
+              ? response.data.departments.map((dept) => ({
+                  label: dept.department_name,
+                  value: dept.department_id,
+                }))
+              : prev
+          );
         } else {
           setErrorMessage("No departments found.");
           setErrorVisible(true);
@@ -74,25 +83,25 @@ const SignUp = () => {
     }
 
     const signUpData = {
-      student_id: student_ID,
+      id_number: student_ID,
       first_name: firstName,
-      middle_name: middleName,
+      middle_name: middleName || null,
       last_name: lastName,
-      suffix: suffix || null,
+      suffix: suffix?.trim() ? suffix : null,
       email,
       password,
       department_id: department,
     };
 
     try {
-      setIsLoading(true);
+      setIsSubmitting(true);
       const response = await axios.post(
         `${config.API_URL}/api/auth/signup`,
         signUpData
       );
 
       if (response.status === 200) {
-        router.replace("/login");
+        setSuccessVisible(true);
       }
     } catch (error) {
       const message =
@@ -100,26 +109,18 @@ const SignUp = () => {
       setErrorMessage(message);
       setErrorVisible(true);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
+  };
+
+  const handleSuccessClose = () => {
+    setSuccessVisible(false);
+    router.replace("/login");
   };
 
   return (
     <SafeAreaView className="bg-primary h-full">
       <ScrollView>
-        <View className="w-full h-50 items-center justify-center mt-5">
-          <View className="absolute w-full h-28 bg-secondary"></View>
-          <View className="absolute w-[70%] h-10 bg-cyan-500 top-1/3 right-52"></View>
-          <View className="absolute w-[70%] h-10 bg-cyan-500 bottom-1/3 left-52"></View>
-          <View className="absolute w-[70%] h-10 bg-primary"></View>
-          <View className="mt-5 mb-7">
-            <Image source={images.logo} className="w-[196px] h-[196px]" />
-          </View>
-        </View>
-
-        <Text className="font-SquadaOne text-7xl text-secondary mb-5 text-center">
-          REGISTER
-        </Text>
         <View className="items-center justify-center">
           <FormField2
             title="ID Number"
@@ -155,6 +156,7 @@ const SignUp = () => {
             value={email}
             onChangeText={setEmail}
           />
+
           {isLoading ? (
             <Text className="text-center text-gray-600 my-3">
               Loading departments...
@@ -163,10 +165,18 @@ const SignUp = () => {
             <CustomDropdown
               title="Department"
               data={departments}
-              onSelect={(value) => setDepartment(value)}
+              value={department}
               placeholder="Select Department"
+              onSelect={(value) => {
+                if (!departments.find((dept) => dept.value === value)) {
+                  return false;
+                }
+                setDepartment(value);
+                return true;
+              }}
             />
           )}
+
           <FormField2
             title="Password"
             type="password"
@@ -180,42 +190,30 @@ const SignUp = () => {
             onChangeText={setConfirmPassword}
           />
 
-          <View className="w-[311px] pt-4">
-            <Text className="text-[12px] font-ArialItalic text-center color-secondary">
-              *By registering for EVENTLOG, you agree with all the terms and
-              conditions set by the College of Information Technology
-              Department. Your participation and continued use of EVENTLOG
-              confirm your acceptance of these policies. *Warning: Make sure to
-              use one account only.
-            </Text>
-          </View>
-
           <CustomButton
             title="Sign Up"
             type="secondary"
             otherStyles="mt-6 mb-2"
             onPress={handleSignUp}
-            disabled={isLoading}
+            disabled={isSubmitting}
           />
         </View>
-        <View className="flex-row mt-5 justify-center mb-20">
-          <Text className="font-Arial text-white text-[15px]">
-            Already have an account?{" "}
-          </Text>
-          <TouchableOpacity onPress={() => router.replace("/login")}>
-            <Text className="font-Arial font-bold text-white text-[15px]">
-              Log In.
-            </Text>
-          </TouchableOpacity>
-        </View>
+
+        <CustomModal
+          visible={successVisible}
+          onClose={handleSuccessClose}
+          title="Success"
+          message="Your account has been successfully created! You can now log in."
+        />
+        <CustomModal
+          visible={errorVisible}
+          onClose={() => setErrorVisible(false)}
+          title="Error"
+          message={errorMessage}
+        />
+
+        <StatusBar style="light" />
       </ScrollView>
-      <CustomModal
-        visible={errorVisible}
-        onClose={() => setErrorVisible(false)}
-        title="Error"
-        message={errorMessage}
-      />
-      <StatusBar style="light" />
     </SafeAreaView>
   );
 };

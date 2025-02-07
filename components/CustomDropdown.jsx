@@ -1,17 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { View, StyleSheet, Text, Image } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 import images from "../constants/images";
 
-const CustomDropdown = ({ onSelect, title, data, placeholder }) => {
-  const [value, setValue] = useState(null);
+const CustomDropdown = ({ onSelect, title, data, placeholder, value }) => {
+  const [selectedValue, setSelectedValue] = useState(value);
   const [isFocus, setIsFocus] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    if (onSelect) {
-      onSelect(value);
+    setSelectedValue(value);
+  }, [value]);
+
+  const handleChange = (item) => {
+    if (errorMessage) setErrorMessage("");
+
+    const isValid = onSelect ? onSelect(item.value) : true;
+
+    if (isValid !== false) {
+      setSelectedValue(item.value);
+    } else {
+      setErrorMessage("Invalid selection. Please choose again.");
     }
-  }, [value, onSelect]);
+  };
 
   return (
     <View className="p-4">
@@ -24,24 +35,16 @@ const CustomDropdown = ({ onSelect, title, data, placeholder }) => {
             styles.dropdown,
             isFocus ? styles.focusedDropdown : styles.unfocusedDropdown,
           ]}
-          placeholder={[isFocus ? placeholder : ""]}
-          placeholderStyle={
-            isFocus ? styles.focusedPlaceholder : styles.unfocusedPlaceholder
-          }
+          placeholder={placeholder || "Select an option"}
+          placeholderStyle={styles.placeholderStyle}
           data={data}
           labelField="label"
           valueField="value"
           maxHeight={300}
-          value={value}
+          value={selectedValue}
           onFocus={() => setIsFocus(true)}
           onBlur={() => setIsFocus(false)}
-          onChange={(item) => {
-            if (item.value === value) {
-              setValue(null);
-            } else {
-              setValue(item.value);
-            }
-          }}
+          onChange={handleChange}
           renderRightIcon={() =>
             isFocus ? null : (
               <Image
@@ -56,6 +59,9 @@ const CustomDropdown = ({ onSelect, title, data, placeholder }) => {
           autoScroll={false}
           containerStyle={styles.containerStyle}
         />
+        {errorMessage ? (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        ) : null}
       </View>
     </View>
   );
@@ -66,12 +72,17 @@ export default CustomDropdown;
 const styles = StyleSheet.create({
   dropdownContainer: {
     width: 311,
-    height: 46,
+    height: 60,
     justifyContent: "center",
   },
   dropdown: {
     height: 46,
     paddingHorizontal: 8,
+  },
+  placeholderStyle: {
+    fontFamily: "ArialBold",
+    fontSize: 16,
+    color: "#707070",
   },
   unfocusedDropdown: {
     backgroundColor: "#FBF1E5",
@@ -86,16 +97,6 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 0,
     backgroundColor: "#FBF1E5",
   },
-  focusedPlaceholder: {
-    paddingTop: 2,
-    backgroundColor: "#255586",
-    color: "#FBF1E5",
-    textAlign: "center",
-    justifyContent: "center",
-    fontFamily: "ArialBold",
-    height: 30,
-    fontSize: 18,
-  },
   itemText: {
     fontFamily: "ArialBold",
     color: "#255586",
@@ -107,5 +108,12 @@ const styles = StyleSheet.create({
   },
   containerStyle: {
     backgroundColor: "#FBF1E5",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 14,
+    marginTop: 4,
+    textAlign: "center",
+    fontFamily: "Arial",
   },
 });
