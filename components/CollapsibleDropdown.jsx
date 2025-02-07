@@ -1,6 +1,5 @@
 import React, { useState, useRef } from "react";
 import { View, Text, Animated, Image, Pressable } from "react-native";
-
 import images from "../constants/images";
 
 const CollapsibleDropdown = ({
@@ -35,7 +34,10 @@ const CollapsibleDropdown = ({
 
   const animatedHeight = animationController.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 200],
+    outputRange: [
+      0,
+      (morningIn || morningOut) && (afternoonIn || afternoonOut) ? 200 : 180,
+    ],
   });
 
   return (
@@ -67,65 +69,93 @@ const CollapsibleDropdown = ({
         className="bg-secondary border-2 border-t-0 border-primary w-[303px] justify-center items-center"
       >
         <View className="justify-center p-3">
-          <View>
-            <Text className="text-[15px] text-primary font-ArialBold">
-              VENUE OF TIME IN/OUT:
-            </Text>
-            <Text className="text-[12px] text-primary font-Arial">{venue}</Text>
+          <Text className="text-[15px] text-primary font-ArialBold">
+            VENUE OF TIME IN/OUT:
+          </Text>
+          <Text className="text-[12px] text-primary font-Arial">{venue}</Text>
+
+          {(morningIn || morningOut || afternoonIn || afternoonOut) && (
             <View className="items-center justify-between flex-row pt-2">
-              <View>
-                <Text className="font-ArialBold text-[15px] color-primary">
-                  TIME IN:
-                </Text>
-                <View className="flex-row">
-                  <Text className="font-ArialBold text-[12px] color-primary">
-                    Morning:{" "}
+              {(morningIn || morningOut) && (
+                <View>
+                  <Text className="font-ArialBold text-[15px] color-primary">
+                    TIME IN:
                   </Text>
-                  <Text className="font-Arial text-[12px] color-primary">
-                    {morningIn}
-                  </Text>
+                  {morningIn && (
+                    <View className="flex-row">
+                      <Text className="font-ArialBold text-[12px] color-primary">
+                        Morning:{" "}
+                      </Text>
+                      <Text className="font-Arial text-[12px] color-primary">
+                        {morningIn}
+                      </Text>
+                    </View>
+                  )}
                 </View>
-                <View className="flex-row">
-                  <Text className="font-ArialBold text-[12px] color-primary">
-                    Afternoon:{" "}
-                  </Text>
-                  <Text className="font-Arial text-[12px] color-primary">
-                    {afternoonIn}
-                  </Text>
-                </View>
-              </View>
+              )}
 
-              <View>
-                <Text className="font-ArialBold text-[12px] color-primary">
-                  TIME OUT:
-                </Text>
-                <View className="flex-row">
-                  <Text className="font-ArialBold text-[12px] color-primary">
-                    Morning:{" "}
+              {(morningOut || afternoonOut) && (
+                <View>
+                  <Text className="font-ArialBold text-[15px] color-primary">
+                    TIME OUT:
                   </Text>
-                  <Text className="font-Arial text-[12px] color-primary">
-                    {morningOut}
-                  </Text>
+                  {morningOut && (
+                    <View className="flex-row">
+                      <Text className="font-ArialBold text-[12px] color-primary">
+                        Morning:{" "}
+                      </Text>
+                      <Text className="font-Arial text-[12px] color-primary">
+                        {morningOut}
+                      </Text>
+                    </View>
+                  )}
                 </View>
+              )}
+            </View>
+          )}
 
-                <View className="flex-row">
-                  <Text className="font-ArialBold text-[12px] color-primary">
-                    Afternoon:{" "}
+          {(afternoonIn || afternoonOut) && (
+            <View className="items-center justify-between flex-row pt-2">
+              {afternoonIn && (
+                <View>
+                  <Text className="font-ArialBold text-[15px] color-primary">
+                    TIME IN:
                   </Text>
-                  <Text className="font-Arial text-[12px] color-primary">
-                    {afternoonOut}
-                  </Text>
+                  <View className="flex-row">
+                    <Text className="font-ArialBold text-[12px] color-primary">
+                      Afternoon:{" "}
+                    </Text>
+                    <Text className="font-Arial text-[12px] color-primary">
+                      {afternoonIn}
+                    </Text>
+                  </View>
                 </View>
-              </View>
+              )}
+              {afternoonOut && (
+                <View>
+                  <Text className="font-ArialBold text-[15px] color-primary">
+                    TIME OUT:
+                  </Text>{" "}
+                  <View className="flex-row">
+                    <Text className="font-ArialBold text-[12px] color-primary">
+                      Afternoon:{" "}
+                    </Text>
+                    <Text className="font-Arial text-[12px] color-primary">
+                      {afternoonOut}
+                    </Text>
+                  </View>
+                </View>
+              )}
             </View>
-            <View className="pt-2">
-              <Text className="font-ArialBold text-[15px] color-primary">
-                SCAN PERSONNEL:
-              </Text>
-              <Text className="font-Arial text-[12px] color-primary">
-                {personnel}
-              </Text>
-            </View>
+          )}
+
+          <View className="pt-2">
+            <Text className="font-ArialBold text-[15px] color-primary">
+              SCAN PERSONNEL:
+            </Text>
+            <Text className="font-Arial text-[12px] color-primary">
+              {personnel}
+            </Text>
           </View>
         </View>
       </Animated.View>
