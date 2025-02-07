@@ -46,11 +46,17 @@ const CollapsibleDropdown = ({
         className="flex-row justify-between items-center p-4 bg-[#FBF1E5] border-primary border-2 w-[303px] h-[52px]"
         onPress={toggleDropdown}
       >
-        <View>
-          <Text className="text-[20px] text-primary font-SquadaOne">
+        <View style={{ flex: 1 }}>
+          <Text
+            className="text-[20px] text-primary font-SquadaOne"
+            numberOfLines={1}
+          >
             {title}
           </Text>
-          <Text className="text-[12px] text-primary font-SquadaOne pt-1">
+          <Text
+            className="text-[12px] text-primary font-SquadaOne pt-1"
+            numberOfLines={1}
+          >
             {date}
           </Text>
         </View>
@@ -68,8 +74,8 @@ const CollapsibleDropdown = ({
         }}
         className="bg-secondary border-2 border-t-0 border-primary w-[303px] justify-center items-center"
       >
-        <View className="justify-center p-3">
-          <Text className="text-[15px] text-primary font-ArialBold">
+        <View className="justify-center">
+          <Text className="text-[15px] text-primary font-ArialBold ">
             VENUE OF TIME IN/OUT:
           </Text>
           <Text className="text-[12px] text-primary font-Arial">{venue}</Text>
@@ -115,12 +121,9 @@ const CollapsibleDropdown = ({
           )}
 
           {(afternoonIn || afternoonOut) && (
-            <View className="items-center justify-between flex-row pt-2">
+            <View className="items-center justify-between flex-row ">
               {afternoonIn && (
                 <View>
-                  <Text className="font-ArialBold text-[15px] color-primary">
-                    TIME IN:
-                  </Text>
                   <View className="flex-row">
                     <Text className="font-ArialBold text-[12px] color-primary">
                       Afternoon:{" "}
@@ -133,9 +136,6 @@ const CollapsibleDropdown = ({
               )}
               {afternoonOut && (
                 <View>
-                  <Text className="font-ArialBold text-[15px] color-primary">
-                    TIME OUT:
-                  </Text>{" "}
                   <View className="flex-row">
                     <Text className="font-ArialBold text-[12px] color-primary">
                       Afternoon:{" "}
