@@ -1,5 +1,4 @@
 import * as SQLite from "expo-sqlite";
-import { setupDatabase } from "./database";
 
 let db;
 
@@ -7,189 +6,138 @@ const initDB = async () => {
   if (!db) {
     db = await SQLite.openDatabaseAsync("eventlog.db");
   }
+  return db;
 };
 
 const saveUser = async (user) => {
-  try {
-    await initDB();
-
-    await db.runAsync("DELETE FROM users;");
-
-    if (!user.id_number || !user.first_name || !user.last_name || !user.email) {
-      throw new Error("Invalid user data");
-    }
-
-    await db.runAsync(
-      `INSERT INTO users (id_number, first_name, last_name, department_name, block_id, email, role) 
-       VALUES (?, ?, ?, ?, ?, ?, ?);`,
-      [
-        user.id_number,
-        user.first_name,
-        user.last_name,
-        user.department_name || "",
-        user.block_id,
-        user.email,
-        user.role || "Student",
-      ]
-    );
-  } catch (error) {
-    console.error("Error saving user:", error);
-    throw error;
+  if (!user.id_number || !user.first_name || !user.last_name || !user.email) {
+    return;
   }
+
+  const db = await initDB();
+  await db.runAsync("DELETE FROM users;");
+  await db.runAsync(
+    `INSERT INTO users (id_number, first_name, last_name, department_name, block_id, email, role) 
+     VALUES (?, ?, ?, ?, ?, ?, ?);`,
+    [
+      user.id_number,
+      user.first_name,
+      user.last_name,
+      user.department_name || "",
+      user.block_id,
+      user.email,
+      user.role || "Student",
+    ]
+  );
 };
 
 const getStoredUser = async () => {
-  try {
-    await initDB();
-
-    const user = await db.getFirstAsync("SELECT * FROM users;");
-    return user || null;
-  } catch (error) {
-    console.error("Error fetching stored user:", error);
-    return null;
-  }
+  const db = await initDB();
+  return await db.getFirstAsync("SELECT * FROM users;");
 };
 
 const clearUser = async () => {
-  try {
-    await initDB();
-
-    await db.execAsync(`DROP TABLE IF EXISTS users;`);
-    await db.execAsync(`DROP TABLE IF EXISTS events;`);
-    await db.execAsync(`DROP TABLE IF EXISTS event_dates;`);
-
-    await setupDatabase();
-  } catch (error) {
-    console.error("Error clearing user and resetting database:", error);
-    throw error;
-  }
+  const db = await initDB();
+  await db.runAsync("DELETE FROM users;");
 };
 
 const saveEvent = async (event) => {
-  try {
-    await initDB();
+  if (!event.event_id || !event.event_name) {
+    return;
+  }
 
-    if (!event.event_id || !event.event_name) {
-      throw new Error("Invalid event data");
+  const db = await initDB();
+  await db.runAsync(
+    `INSERT OR REPLACE INTO events 
+     (event_id, event_name, venue, scan_personnel, am_in, am_out, pm_in, pm_out) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
+    [
+      event.event_id,
+      event.event_name,
+      event.venue || "",
+      event.scan_personnel || "",
+      event.am_in || null,
+      event.am_out || null,
+      event.pm_in || null,
+      event.pm_out || null,
+    ]
+  );
+
+  if (Array.isArray(event.dates)) {
+    for (let eventDate of event.dates) {
+      await db.runAsync(
+        `INSERT OR IGNORE INTO event_dates (event_id, event_date) VALUES (?, ?);`,
+        [event.event_id, eventDate]
+      );
     }
-
-    const existingEvent = await db.getFirstAsync(
-      `SELECT event_id FROM events WHERE event_id = ?;`,
-      [event.event_id]
-    );
-
-    if (existingEvent) {
-      return;
-    }
-
-    await db.runAsync(
-      `INSERT INTO events 
-      (event_id, event_name, venue, scan_personnel, am_in, am_out, pm_in, pm_out) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
-      [
-        event.event_id,
-        event.event_name,
-        event.venue || "",
-        event.scan_personnel || "",
-        event.am_in || null,
-        event.am_out || null,
-        event.pm_in || null,
-        event.pm_out || null,
-      ]
-    );
-
-    if (Array.isArray(event.dates)) {
-      for (let eventDate of event.dates) {
-        if (event.event_id && eventDate) {
-          await db.runAsync(
-            `INSERT INTO event_dates (event_id, event_date) VALUES (?, ?);`,
-            [event.event_id, eventDate]
-          );
-        }
-      }
-    }
-  } catch (error) {
-    console.error("Error saving event:", error);
-    throw error;
   }
 };
 
 const getStoredEvents = async () => {
-  try {
-    await initDB();
+  const db = await initDB();
+  const events = await db.getAllAsync(`SELECT * FROM events;`);
+  const eventDates = await db.getAllAsync(
+    `SELECT event_id, event_date FROM event_dates;`
+  );
 
-    const events = await db.getAllAsync(`SELECT * FROM events;`);
-    const eventDates = await db.getAllAsync(
-      `SELECT event_id, event_date FROM event_dates;`
-    );
+  const eventMap = {};
+  events.forEach((event) => {
+    eventMap[event.event_id] = { ...event, dates: [] };
+  });
 
-    const eventMap = {};
-    events.forEach((event) => {
-      eventMap[event.event_id] = {
-        ...event,
-        dates: [],
-      };
-    });
+  eventDates.forEach(({ event_id, event_date }) => {
+    if (eventMap[event_id]) {
+      eventMap[event_id].dates.push(event_date);
+    }
+  });
 
-    eventDates.forEach((dateEntry) => {
-      if (eventMap[dateEntry.event_id]) {
-        eventMap[dateEntry.event_id].dates.push(dateEntry.event_date);
-      }
-    });
-
-    return Object.values(eventMap).map((event) => ({
-      ...event,
-      dates: [...new Set(event.dates)],
-    }));
-  } catch (error) {
-    console.error("Error fetching stored events:", error);
-    return [];
-  }
+  return Object.values(eventMap);
 };
 
 const removeEvent = async (event_id) => {
-  try {
-    await initDB();
-    await db.runAsync(`DELETE FROM events WHERE event_id = ?;`, [event_id]);
-    await db.runAsync(`DELETE FROM event_dates WHERE event_id = ?;`, [
-      event_id,
-    ]);
-  } catch (error) {
-    console.error(`Error removing event with ID ${event_id}:`, error);
-  }
+  const db = await initDB();
+  await db.runAsync("DELETE FROM events WHERE event_id = ?;", [event_id]);
+  await db.runAsync("DELETE FROM event_dates WHERE event_id = ?;", [event_id]);
 };
 
 const syncDatabaseWithAPI = async (apiEvents) => {
   if (!Array.isArray(apiEvents)) return;
 
-  await clearEventsTable();
+  const db = await initDB();
+  await db.runAsync("BEGIN TRANSACTION;");
+
+  const storedEvents = await getStoredEvents();
+  const storedEventIds = new Set(storedEvents.map((e) => e.event_id));
+  const apiEventIds = new Set(apiEvents.map((e) => e.event_id));
+
+  for (const event of storedEvents) {
+    if (!apiEventIds.has(event.event_id)) {
+      await db.runAsync("DELETE FROM events WHERE event_id = ?;", [
+        event.event_id,
+      ]);
+      await db.runAsync("DELETE FROM event_dates WHERE event_id = ?;", [
+        event.event_id,
+      ]);
+    }
+  }
 
   for (const event of apiEvents) {
     await saveEvent(event);
   }
 
-  await loadStoredEvents();
+  await db.runAsync("COMMIT;");
 };
 
 const getEventsByDate = async (date) => {
-  try {
-    await initDB();
-    const events = await getStoredEvents();
-    return events.filter((event) => event.dates.includes(date));
-  } catch (error) {
-    console.error("Error fetching events by date:", error);
-    return [];
-  }
+  const db = await initDB();
+  const events = await getStoredEvents();
+  return events.filter((event) => event.dates.includes(date));
 };
 
 const clearEventsTable = async () => {
-  try {
-    await initDB();
-    await db.runAsync("DELETE FROM events;");
-    await db.runAsync("DELETE FROM event_dates;");
-  } catch (error) {
-    console.error("Error clearing events:", error);
-  }
+  const db = await initDB();
+  await db.runAsync("DELETE FROM events;");
+  await db.runAsync("DELETE FROM event_dates;");
 };
 
 export {
