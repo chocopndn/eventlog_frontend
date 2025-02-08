@@ -66,17 +66,20 @@ const formatGroupedDates = (dates) => {
 const syncDatabaseWithAPI = async (apiEvents) => {
   const storedEvents = await getStoredEvents();
   const storedEventIds = new Set(storedEvents.map((e) => e.event_id));
-  const apiEventIds = new Set(apiEvents.map((e) => e.event_id));
 
   for (const event of storedEvents) {
-    if (!apiEventIds.has(event.event_id)) {
+    if (!apiEvents.some((e) => e.event_id === event.event_id)) {
       await removeEvent(event.event_id);
     }
   }
 
   for (const event of apiEvents) {
     if (!storedEventIds.has(event.event_id)) {
-      await saveEvent(event);
+      try {
+        await saveEvent(event);
+      } catch (error) {
+        console.error(`Error saving event ${event.event_id}:`, error);
+      }
     }
   }
 };
@@ -110,17 +113,17 @@ const HomeIndex = () => {
   const [isConnected, setIsConnected] = useState(true);
 
   useEffect(() => {
-    NetInfo.addEventListener((state) => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
       setIsConnected(state.isConnected);
       if (state.isConnected) {
         updateSQLiteFromAPI();
       }
     });
+
     loadStoredEvents();
-    if (isConnected) {
-      updateSQLiteFromAPI();
-    }
-  }, [isConnected]);
+
+    return () => unsubscribe();
+  }, []);
 
   const loadStoredEvents = async () => {
     setIsLoading(true);
@@ -139,16 +142,20 @@ const HomeIndex = () => {
   };
 
   const updateSQLiteFromAPI = async () => {
-    const apiEvents = await fetchFromAPI();
-    if (apiEvents) {
-      await syncDatabaseWithAPI(apiEvents);
+    try {
+      const apiEvents = await fetchFromAPI();
+      if (apiEvents) {
+        await syncDatabaseWithAPI(apiEvents);
+      }
       await loadStoredEvents();
+    } catch (error) {
+      console.error("Error syncing with API:", error);
     }
   };
 
-  const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    updateSQLiteFromAPI();
+    await updateSQLiteFromAPI();
     setRefreshing(false);
   }, []);
 
