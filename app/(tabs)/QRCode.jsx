@@ -33,7 +33,7 @@ const QRCodeScreen = () => {
   }, []);
 
   return (
-    <SafeAreaView className="bg-secondary h-full items-center justify-start">
+    <SafeAreaView className="flex-1 bg-secondary items-center justify-start pt-10">
       {selectedEvent ? (
         <View className="relative w-[200px] h-[200px] border-primary border-[3px] items-center justify-center">
           <QRCode
