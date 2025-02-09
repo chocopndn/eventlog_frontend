@@ -16,20 +16,22 @@ import { API_URL } from "../../../config/config";
 import useModal from "../../../hooks/useModal";
 
 const LogIn = () => {
-  const [id_number, setIdNumber] = useState("");
+  const [idNumber, setIdNumber] = useState("");
   const [password, setPassword] = useState("");
   const [rememberPassword, setRememberPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { modalVisible, modalDetails, showModal, hideModal } = useModal();
-  const isButtonEnabled = id_number.length > 0 && password.length > 0;
+  const isButtonEnabled = idNumber.length > 0 && password.length > 0;
 
   useEffect(() => {
     const loadStoredCredentials = async () => {
       try {
-        const storedId = await AsyncStorage.getItem("storedIdNumber");
-        const storedPass = await AsyncStorage.getItem("storedPassword");
-        const rememberMe = await AsyncStorage.getItem("rememberMe");
+        const [storedId, storedPass, rememberMe] = await Promise.all([
+          AsyncStorage.getItem("storedIdNumber"),
+          AsyncStorage.getItem("storedPassword"),
+          AsyncStorage.getItem("rememberMe"),
+        ]);
 
         if (rememberMe === "true" && storedId && storedPass) {
           setIdNumber(storedId);
@@ -46,8 +48,7 @@ const LogIn = () => {
 
   useEffect(() => {
     const checkStoredUser = async () => {
-      const storedUser = await getStoredUser();
-      if (storedUser) {
+      if (await getStoredUser()) {
         router.replace("/home");
       }
     };
@@ -55,39 +56,31 @@ const LogIn = () => {
     checkStoredUser();
   }, []);
 
-  const handleLogin = async () => {
-    if (!id_number || !password) {
-      showModal({
-        title: "Input Error",
-        message: "ID Number and Password are required.",
-        type: "error",
-      });
-      return;
+  const saveCredentials = async () => {
+    if (rememberPassword) {
+      await AsyncStorage.multiSet([
+        ["storedIdNumber", idNumber],
+        ["storedPassword", password],
+        ["rememberMe", "true"],
+      ]);
+    } else {
+      await AsyncStorage.multiRemove(["storedIdNumber", "storedPassword"]);
+      await AsyncStorage.setItem("rememberMe", "false");
     }
+  };
 
+  const handleLogin = async () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${API_URL}/api/auth/login`, {
-        id_number,
+      const { data } = await axios.post(`${API_URL}/api/auth/login`, {
+        id_number: idNumber,
         password,
       });
 
-      const { token, user } = response.data;
-
-      await AsyncStorage.setItem("authToken", token);
-
-      await saveUser(user);
-
-      if (rememberPassword) {
-        await AsyncStorage.setItem("storedIdNumber", id_number);
-        await AsyncStorage.setItem("storedPassword", password);
-        await AsyncStorage.setItem("rememberMe", "true");
-      } else {
-        await AsyncStorage.removeItem("storedIdNumber");
-        await AsyncStorage.removeItem("storedPassword");
-        await AsyncStorage.setItem("rememberMe", "false");
-      }
+      await AsyncStorage.setItem("authToken", data.token);
+      await saveUser(data.user);
+      await saveCredentials();
 
       router.replace("/home");
     } catch (error) {
@@ -118,14 +111,14 @@ const LogIn = () => {
       <Text className="font-SquadaOne text-7xl text-secondary mb-5">
         WELCOME!
       </Text>
+
       <View>
         <FormField
           type="id"
           placeholder="ID Number"
-          value={id_number}
+          value={idNumber}
           onChangeText={setIdNumber}
         />
-
         <FormField
           type="password"
           placeholder="Password"
@@ -155,15 +148,14 @@ const LogIn = () => {
             </TouchableOpacity>
           </View>
 
-          <View className="mr-6">
-            <TouchableOpacity
-              onPress={() => router.push("/login/ForgotPassword")}
-            >
-              <Text className="font-Arial color-secondary font-[12px]">
-                Forgot Password?
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            className="mr-6"
+            onPress={() => router.push("/login/ForgotPassword")}
+          >
+            <Text className="font-Arial color-secondary font-[12px]">
+              Forgot Password?
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
 
