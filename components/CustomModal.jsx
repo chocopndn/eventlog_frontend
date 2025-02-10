@@ -1,42 +1,60 @@
 import React from "react";
-import { Modal, View, Text, TouchableOpacity, StatusBar } from "react-native";
+import { Modal, View, Text, TouchableOpacity, Image } from "react-native";
+import { useRouter } from "expo-router";
+import images from "../constants/images";
 
 const CustomModal = ({
   visible,
   onClose,
-  title = "Error",
-  message = "An unexpected error occurred.",
+  title,
+  message,
   type = "error",
-  buttonText = "Okay",
-  buttonAction = onClose,
+  buttonText = "OK",
+  buttonRedirect,
+  secondButtonText,
 }) => {
-  return (
-    <Modal
-      animationType="fade"
-      transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
-    >
-      <StatusBar
-        backgroundColor="rgba(0, 0, 0, 0.5)"
-        barStyle="light-content"
-        translucent
-      />
+  const router = useRouter();
 
-      <View className="absolute top-0 left-0 right-0 bottom-0 flex-1 bg-black/50 justify-center items-center">
-        <View className="w-4/5 bg-secondary p-6 rounded-lg items-center shadow-xl">
-          <Text className="font-SquadaOne text-4xl mb-4 text-primary">
+  const handlePrimaryAction = () => {
+    if (buttonRedirect) {
+      router.replace(buttonRedirect);
+    } else {
+      onClose();
+    }
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade">
+      <View className="flex-1 justify-center items-center bg-black/50">
+        <View
+          className="w-80 p-6 rounded-lg items-center justify-center shadow-lg shadow-black/20 bg-red-100 dark:bg-red-900"
+          style={{ elevation: 10, alignSelf: "center" }}
+        >
+          <Image source={images[type]} className="w-24 h-24 mb-4" />
+          <Text className="text-lg font-bold text-red-700 dark:text-red-300">
             {title}
           </Text>
-          <Text className="mb-6 font-Arial text-lg text-center">{message}</Text>
-          <TouchableOpacity
-            onPress={buttonAction}
-            className={`px-5 py-3 rounded-md ${
-              type === "success" ? "bg-green-500" : "bg-red-500"
-            }`}
-          >
-            <Text className="text-white font-bold">{buttonText}</Text>
-          </TouchableOpacity>
+          <Text className="text-sm text-center mb-5 text-red-600 dark:text-red-400">
+            {message}
+          </Text>
+          <View className="flex-row w-full justify-center">
+            <TouchableOpacity
+              className="p-3 px-6 rounded-lg bg-red-500 dark:bg-red-700"
+              onPress={handlePrimaryAction}
+            >
+              <Text className="text-white text-center">{buttonText}</Text>
+            </TouchableOpacity>
+            {secondButtonText && (
+              <TouchableOpacity
+                className="p-3 px-6 rounded-lg bg-gray-500 dark:bg-gray-700 ml-3"
+                onPress={onClose}
+              >
+                <Text className="text-white text-center">
+                  {secondButtonText}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </View>
     </Modal>

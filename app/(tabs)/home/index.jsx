@@ -18,7 +18,7 @@ import {
   saveEvent,
   getStoredEvents,
   removeEvent,
-} from "../../../src/database/queries";
+} from "../../../database/queries";
 import CustomModal from "../../../components/CustomModal";
 
 const formatTime = (time) =>

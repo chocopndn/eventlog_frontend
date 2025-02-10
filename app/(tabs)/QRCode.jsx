@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import QRCode from "react-native-qrcode-svg";
 import images from "../../constants/images";
 import CustomDropdown2 from "../../components/CustomDropdown2";
-import { getStoredEvents } from "../../src/database/queries";
+import { getStoredEvents } from "../../database/queries";
 
 const QRCodeScreen = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);

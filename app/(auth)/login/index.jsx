@@ -1,13 +1,18 @@
-import { Text, View, Image, TouchableOpacity } from "react-native";
+import {
+  Text,
+  View,
+  Image,
+  TouchableOpacity,
+  SafeAreaView,
+} from "react-native";
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import axios from "axios";
 import Checkbox from "expo-checkbox";
-import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { saveUser, getStoredUser } from "../../../src/database/queries";
+import { saveUser, getStoredUser } from "../../../database/queries";
 import images from "../../../constants/images";
 import FormField from "../../../components/FormField";
 import CustomButton from "../../../components/CustomButton";
@@ -27,11 +32,9 @@ const LogIn = () => {
   useEffect(() => {
     const loadStoredCredentials = async () => {
       try {
-        const [storedId, storedPass, rememberMe] = await Promise.all([
-          AsyncStorage.getItem("storedIdNumber"),
-          AsyncStorage.getItem("storedPassword"),
-          AsyncStorage.getItem("rememberMe"),
-        ]);
+        const storedId = await AsyncStorage.getItem("storedIdNumber");
+        const storedPass = await AsyncStorage.getItem("storedPassword");
+        const rememberMe = await AsyncStorage.getItem("rememberMe");
 
         if (rememberMe === "true" && storedId && storedPass) {
           setIdNumber(storedId);
@@ -70,6 +73,15 @@ const LogIn = () => {
   };
 
   const handleLogin = async () => {
+    if (!idNumber || !password) {
+      showModal({
+        title: "Input Error",
+        message: "ID Number and Password are required.",
+        type: "error",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -89,6 +101,7 @@ const LogIn = () => {
         message: error.response?.data?.message || "Something went wrong.",
         type: "error",
         buttonText: "Retry",
+        buttonRedirect: "/SignUp",
       });
     } finally {
       setLoading(false);
@@ -183,6 +196,7 @@ const LogIn = () => {
         title={modalDetails.title}
         message={modalDetails.message}
         buttonText={modalDetails.buttonText}
+        buttonRedirect={modalDetails.buttonRedirect}
       />
 
       <StatusBar style="dark" />
