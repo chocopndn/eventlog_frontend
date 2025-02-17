@@ -90,16 +90,10 @@ const formatGroupedDates = (dates) => {
 const fetchFromAPI = async () => {
   try {
     const idNumber = String(await AsyncStorage.getItem("id_number"));
-    if (!idNumber) {
-      console.log("ID number not found in AsyncStorage.");
-      return null;
-    }
+    if (!idNumber) return null;
 
     const user = await getStoredUser();
-    if (!user || String(user.id_number) !== idNumber) {
-      console.log("User not found or ID mismatch.");
-      return null;
-    }
+    if (!user || String(user.id_number) !== idNumber) return null;
 
     const blockId = user.block_id;
 
@@ -114,8 +108,6 @@ const fetchFromAPI = async () => {
     clearTimeout(timeout);
 
     if (data.success && data.events.length > 0) {
-      console.log("Fetched events from API:", data.events);
-
       for (const event of data.events) {
         await saveEvent(event);
       }
@@ -123,7 +115,6 @@ const fetchFromAPI = async () => {
 
     return data.success ? data.events : null;
   } catch (error) {
-    console.error("Error fetching data from API:", error);
     return null;
   }
 };

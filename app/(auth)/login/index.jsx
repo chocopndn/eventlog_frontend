@@ -45,9 +45,7 @@ const LogIn = () => {
           setPassword(storedPass);
           setRememberPassword(true);
         }
-      } catch (error) {
-        console.error("Error loading stored credentials:", error);
-      }
+      } catch (error) {}
     };
 
     loadStoredCredentials();
@@ -107,8 +105,6 @@ const LogIn = () => {
 
       router.replace("/home");
     } catch (error) {
-      console.error("Login error details:", error);
-
       if (error.response) {
         const errorMessage =
           error.response?.data?.message || "Something went wrong.";
@@ -120,7 +116,6 @@ const LogIn = () => {
           buttonRedirect: "/SignUp",
         });
       } else {
-        console.error("Unexpected error:", error.message);
         showModal({
           title: "Error",
           message: "An unexpected error occurred. Please try again later.",

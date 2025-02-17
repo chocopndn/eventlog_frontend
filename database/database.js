@@ -1,10 +1,25 @@
 import * as SQLite from "expo-sqlite";
 
-const setupDatabase = async () => {
-  try {
-    const db = await SQLite.openDatabaseAsync("eventlog.db");
+let db;
 
-    await db.execAsync(`PRAGMA journal_mode = WAL;`);
+const initDB = async () => {
+  if (!db) {
+    try {
+      db = await SQLite.openDatabaseAsync("eventlog.db");
+      console.log("Database opened successfully.");
+    } catch (error) {
+      console.error("Error opening database:", error);
+      throw new Error("Failed to open the database.");
+    }
+  }
+  return db;
+};
+
+const setupDatabase = async () => {
+  const db = await initDB();
+
+  try {
+    await db.execAsync("PRAGMA journal_mode = WAL;");
 
     await db.execAsync(`
       CREATE TABLE IF NOT EXISTS departments (
@@ -58,12 +73,12 @@ const setupDatabase = async () => {
     `);
 
     console.log("Database setup successful");
-
-    return db;
   } catch (error) {
     console.error("Error setting up the database:", error);
     throw new Error("Database setup failed");
   }
+
+  return db;
 };
 
 export { setupDatabase };

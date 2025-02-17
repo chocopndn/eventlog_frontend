@@ -32,9 +32,6 @@ const saveUser = async (user) => {
           user.block_id,
         ]
       );
-      console.log(`User with ID ${user.id_number} saved successfully.`);
-    } else {
-      console.log(`User with ID ${user.id_number} already exists.`);
     }
   } catch (error) {
     console.error("Error saving user:", error);
@@ -46,20 +43,14 @@ const getStoredUser = async () => {
 
   try {
     const idNumber = await AsyncStorage.getItem("id_number");
-    if (!idNumber) {
-      console.log("ID number not found in AsyncStorage.");
-      return null;
-    }
+    if (!idNumber) return null;
 
     const result = await db.getFirstAsync(
       "SELECT * FROM users WHERE id_number = ?;",
       [idNumber]
     );
 
-    if (!result) {
-      console.log("User not found.");
-      return null;
-    }
+    if (!result) return null;
 
     return result;
   } catch (error) {
@@ -72,7 +63,6 @@ const clearUser = async () => {
   const db = await initDB();
   try {
     await db.runAsync("DELETE FROM users;");
-    console.log("User data cleared successfully.");
   } catch (error) {
     console.error("Error clearing user data:", error);
   }
@@ -101,9 +91,6 @@ const saveEvent = async (event) => {
           event.pm_out,
         ]
       );
-      console.log(`Event with ID ${event.event_id} saved successfully.`);
-    } else {
-      console.log(`Event with ID ${event.event_id} already exists.`);
     }
 
     if (event.event_dates && Array.isArray(event.event_dates)) {
@@ -112,7 +99,6 @@ const saveEvent = async (event) => {
           "INSERT INTO event_dates (event_id, event_date) VALUES (?, ?);",
           [event.event_id, date]
         );
-        console.log(`Event date ${date} saved for event ID ${event.event_id}.`);
       }
     }
   } catch (error) {
@@ -125,18 +111,11 @@ const getStoredEvents = async () => {
 
   try {
     const events = await db.getAllAsync("SELECT * FROM events;");
-    console.log("Stored events fetched from SQLite:", events);
 
     for (const event of events) {
       const eventDates = await db.getAllAsync(
         "SELECT event_date FROM event_dates WHERE event_id = ?;",
         [event.event_id]
-      );
-
-      console.log(
-        "Fetched event dates for event_id:",
-        event.event_id,
-        eventDates
       );
 
       event.event_dates = eventDates.map((entry) => entry.event_date);
@@ -160,7 +139,6 @@ const clearAllTables = async () => {
     await db.runAsync("DELETE FROM users;");
     await db.runAsync("DELETE FROM events;");
     await db.runAsync("DELETE FROM event_dates;");
-    console.log("All tables cleared successfully.");
   } catch (error) {
     console.error("Error clearing tables:", error);
   }
