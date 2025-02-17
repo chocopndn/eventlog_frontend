@@ -17,90 +17,117 @@ import {
   getStoredUser,
   saveEvent,
   getStoredEvents,
-  removeEvent,
 } from "../../../database/queries";
 import CustomModal from "../../../components/CustomModal";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const formatTime = (time) =>
-  time
-    ? new Date(`1970-01-01T${time}Z`).toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-        timeZone: "UTC",
-      })
-    : "";
+const format12HourTime = (time) => {
+  if (!time) return "";
+
+  const [hours, minutes] = time.split(":");
+  if (isNaN(hours) || isNaN(minutes)) return "";
+
+  const period = hours >= 12 ? "PM" : "AM";
+  const hour12 = hours % 12 || 12;
+
+  return `${hour12}:${minutes} ${period}`;
+};
 
 const formatGroupedDates = (dates) => {
   if (!dates || dates.length === 0) return "No date available";
 
   const sortedDates = [...dates].sort();
+
   let grouped = [];
-  let tempGroup = [];
-  let prevMonthYear = "";
+  let tempGroup = [sortedDates[0]];
 
-  sortedDates.forEach((date, index) => {
-    const [year, month, day] = date.split("-");
-    const monthName = new Date(date).toLocaleString("en-US", { month: "long" });
-    const monthYear = `${monthName} ${year}`;
+  for (let i = 1; i < sortedDates.length; i++) {
+    const currentDate = new Date(sortedDates[i]);
+    const prevDate = new Date(sortedDates[i - 1]);
 
-    if (monthYear === prevMonthYear) {
-      tempGroup.push(day);
+    if (currentDate - prevDate === 86400000) {
+      tempGroup.push(sortedDates[i]);
     } else {
-      if (tempGroup.length > 0) {
-        grouped.push(`${prevMonthYear} ${tempGroup.join(", ")}`);
-      }
-      tempGroup = [day];
-    }
-
-    prevMonthYear = monthYear;
-
-    if (index === sortedDates.length - 1) {
-      grouped.push(`${prevMonthYear} ${tempGroup.join(", ")}`);
-    }
-  });
-
-  return grouped.join(", ");
-};
-
-const syncDatabaseWithAPI = async (apiEvents) => {
-  const storedEvents = await getStoredEvents();
-  const storedEventIds = new Set(storedEvents.map((e) => e.event_id));
-
-  for (const event of storedEvents) {
-    if (!apiEvents.some((e) => e.event_id === event.event_id)) {
-      await removeEvent(event.event_id);
+      grouped.push(tempGroup);
+      tempGroup = [sortedDates[i]];
     }
   }
 
-  for (const event of apiEvents) {
-    if (!storedEventIds.has(event.event_id)) {
-      try {
-        await saveEvent(event);
-      } catch (error) {
-        console.error(`Error saving event ${event.event_id}:`, error);
+  grouped.push(tempGroup);
+
+  return grouped
+    .map((group) => {
+      const start = new Date(group[0]);
+      const end = new Date(group[group.length - 1]);
+
+      if (group.length === 1) {
+        return `${start.toLocaleString("en-US", {
+          month: "long",
+        })} ${start.getDate()} ${start.getFullYear()}`;
+      } else if (group.length > 1) {
+        const days = group.map((date) => new Date(date).getDate()).join(",");
+        if (
+          start.getMonth() === end.getMonth() &&
+          start.getFullYear() === end.getFullYear()
+        ) {
+          return `${start.toLocaleString("en-US", {
+            month: "long",
+          })} ${days} ${start.getFullYear()}`;
+        } else {
+          const startMonthYear = `${start.toLocaleString("en-US", {
+            month: "long",
+          })} ${start.getDate()}`;
+          const endMonthYear = `${end.toLocaleString("en-US", {
+            month: "long",
+          })} ${end.getDate()}`;
+          return `${startMonthYear} - ${endMonthYear}, ${start.getFullYear()}`;
+        }
       }
-    }
-  }
+    })
+    .join(", ");
 };
 
 const fetchFromAPI = async () => {
   try {
+    const idNumber = String(await AsyncStorage.getItem("id_number"));
+    if (!idNumber) {
+      console.log("ID number not found in AsyncStorage.");
+      return null;
+    }
+
     const user = await getStoredUser();
-    if (!user) return null;
+    if (!user || String(user.id_number) !== idNumber) {
+      console.log("User not found or ID mismatch.");
+      return null;
+    }
+
+    const blockId = user.block_id;
+    if (!blockId) {
+      console.log("Block ID is missing in the stored user data.");
+      return null;
+    }
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
 
     const { data } = await axios.post(
-      `${config.API_URL}/api/events/user/upcoming?block_id=${user.block_id}`,
-      {},
-      { signal: controller.signal }
+      `${config.API_URL}/api/events/user/upcoming`,
+      { block_id: blockId }
     );
 
     clearTimeout(timeout);
+
+    if (data.success && data.events.length > 0) {
+      console.log("Fetched events from API:", data.events);
+
+      for (const event of data.events) {
+        await saveEvent(event);
+      }
+    }
+
     return data.success ? data.events : null;
-  } catch {
+  } catch (error) {
+    console.error("Error fetching data from API:", error);
     return null;
   }
 };
@@ -112,52 +139,33 @@ const HomeIndex = () => {
   const [error, setError] = useState(null);
   const [isConnected, setIsConnected] = useState(true);
 
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener((state) => {
-      setIsConnected(state.isConnected);
-      if (state.isConnected) {
-        updateSQLiteFromAPI();
-      }
-    });
-
-    loadStoredEvents();
-
-    return () => unsubscribe();
-  }, []);
-
-  const loadStoredEvents = async () => {
-    setIsLoading(true);
-    const storedEvents = await getStoredEvents();
-    setEvents(
-      storedEvents.map((event) => ({
-        ...event,
-        dates: formatGroupedDates(event.dates),
-        am_in: formatTime(event.am_in),
-        pm_in: formatTime(event.pm_in),
-        am_out: formatTime(event.am_out),
-        pm_out: formatTime(event.pm_out),
-      }))
-    );
-    setIsLoading(false);
-  };
-
-  const updateSQLiteFromAPI = async () => {
-    try {
+  const getEvents = async () => {
+    if (isConnected) {
       const apiEvents = await fetchFromAPI();
       if (apiEvents) {
-        await syncDatabaseWithAPI(apiEvents);
+        setEvents(apiEvents);
       }
-      await loadStoredEvents();
-    } catch (error) {
-      console.error("Error syncing with API:", error);
+    } else {
+      const storedEvents = await getStoredEvents();
+      setEvents(storedEvents);
     }
   };
 
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsConnected(state.isConnected);
+    });
+
+    getEvents();
+
+    return () => unsubscribe();
+  }, [isConnected]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await updateSQLiteFromAPI();
+    await getEvents();
     setRefreshing(false);
-  }, []);
+  }, [isConnected]);
 
   return (
     <SafeAreaView className="bg-secondary h-full">
@@ -200,12 +208,12 @@ const HomeIndex = () => {
               <View key={`${event.event_id}-${index}`} className="w-[303px]">
                 <CollapsibleDropdown
                   title={event.event_name}
-                  date={event.dates}
+                  date={formatGroupedDates(event.event_dates)}
                   venue={event.venue}
-                  morningIn={event.am_in}
-                  afternoonIn={event.pm_in}
-                  morningOut={event.am_out}
-                  afternoonOut={event.pm_out}
+                  morningIn={format12HourTime(event.am_in)}
+                  afternoonIn={format12HourTime(event.pm_in)}
+                  morningOut={format12HourTime(event.am_out)}
+                  afternoonOut={format12HourTime(event.pm_out)}
                   personnel={event.scan_personnel}
                 />
               </View>

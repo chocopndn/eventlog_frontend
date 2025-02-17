@@ -51,7 +51,8 @@ const LogIn = () => {
 
   useEffect(() => {
     const checkStoredUser = async () => {
-      if (await getStoredUser()) {
+      const storedUser = await getStoredUser();
+      if (storedUser) {
         router.replace("/home");
       }
     };
@@ -87,22 +88,37 @@ const LogIn = () => {
     try {
       const { data } = await axios.post(`${API_URL}/api/auth/login`, {
         id_number: idNumber,
-        password,
+        password: password,
       });
 
       await AsyncStorage.setItem("authToken", data.token);
       await saveUser(data.user);
-      await saveCredentials();
+
+      await AsyncStorage.setItem("block_id", String(data.user.block_id));
+      await AsyncStorage.setItem("id_number", idNumber);
 
       router.replace("/home");
     } catch (error) {
-      showModal({
-        title: "Login Failed",
-        message: error.response?.data?.message || "Something went wrong.",
-        type: "error",
-        buttonText: "Retry",
-        buttonRedirect: "/SignUp",
-      });
+      console.error("Login error details:", error);
+
+      if (error.response) {
+        const errorMessage =
+          error.response?.data?.message || "Something went wrong.";
+        showModal({
+          title: "Login Failed",
+          message: errorMessage,
+          type: "error",
+          buttonText: "Retry",
+          buttonRedirect: "/SignUp",
+        });
+      } else {
+        console.error("Unexpected error:", error.message);
+        showModal({
+          title: "Error",
+          message: "An unexpected error occurred. Please try again later.",
+          type: "error",
+        });
+      }
     } finally {
       setLoading(false);
     }
