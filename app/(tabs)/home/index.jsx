@@ -102,10 +102,6 @@ const fetchFromAPI = async () => {
     }
 
     const blockId = user.block_id;
-    if (!blockId) {
-      console.log("Block ID is missing in the stored user data.");
-      return null;
-    }
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
