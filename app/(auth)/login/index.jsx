@@ -103,6 +103,8 @@ const LogIn = () => {
       await AsyncStorage.setItem("block_id", String(data.user.block_id));
       await AsyncStorage.setItem("id_number", idNumber);
 
+      await saveCredentials();
+
       router.replace("/home");
     } catch (error) {
       console.error("Login error details:", error);
