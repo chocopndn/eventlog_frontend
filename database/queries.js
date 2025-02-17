@@ -153,4 +153,24 @@ const getStoredEvents = async () => {
   }
 };
 
-export { saveUser, clearUser, saveEvent, getStoredEvents, getStoredUser };
+const clearAllTables = async () => {
+  const db = await initDB();
+
+  try {
+    await db.runAsync("DELETE FROM users;");
+    await db.runAsync("DELETE FROM events;");
+    await db.runAsync("DELETE FROM event_dates;");
+    console.log("All tables cleared successfully.");
+  } catch (error) {
+    console.error("Error clearing tables:", error);
+  }
+};
+
+export {
+  saveUser,
+  clearUser,
+  saveEvent,
+  getStoredEvents,
+  getStoredUser,
+  clearAllTables,
+};

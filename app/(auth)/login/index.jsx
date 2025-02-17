@@ -12,7 +12,11 @@ import axios from "axios";
 import Checkbox from "expo-checkbox";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { saveUser, getStoredUser } from "../../../database/queries";
+import {
+  saveUser,
+  getStoredUser,
+  clearAllTables,
+} from "../../../database/queries";
 import images from "../../../constants/images";
 import FormField from "../../../components/FormField";
 import CustomButton from "../../../components/CustomButton";
@@ -90,6 +94,8 @@ const LogIn = () => {
         id_number: idNumber,
         password: password,
       });
+
+      await clearAllTables();
 
       await AsyncStorage.setItem("authToken", data.token);
       await saveUser(data.user);
