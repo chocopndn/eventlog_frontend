@@ -20,6 +20,7 @@ import printer from "../assets/icons/printer.png";
 import warning from "../assets/icons/exclamation-triangle.png";
 import error from "../assets/icons/exclamation-circle.png";
 import success from "../assets/icons/check-circle.png";
+import qrscan from "../assets/icons/qr-scan.png";
 
 export default {
   logo,
@@ -42,4 +43,5 @@ export default {
   warning,
   error,
   success,
+  qrscan,
 };
