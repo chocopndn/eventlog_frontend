@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { View, Text, Image, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 import images from "../constants/images";
 
@@ -32,7 +32,9 @@ const SharpDropdown = ({
 
   return (
     <View style={styles.container}>
-      {title && <Text style={styles.title}>{title}</Text>}
+      {title && title.trim() !== "" && (
+        <Text style={styles.title}>{title}</Text>
+      )}
       <Dropdown
         style={[styles.dropdown, isFocus ? styles.dropdownFocused : null]}
         placeholder={placeholder}
@@ -47,11 +49,41 @@ const SharpDropdown = ({
         value={value}
         onFocus={() => setIsFocus(true)}
         onBlur={() => setIsFocus(false)}
-        onChange={(item) => setValue(item.value)}
+        onChange={(item) => {
+          setValue((prevValue) =>
+            prevValue === item.value ? null : item.value
+          );
+          setIsFocus(false);
+        }}
         renderRightIcon={() =>
           !isFocus && <Image source={images.arrowDown} style={styles.icon} />
         }
         containerStyle={styles.containerStyle}
+        renderItem={(item) => (
+          <TouchableOpacity
+            style={[
+              styles.listItem,
+              item.value === value ? styles.listItemSelected : null,
+            ]}
+            onPress={() => {
+              setValue((prevValue) =>
+                prevValue === item.value ? null : item.value
+              );
+              setIsFocus(false);
+            }}
+          >
+            <Text
+              style={[
+                styles.listItemText,
+                item.value === value ? styles.listItemTextSelected : null,
+              ]}
+              numberOfLines={2}
+              ellipsizeMode="tail"
+            >
+              {item.label}
+            </Text>
+          </TouchableOpacity>
+        )}
       />
     </View>
   );
@@ -61,37 +93,38 @@ export default SharpDropdown;
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
-    marginVertical: 8,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 5,
+    width: 260,
+    height: 46,
   },
   dropdown: {
-    height: 50,
-    backgroundColor: "#FFF",
-    borderWidth: 1,
-    borderColor: "#ccc",
+    height: 46,
+    backgroundColor: "#FBF1E5",
+    borderWidth: 2,
+    borderColor: "#255586",
     paddingHorizontal: 12,
+    justifyContent: "center",
   },
   dropdownFocused: {
-    borderColor: "#007AFF",
+    borderColor: "#255586",
+    borderWidth: 2,
   },
   placeholderStyle: {
-    fontSize: 16,
-    color: "#888",
+    fontSize: 30,
+    color: "#255586",
+    textAlign: "center",
+    fontFamily: "SquadaOne",
   },
   selectedTextStyle: {
-    fontSize: 16,
-    color: "#333",
+    fontSize: 18,
+    color: "#255586",
+    textAlign: "center",
+    fontFamily: "SquadaOne",
   },
   inputSearchStyle: {
     height: 40,
     fontSize: 16,
     paddingHorizontal: 10,
+    fontFamily: "SquadaOne",
   },
   icon: {
     width: 20,
@@ -99,8 +132,28 @@ const styles = StyleSheet.create({
     tintColor: "#666",
   },
   containerStyle: {
-    backgroundColor: "#FFF",
+    backgroundColor: "#FBF1E5",
     borderWidth: 1,
     borderColor: "#ccc",
+  },
+  listItem: {
+    minHeight: 50,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    backgroundColor: "#FBF1E5",
+    justifyContent: "center",
+  },
+  listItemSelected: {
+    backgroundColor: "#255586",
+  },
+  listItemText: {
+    fontSize: 20,
+    fontFamily: "SquadaOne",
+    color: "#255586",
+    height: 45,
+    textAlignVertical: "center",
+  },
+  listItemTextSelected: {
+    color: "#FBF1E5",
   },
 });
