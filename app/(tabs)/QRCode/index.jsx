@@ -21,14 +21,14 @@ export default function QRCodeIndex() {
 
   useEffect(() => {
     if (roleId === 1) {
-      router.replace("/QRCode/Generate"); // Redirect to Generate.jsx
+      router.replace("/QRCode/Generate");
     } else if (roleId === 3 || roleId === 4) {
-      router.replace("/QRCode/Scan"); // Redirect to Scan.jsx
+      router.replace("/QRCode/Scan");
     }
   }, [roleId]);
 
   if (roleId === 1 || roleId === 3 || roleId === 4) {
-    return null; // Prevent unnecessary rendering when redirecting
+    return null;
   }
 
   return (
@@ -37,12 +37,12 @@ export default function QRCodeIndex() {
         <>
           <CustomButton
             title="Generate"
-            onPress={() => router.push("/Generate")}
+            onPress={() => router.push("/QRCode/Generate")}
           />
           <CustomButton
             title="Scan"
             type="secondary"
-            onPress={() => router.push("/Scan")}
+            onPress={() => router.push("/QRCode/Scan")}
           />
         </>
       )}
