@@ -2,6 +2,7 @@ import * as SQLite from "expo-sqlite";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 let db;
+
 const initDB = async () => {
   if (!db) {
     db = await SQLite.openDatabaseAsync("eventlog.db");
@@ -9,10 +10,46 @@ const initDB = async () => {
   return db;
 };
 
+const ensureDepartmentExists = async (db, departmentId, departmentName) => {
+  const existingDepartment = await db.getFirstAsync(
+    "SELECT department_id FROM departments WHERE department_id = ?;",
+    [departmentId]
+  );
+
+  if (!existingDepartment) {
+    await db.runAsync(
+      "INSERT INTO departments (department_id, department_name) VALUES (?, ?);",
+      [departmentId, departmentName]
+    );
+  }
+};
+
+const ensureBlockExists = async (db, blockId, blockName, departmentId) => {
+  const existingBlock = await db.getFirstAsync(
+    "SELECT block_id FROM blocks WHERE block_id = ?;",
+    [blockId]
+  );
+
+  if (!existingBlock) {
+    await db.runAsync(
+      "INSERT INTO blocks (block_id, block_name, department_id) VALUES (?, ?, ?);",
+      [blockId, blockName, departmentId]
+    );
+  }
+};
+
 const saveUser = async (user) => {
   const db = await initDB();
 
   try {
+    await ensureDepartmentExists(db, user.department_id, user.department_name);
+    await ensureBlockExists(
+      db,
+      user.block_id,
+      user.block_name,
+      user.department_id
+    );
+
     const existingUser = await db.getFirstAsync(
       "SELECT id_number FROM users WHERE id_number = ?;",
       [user.id_number]
@@ -20,8 +57,8 @@ const saveUser = async (user) => {
 
     if (!existingUser) {
       await db.runAsync(
-        `INSERT INTO users (id_number, first_name, last_name, email, role_id, department_id, block_id) 
-        VALUES (?, ?, ?, ?, ?, ?, ?);`,
+        `INSERT INTO users (id_number, first_name, last_name, email, role_id, department_id, block_id, block_name, course_id, course_name) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         [
           user.id_number,
           user.first_name,
@@ -30,6 +67,9 @@ const saveUser = async (user) => {
           user.role_id,
           user.department_id,
           user.block_id,
+          user.block_name,
+          user.course_id,
+          user.course_name,
         ]
       );
     }
@@ -50,9 +90,7 @@ const getStoredUser = async () => {
       [idNumber]
     );
 
-    if (!result) return null;
-
-    return result;
+    return result || null;
   } catch (error) {
     console.error("Error fetching stored user:", error);
     return null;
@@ -119,10 +157,6 @@ const getStoredEvents = async () => {
       );
 
       event.event_dates = eventDates.map((entry) => entry.event_date);
-
-      if (event.event_dates.length === 0) {
-        event.event_dates = [];
-      }
     }
 
     return events;
@@ -139,6 +173,8 @@ const clearAllTables = async () => {
     await db.runAsync("DELETE FROM users;");
     await db.runAsync("DELETE FROM events;");
     await db.runAsync("DELETE FROM event_dates;");
+    await db.runAsync("DELETE FROM blocks;");
+    await db.runAsync("DELETE FROM departments;");
   } catch (error) {
     console.error("Error clearing tables:", error);
   }
@@ -151,4 +187,5 @@ export {
   getStoredEvents,
   getStoredUser,
   clearAllTables,
+  initDB,
 };

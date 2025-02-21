@@ -5,34 +5,39 @@ import {
   Image,
   ActivityIndicator,
   SafeAreaView,
+  StatusBar,
 } from "react-native";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import images from "../constants/images";
-import { StatusBar } from "expo-status-bar";
-import { setupDatabase } from "../database/database";
+import { setupDatabase, initDB } from "../database/database";
 
 import CustomButton from "../components/CustomButton";
 
 const App = () => {
   const [loading, setLoading] = useState(true);
+  const [db, setDb] = useState(null);
 
   useEffect(() => {
-    setupDatabase();
-  }, []);
+    const initialize = async () => {
+      try {
+        await setupDatabase();
+        const initializedDb = await initDB();
+        setDb(initializedDb);
 
-  useEffect(() => {
-    const checkAuthToken = async () => {
-      const authToken = await AsyncStorage.getItem("authToken");
-      if (authToken) {
-        router.replace("/home");
-      } else {
-        setLoading(false);
+        const authToken = await AsyncStorage.getItem("authToken");
+        if (authToken) {
+          router.replace("/home");
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Database initialization error:", error);
       }
     };
 
-    checkAuthToken();
+    initialize();
   }, []);
 
   if (loading) {
@@ -65,8 +70,7 @@ const App = () => {
           onPress={() => router.push("/SignUp")}
         />
       </View>
-
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
     </SafeAreaView>
   );
 };
