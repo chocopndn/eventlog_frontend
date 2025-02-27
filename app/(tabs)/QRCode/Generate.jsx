@@ -146,10 +146,10 @@ export default function Generate() {
                 {user && (
                   <InfoCard
                     title={selectedEventName || "Title"}
-                    name={user.name || "N/A"}
+                    name={`${user.first_name} ${user.last_name}` || "N/A"}
                     id_number={user.id_number || "N/A"}
-                    course={user.course || "N/A"}
-                    block={user.block || "N/A"}
+                    course={user.course_name || "N/A"}
+                    block={user.block_name || "N/A"}
                     onTitlePress={resetState}
                   />
                 )}
