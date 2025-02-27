@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { View, SafeAreaView, Text, Alert } from "react-native";
+import { View, SafeAreaView, Text } from "react-native";
 import { getStoredEvents, getStoredUser } from "../../../database/queries";
 import SharpDropdown from "../../../components/SharpDropdown";
 import QRCode from "react-native-qrcode-svg";
 import CustomButton from "../../../components/CustomButton";
 import InfoCard from "../../../components/InfoCard";
-import * as Crypto from "expo-crypto";
+import CryptoES from "crypto-es";
+import CustomModal from "../../../components/CustomModal";
+
+import config from "../../../config/config";
 
 export default function Generate() {
   const [events, setEvents] = useState([]);
@@ -14,6 +17,9 @@ export default function Generate() {
   const [showInfoCard, setShowInfoCard] = useState(false);
   const [selectedEventName, setSelectedEventName] = useState("");
   const [user, setUser] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
 
   useEffect(() => {
     let isMounted = true;
@@ -59,16 +65,21 @@ export default function Generate() {
   const generateQrCode = async () => {
     if (selectedEvent && user && user.id_number) {
       try {
-        const dataToEncrypt = `${user.id_number}-${selectedEventName}`;
-        const encryptedData = await Crypto.digestStringAsync(
-          Crypto.CryptoDigestAlgorithm.SHA256,
-          dataToEncrypt
-        );
-        setQrValue(encryptedData);
+        const dataToEncrypt = `${user.id_number}-${selectedEvent}`;
+        const password = config.QR_PASS;
+        const encrypted = CryptoES.AES.encrypt(
+          dataToEncrypt,
+          password
+        ).toString();
+        console.log(encrypted);
+
+        setQrValue(encrypted);
         setShowInfoCard(true);
       } catch (error) {
         console.error("Encryption error:", error);
-        Alert.alert("Error", "An error occurred during QR code generation.");
+        setModalTitle("Error");
+        setModalMessage("An error occurred during QR code generation.");
+        setModalVisible(true);
       }
     } else {
       let message = "";
@@ -79,7 +90,9 @@ export default function Generate() {
       } else if (!user.id_number) {
         message = "User ID number not found. Please check your profile.";
       }
-      Alert.alert("Error", message);
+      setModalTitle("Error");
+      setModalMessage(message);
+      setModalVisible(true);
     }
   };
 
@@ -88,6 +101,10 @@ export default function Generate() {
     setQrValue("");
     setShowInfoCard(false);
     setSelectedEventName("");
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
   };
 
   return (
@@ -126,14 +143,16 @@ export default function Generate() {
           ) : (
             <View className="flex items-center">
               <View className="mb-6 mt-16">
-                <InfoCard
-                  title={selectedEventName || "Title"}
-                  name="Dhanrev Mina"
-                  id_number="19015236"
-                  course="BSIT"
-                  block="3A NON"
-                  onTitlePress={resetState}
-                />
+                {user && (
+                  <InfoCard
+                    title={selectedEventName || "Title"}
+                    name={user.name || "N/A"}
+                    id_number={user.id_number || "N/A"}
+                    course={user.course || "N/A"}
+                    block={user.block || "N/A"}
+                    onTitlePress={resetState}
+                  />
+                )}
               </View>
             </View>
           )}
@@ -148,6 +167,14 @@ export default function Generate() {
           </View>
         )}
       </View>
+
+      <CustomModal
+        visible={modalVisible}
+        onClose={closeModal}
+        title={modalTitle}
+        message={modalMessage}
+        buttonText="OK"
+      />
     </SafeAreaView>
   );
 }
