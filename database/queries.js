@@ -57,8 +57,9 @@ const saveUser = async (user) => {
 
     if (!existingUser) {
       await db.runAsync(
-        `INSERT INTO users (id_number, first_name, last_name, email, role_id, department_id, block_id, block_name, course_id, course_name) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        `INSERT INTO users 
+        (id_number, first_name, last_name, email, role_id, department_id, department_name, block_id, block_name, course_id, course_name) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
         [
           user.id_number,
           user.first_name,
@@ -66,6 +67,7 @@ const saveUser = async (user) => {
           user.email,
           user.role_id,
           user.department_id,
+          user.department_name,
           user.block_id,
           user.block_name,
           user.course_id,

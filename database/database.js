@@ -62,6 +62,7 @@ const setupDatabase = async () => {
                 email TEXT UNIQUE NOT NULL,
                 role_id INTEGER NOT NULL DEFAULT 1,
                 department_id INTEGER,
+                department_name INTEGER,
                 block_id INTEGER,
                 block_name TEXT,
                 course_id INTEGER,
