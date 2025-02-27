@@ -5,53 +5,81 @@ import SharpDropdown from "../../../components/SharpDropdown";
 import QRCode from "react-native-qrcode-svg";
 import CustomButton from "../../../components/CustomButton";
 import InfoCard from "../../../components/InfoCard";
-import * as Crypto from "expo-crypto";
+import CryptoES from "crypto-es";
+import CustomModal from "../../../components/CustomModal";
+
+import config from "../../../config/config";
 
 export default function Generate() {
   const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [qrValue, setQrValue] = useState("");
+  const [showInfoCard, setShowInfoCard] = useState(false);
+  const [selectedEventName, setSelectedEventName] = useState("");
   const [user, setUser] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [modalMessage, setModalMessage] = useState("");
 
   useEffect(() => {
-    const fetchData = async () => {
+    let isMounted = true;
+
+    async function fetchData() {
       try {
         const storedEvents = await getStoredEvents();
         const storedUser = await getStoredUser();
 
-        setEvents(
-          storedEvents.map((event) => ({
+        if (isMounted) {
+          const formattedEvents = storedEvents.map((event) => ({
             label: event.event_name,
             value: event.event_id,
             name: event.event_name,
-          }))
-        );
-        setUser(storedUser);
+          }));
+          setEvents(formattedEvents);
+          setUser(storedUser);
+        }
       } catch (error) {
-        console.error("Error fetching data:", error);
-        Alert.alert("Error", "Failed to fetch data.");
+        if (isMounted) {
+          console.error("Error fetching data:", error);
+        }
       }
-    };
+    }
 
     fetchData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  const handleEventSelect = (value) => {
+    setSelectedEvent(value);
+    const selectedEventObj = events.find((e) => e.value === value);
+    if (selectedEventObj) {
+      setSelectedEventName(selectedEventObj.name);
+    } else {
+      setSelectedEventName("");
+    }
+  };
 
   const generateQrCode = async () => {
     if (selectedEvent && user && user.id_number) {
       try {
-        const dataToEncrypt = `${user.id_number}-${selectedEventName}`;
-        const encryptedData = await Crypto.digestStringAsync(
-          Crypto.CryptoDigestAlgorithm.SHA256,
-          dataToEncrypt
-        );
-        setQrValue(encryptedData);
+        const dataToEncrypt = `${user.id_number}-${selectedEvent}`;
+        const password = config.QR_PASS;
+        const encrypted = CryptoES.AES.encrypt(
+          dataToEncrypt,
+          password
+        ).toString();
+        console.log(encrypted);
+
+        setQrValue(encrypted);
         setShowInfoCard(true);
       } catch (error) {
         console.error("Encryption error:", error);
-        Alert.alert("Error", "An error occurred during QR code generation.");
+        setModalTitle("Error");
+        setModalMessage("An error occurred during QR code generation.");
+        setModalVisible(true);
       }
     } else {
       let message = "";
@@ -62,7 +90,9 @@ export default function Generate() {
       } else if (!user.id_number) {
         message = "User ID number not found. Please check your profile.";
       }
-      Alert.alert("Error", message);
+      setModalTitle("Error");
+      setModalMessage(message);
+      setModalVisible(true);
     }
   };
 
@@ -87,46 +117,48 @@ export default function Generate() {
         </View>
 
         <View className="h-[200px] w-[280px] flex justify-center items-center">
-          {!qrValue ? (
+          {!showInfoCard ? (
             <>
               <SharpDropdown
                 data={events}
-                defaultValue={selectedEvent?.value}
-                onSelect={(value) =>
-                  setSelectedEvent(
-                    events.find((e) => e.value === value) || null
-                  )
+                defaultValue={selectedEvent}
+                onSelect={handleEventSelect}
+                placeholder={
+                  selectedEvent
+                    ? events.find((e) => e.value === selectedEvent)?.label
+                    : "SELECT EVENT"
                 }
-                placeholder={selectedEvent?.label || "SELECT EVENT"}
               />
 
               <View className="h-[60px] w-full flex justify-center items-center mt-6">
-                {selectedEvent && (
+                {selectedEvent ? (
                   <CustomButton
                     title="Generate QR"
                     type="primary"
                     onPress={generateQrCode}
                   />
-                )}
+                ) : null}
               </View>
             </>
           ) : (
             <View className="flex items-center">
               <View className="mb-6 mt-16">
-                <InfoCard
-                  title={selectedEventName || "Title"}
-                  name="Dhanrev Mina"
-                  id_number="19015236"
-                  course="BSIT"
-                  block="3A NON"
-                  onTitlePress={resetState}
-                />
+                {user && (
+                  <InfoCard
+                    title={selectedEventName || "Title"}
+                    name={user.name || "N/A"}
+                    id_number={user.id_number || "N/A"}
+                    course={user.course || "N/A"}
+                    block={user.block || "N/A"}
+                    onTitlePress={resetState}
+                  />
+                )}
               </View>
             </View>
           )}
         </View>
 
-        {qrValue && (
+        {showInfoCard && (
           <View className="border-2 border-primary w-[280px] mt-auto self-center mb-4">
             <Text className="font-SquadaOne text-[20px] p-3 text-center text-primary">
               NOTE: The Instructors/Officers in charge will scan your QR Code.
