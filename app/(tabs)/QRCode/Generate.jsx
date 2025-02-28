@@ -7,7 +7,6 @@ import CustomButton from "../../../components/CustomButton";
 import InfoCard from "../../../components/InfoCard";
 import CryptoES from "crypto-es";
 import CustomModal from "../../../components/CustomModal";
-
 import config from "../../../config/config";
 
 export default function Generate() {
@@ -63,9 +62,17 @@ export default function Generate() {
   };
 
   const generateQrCode = async () => {
-    if (selectedEvent && user && user.id_number) {
+    if (
+      selectedEvent &&
+      user &&
+      user.id_number &&
+      user.first_name &&
+      user.last_name
+    ) {
       try {
-        const dataToEncrypt = `${user.id_number}-${selectedEvent}`;
+        const firstName = user.first_name.replace(/"/g, "");
+        const lastName = user.last_name.replace(/"/g, "");
+
         const password = config.QR_PASS;
         const encrypted = CryptoES.AES.encrypt(
           dataToEncrypt,
@@ -87,8 +94,9 @@ export default function Generate() {
         message = "Please select an event.";
       } else if (!user) {
         message = "User data not found. Please log in or check your profile.";
-      } else if (!user.id_number) {
-        message = "User ID number not found. Please check your profile.";
+      } else if (!user.id_number || !user.first_name || !user.last_name) {
+        message =
+          "User ID, first name or last name not found. Please check your profile.";
       }
       setModalTitle("Error");
       setModalMessage(message);
