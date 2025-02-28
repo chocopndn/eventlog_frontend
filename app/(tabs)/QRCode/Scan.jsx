@@ -2,14 +2,18 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { useEffect, useState } from "react";
 import { Text, View, Image } from "react-native";
 import CustomModal from "../../../components/CustomModal";
-import { getStoredUser, getStoredEvent } from "../../../database/queries";
+import { getStoredEvents } from "../../../database/queries";
 import images from "../../../constants/images";
+import CryptoES from "crypto-es";
+import config from "../../../config/config";
 
 export default function Scan() {
   const [facing, setFacing] = useState("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [scannedData, setScannedData] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [decryptedData, setDecryptedData] = useState(null);
+  const [eventName, setEventName] = useState("N/A");
 
   useEffect(() => {
     if (!permission || permission.status !== "granted") {
@@ -17,10 +21,38 @@ export default function Scan() {
     }
   }, [permission]);
 
-  const handleBarcodeScanned = ({ data }) => {
+  const handleBarcodeScanned = async ({ data }) => {
     if (modalVisible) return;
-    setScannedData(data);
-    setModalVisible(true);
+
+    try {
+      const decryptedBytes = CryptoES.AES.decrypt(data, config.QR_PASS);
+      const decryptedString = decryptedBytes.toString(CryptoES.enc.Utf8);
+      const parts = decryptedString.split("-");
+
+      if (parts.length === 3) {
+        const [fullName, idNumber, eventId] = parts;
+        setDecryptedData({ fullName, idNumber, eventId });
+        setScannedData(data);
+        setModalVisible(true);
+
+        const events = await getStoredEvents();
+        const foundEvent = events.find(
+          (event) => event.event_id === parseInt(eventId)
+        );
+        if (foundEvent) {
+          setEventName(foundEvent.event_name);
+        } else {
+          setEventName("Event Not Found");
+        }
+      } else {
+        setScannedData("Invalid QR code");
+        setModalVisible(true);
+      }
+    } catch (error) {
+      console.error("Decryption Error:", error);
+      setScannedData("Invalid QR code");
+      setModalVisible(true);
+    }
   };
 
   const handleConfirm = () => {
@@ -33,7 +65,11 @@ export default function Scan() {
 
   const closeModal = () => {
     setModalVisible(false);
-    setTimeout(() => setScannedData(null), 1000);
+    setTimeout(() => {
+      setScannedData(null);
+      setDecryptedData(null);
+      setEventName("N/A");
+    }, 1000);
   };
 
   if (!permission || permission.status !== "granted") {
@@ -86,9 +122,9 @@ export default function Scan() {
             buttonText="CONFIRM"
             secondButtonText="DECLINE"
             buttonRedirect={null}
-            eventName="IT Day"
-            idNumber="19015236"
-            studentName="Dhanrev Mina"
+            eventName={eventName}
+            idNumber={decryptedData ? decryptedData.idNumber : "N/A"}
+            studentName={decryptedData ? decryptedData.fullName : "N/A"}
             onConfirm={handleConfirm}
             onDecline={handleDecline}
           />
