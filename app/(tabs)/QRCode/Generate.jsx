@@ -73,6 +73,8 @@ export default function Generate() {
         const firstName = user.first_name.replace(/"/g, "");
         const lastName = user.last_name.replace(/"/g, "");
 
+        const dataToEncrypt = `${firstName} ${lastName}-${user.id_number}-${selectedEvent}`;
+
         const password = config.QR_PASS;
         const encrypted = CryptoES.AES.encrypt(
           dataToEncrypt,
