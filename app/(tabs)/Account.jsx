@@ -41,13 +41,12 @@ const Account = () => {
           justifyContent: "center",
         }}
       >
-        <View className="w-full items-center mt-24 mb-14">
+        <View className="w-full items-center mt-20 mb-14">
           <View className="w-full h-50 items-center justify-center">
             <View className="absolute w-full h-28 bg-primary"></View>
             <View className="absolute w-[70%] h-10 bg-cyan-500 top-1/3 right-40"></View>
             <View className="absolute w-[70%] h-10 bg-cyan-500 bottom-1/3 left-40"></View>
             <View className="absolute w-[70%] h-10 bg-secondary"></View>
-
             <Image source={images.logo} style={{ width: 160, height: 160 }} />
           </View>
 
@@ -57,12 +56,17 @@ const Account = () => {
 
           {user ? (
             <View className="items-center">
-              <Text className="text-[25px] text-primary font-ArialBold">
+              <Text className="text-[25px] text-primary font-ArialBold pb-3">
                 {`${user.first_name} ${user.last_name}`}
               </Text>
-              <Text className="text-[25px] text-primary font-ArialBold">
-                {user.id_number}
-              </Text>
+
+              {user.role_id === 1 || user.role_id === 2 ? (
+                <Text className="text-[25px] font-ArialBold text-primary text-center pb-5">
+                  {user.id_number}
+                </Text>
+              ) : (
+                ""
+              )}
 
               <View className="w-[300px]">
                 <View className="border-2 border-primary p-2 border-b-0">
@@ -76,10 +80,14 @@ const Account = () => {
 
                 <View className="border-2 border-primary p-2 border-b-0">
                   <Text className="text-[15px] font-ArialBold text-primary text-center">
-                    Block
+                    {user.role_id === 1 || user.role_id === 2
+                      ? "Block"
+                      : "ID Number"}
                   </Text>
                   <Text className="text-[15px] text-primary font-Arial text-center">
-                    {user.block_name}
+                    {user.role_id === 1 || user.role_id === 2
+                      ? user.block_name
+                      : user.id_number}
                   </Text>
                 </View>
 
@@ -93,19 +101,43 @@ const Account = () => {
                 </View>
               </View>
 
+              {!(user.role_id === 1 || user.role_id === 2) && (
+                <View className="items-center mt-5">
+                  <CustomButton
+                    title="ADD EVENT"
+                    type="primary"
+                    onPress={handleLogout}
+                    otherStyles="h-[35px] w-[190px]"
+                  />
+
+                  <CustomButton
+                    title="EDIT EVENT"
+                    type="secondary"
+                    onPress={handleLogout}
+                    otherStyles="h-[35px] w-[190px]"
+                  />
+                </View>
+              )}
+
               <View className="items-center w-full px-4 mt-4">
                 <Text className="text-[15px] font-ArialBold text-primary">
                   Contact Us
                 </Text>
                 <View className="border-[1px] border-primary bg-primary w-[300px] my-2"></View>
-                <Text className="text-center text-[15px] text-primary font-ArialBold">
-                  UNIVERSITY OF CAGAYAN VALLEY COLLEGE OF INFORMATION TECHNOLOGY
-                </Text>
+                <View>
+                  <Text className="text-center text-[15px] text-primary font-ArialBold">
+                    UNIVERSITY OF CAGAYAN VALLEY
+                  </Text>
+                  <Text className="text-center text-[15px] text-primary font-ArialBold">
+                    COLLEGE OF INFORMATION TECHNOLOGY
+                  </Text>
+                </View>
                 <Text className="text-center text-[15px] text-primary font-Arial mt-2">
                   VHNP Building 4th Floor - New Site Campus, Balzain, Tuguegarao
                   City, Cagayan
                 </Text>
               </View>
+
               <View>
                 <View className="flex-row mt-5">
                   <Image
@@ -132,7 +164,7 @@ const Account = () => {
           )}
 
           <CustomButton
-            title="Logout"
+            title="LOGOUT"
             type="primary"
             onPress={handleLogout}
             otherStyles="mt-5"
