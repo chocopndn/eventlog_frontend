@@ -15,6 +15,7 @@
     "axios": "^1.7.9",
     "crypto-es": "^2.1.0",
     "expo": "~52.0.23",
+    "expo-camera": "~16.0.17",
     "expo-checkbox": "~4.0.1",
     "expo-constants": "~17.0.3",
     "expo-font": "~13.0.2",
