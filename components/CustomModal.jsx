@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Modal, View, Text, TouchableOpacity, Image } from "react-native";
 import { useRouter } from "expo-router";
 import images from "../constants/images";
@@ -17,22 +17,25 @@ const CustomModal = ({
   eventName,
   idNumber,
   studentName,
+  onConfirm,
+  onDecline,
 }) => {
   const router = useRouter();
-  const validatedType = ALLOWED_TYPES.includes(type) ? type : "error";
+
+  const validatedType = useMemo(
+    () => (ALLOWED_TYPES.includes(type) ? type : "error"),
+    [type]
+  );
 
   const handlePrimaryAction = () => {
-    if (buttonRedirect) {
-      router.replace(buttonRedirect);
-    } else {
-      onClose();
-    }
+    if (onConfirm) onConfirm();
+    else if (buttonRedirect) router.replace(buttonRedirect);
+    else onClose();
   };
 
-  const truncateText = (text, maxLength) => {
-    return text.length > maxLength
-      ? text.substring(0, maxLength) + "..."
-      : text;
+  const handleSecondaryAction = () => {
+    if (onDecline) onDecline();
+    else onClose();
   };
 
   return (
@@ -58,17 +61,17 @@ const CustomModal = ({
               <Text
                 className="font-SquadaOne text-primary text-[26px] mb-2"
                 numberOfLines={1}
-                ellipsizeMode="tail"
+                adjustsFontSizeToFit
+                minimumFontScale={0.5}
               >
                 QR Code Scanned
               </Text>
               <Text
                 className="font-SquadaOne text-[22px] mb-2"
                 numberOfLines={1}
-                ellipsizeMode="tail"
                 style={{ color: "rgba(37, 85, 134, 0.8)" }}
               >
-                {truncateText(eventName, 20)}
+                {eventName}
               </Text>
               <Text
                 className="font-SquadaOne text-[20px] mb-2"
@@ -93,14 +96,14 @@ const CustomModal = ({
               <Text
                 className="text-[26px] text-primary font-SquadaOne mb-2"
                 numberOfLines={1}
-                ellipsizeMode="tail"
+                adjustsFontSizeToFit
+                minimumFontScale={0.5}
               >
-                {truncateText(title, 20)}
+                {title}
               </Text>
               <Text
                 className="text-[20px] text-center font-SquadaOne mb-2"
                 numberOfLines={3}
-                ellipsizeMode="tail"
                 style={{ color: "rgba(37, 85, 134, 0.8)" }}
               >
                 {message}
@@ -135,7 +138,7 @@ const CustomModal = ({
                   shadowOpacity: 0.2,
                   shadowRadius: 4,
                 }}
-                onPress={onClose}
+                onPress={handleSecondaryAction}
               >
                 <Text className="text-primary font-SquadaOne text-[20px]">
                   {secondButtonText}
