@@ -39,15 +39,17 @@ const SignUp = () => {
       try {
         const response = await axios.get(`${config.API_URL}/api/departments`);
 
-        if (response.data?.departments?.length > 0) {
-          setDepartments((prev) =>
-            prev.length === 0
-              ? response.data.departments.map((dept) => ({
-                  label: dept.department_name,
-                  value: dept.department_id,
-                }))
-              : prev
-          );
+        if (
+          response.data &&
+          response.data.departments &&
+          response.data.departments.length > 0
+        ) {
+          const mappedDepartments = response.data.departments.map((dept) => ({
+            label: dept.name,
+            value: dept.id,
+          }));
+
+          setDepartments(mappedDepartments);
         } else {
           setErrorMessage("No departments found.");
           setErrorVisible(true);
@@ -120,6 +122,16 @@ const SignUp = () => {
 
   return (
     <SafeAreaView className="bg-primary h-full">
+      <View className="w-full h-50 items-center justify-center">
+        <View className="absolute w-full h-28 bg-secondary"></View>
+        <View className="absolute w-[70%] h-10 bg-cyan-500 top-1/3 right-52"></View>
+        <View className="absolute w-[70%] h-10 bg-cyan-500 bottom-1/3 left-52"></View>
+        <View className="absolute w-[70%] h-10 bg-primary"></View>
+
+        <View className="mt-5 mb-7">
+          <Image source={images.logo} style={{ width: 160, height: 160 }} />
+        </View>
+      </View>
       <ScrollView>
         <View className="items-center justify-center">
           <FormField2
@@ -190,13 +202,32 @@ const SignUp = () => {
             onChangeText={setConfirmPassword}
           />
 
+          <Text className="text-center w-[320px] text-secondary font-Arial mt-5">
+            *By registering for EVENTLOG, you agree with all the terms and
+            conditions set by the College of Information Technology Department.
+            Your participation and continued use of EVENTLOG confirm your
+            acceptance of these policies. *Warning: Make sure to use one account
+            only.
+          </Text>
+
           <CustomButton
-            title="Sign Up"
+            title="REGISTER"
             type="secondary"
-            otherStyles="mt-6 mb-2"
+            otherStyles="mt-5 mb-5"
             onPress={handleSignUp}
             disabled={isSubmitting}
           />
+
+          <View className="flex-row mb-16">
+            <Text className="font-Arial text-secondary text-[15px]">
+              Already have an account?{" "}
+            </Text>
+            <TouchableOpacity onPress={() => router.replace("/login")}>
+              <Text className="font-Arial font-bold text-secondary text-[15px]">
+                Log In.
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <CustomModal
