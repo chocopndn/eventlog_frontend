@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import { Text, View, Image, Alert } from "react-native";
+import { Text, View, Image } from "react-native";
 import CustomModal from "../../../components/CustomModal";
 import { getStoredEvents } from "../../../database/queries";
 import images from "../../../constants/images";
@@ -18,6 +18,7 @@ export default function Scan() {
   const [decryptedData, setDecryptedData] = useState(null);
   const [eventName, setEventName] = useState("N/A");
   const [apiStatus, setApiStatus] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
     if (permission?.status !== "granted") requestPermission();
@@ -47,7 +48,7 @@ export default function Scan() {
       }
     } catch (error) {
       console.error("Decryption Error:", error);
-      setModalVisible(true);
+      setErrorMessage("Invalid QR Code");
     }
   };
 
@@ -60,12 +61,9 @@ export default function Scan() {
       });
       setApiStatus("success");
     } catch (error) {
-      console.error("API Error:", error);
-      Alert.alert(
-        "Error",
+      setErrorMessage(
         error.response?.data?.message || "Failed to record attendance."
       );
-      setApiStatus("error");
     } finally {
       setModalVisible(false);
     }
@@ -81,6 +79,7 @@ export default function Scan() {
     setScannedData(null);
     setDecryptedData(null);
     setEventName("N/A");
+    setErrorMessage(null);
   };
 
   if (permission?.status !== "granted") {
@@ -95,7 +94,7 @@ export default function Scan() {
 
   return (
     <View className="flex-1 justify-center items-center bg-white relative">
-      {!modalVisible && !apiStatus && (
+      {!modalVisible && !apiStatus && !errorMessage && (
         <View className="flex items-center">
           <Text className="text-[30px] font-SquadaOne text-primary mb-10">
             Find a QR Code to scan
@@ -157,6 +156,19 @@ export default function Scan() {
                 : "Attendance was not recorded."
             }
             type={apiStatus === "success" ? "success" : "error"}
+            buttonText="OK"
+          />
+        </View>
+      )}
+
+      {errorMessage && (
+        <View className="absolute inset-0 flex justify-center items-center bg-black/50">
+          <CustomModal
+            visible={!!errorMessage}
+            onClose={() => setErrorMessage(null)}
+            title="Error"
+            message={errorMessage}
+            type="error"
             buttonText="OK"
           />
         </View>
