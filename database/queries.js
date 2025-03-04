@@ -1,9 +1,19 @@
-import * as SQLite from "expo-sqlite";
+import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+let SQLite;
 let db;
 
+if (Platform.OS !== "web") {
+  SQLite = require("expo-sqlite");
+}
+
 const initDB = async () => {
+  if (Platform.OS === "web") {
+    console.log("Web: initDB - SQLite not supported on web.");
+    return null;
+  }
+
   if (!db) {
     db = await SQLite.openDatabaseAsync("eventlog.db");
   }
@@ -11,6 +21,8 @@ const initDB = async () => {
 };
 
 const ensureDepartmentExists = async (db, departmentId, departmentName) => {
+  if (Platform.OS === "web") return;
+
   const existingDepartment = await db.getFirstAsync(
     "SELECT department_id FROM departments WHERE department_id = ?;",
     [departmentId]
@@ -25,6 +37,8 @@ const ensureDepartmentExists = async (db, departmentId, departmentName) => {
 };
 
 const ensureBlockExists = async (db, blockId, blockName, departmentId) => {
+  if (Platform.OS === "web") return;
+
   const existingBlock = await db.getFirstAsync(
     "SELECT block_id FROM blocks WHERE block_id = ?;",
     [blockId]
@@ -39,6 +53,8 @@ const ensureBlockExists = async (db, blockId, blockName, departmentId) => {
 };
 
 const saveUser = async (user) => {
+  if (Platform.OS === "web") return;
+
   const db = await initDB();
 
   try {
@@ -81,6 +97,8 @@ const saveUser = async (user) => {
 };
 
 const getStoredUser = async () => {
+  if (Platform.OS === "web") return null;
+
   const db = await initDB();
 
   try {
@@ -100,6 +118,8 @@ const getStoredUser = async () => {
 };
 
 const clearUser = async () => {
+  if (Platform.OS === "web") return;
+
   const db = await initDB();
   try {
     await db.runAsync("DELETE FROM users;");
@@ -109,6 +129,8 @@ const clearUser = async () => {
 };
 
 const saveEvent = async (event) => {
+  if (Platform.OS === "web") return;
+
   const db = await initDB();
 
   try {
@@ -147,6 +169,8 @@ const saveEvent = async (event) => {
 };
 
 const getStoredEvents = async () => {
+  if (Platform.OS === "web") return [];
+
   const db = await initDB();
 
   try {
@@ -169,6 +193,8 @@ const getStoredEvents = async () => {
 };
 
 const clearAllTables = async () => {
+  if (Platform.OS === "web") return;
+
   const db = await initDB();
 
   try {

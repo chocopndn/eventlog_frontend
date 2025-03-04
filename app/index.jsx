@@ -6,35 +6,34 @@ import {
   ActivityIndicator,
   SafeAreaView,
   StatusBar,
+  Platform,
 } from "react-native";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import images from "../constants/images";
 import { setupDatabase, initDB } from "../database/database";
-
 import CustomButton from "../components/CustomButton";
 
 const App = () => {
   const [loading, setLoading] = useState(true);
-  const [db, setDb] = useState(null);
 
   useEffect(() => {
     const initialize = async () => {
       try {
-        await setupDatabase();
-        const initializedDb = await initDB();
-        setDb(initializedDb);
-
-        const authToken = await AsyncStorage.getItem("authToken");
-        if (authToken) {
-          router.replace("/home");
+        if (Platform.OS !== "web") {
+          await setupDatabase();
+          await initDB();
+          const authToken = await AsyncStorage.getItem("authToken");
+          if (authToken) {
+            router.replace("/home");
+          } else {
+            setLoading(false);
+          }
         } else {
           setLoading(false);
         }
-      } catch (error) {
-        console.error("Database initialization error:", error);
-      }
+      } catch (error) {}
     };
 
     initialize();
@@ -46,6 +45,10 @@ const App = () => {
         <ActivityIndicator size="large" color="#81b0ff" />
       </View>
     );
+  }
+
+  if (Platform.OS === "web") {
+    router.replace("/login");
   }
 
   return (
