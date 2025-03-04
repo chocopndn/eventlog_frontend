@@ -21,10 +21,11 @@ const setupDatabase = async () => {
   try {
     db = await SQLite.openDatabaseAsync(dbName);
 
-    // Only set up the database if it's a new database.
-    const tables = await db.getAllAsync("SELECT name FROM sqlite_master WHERE type='table';");
+    const tables = await db.getAllAsync(
+      "SELECT name FROM sqlite_master WHERE type='table';"
+    );
 
-    if (tables.length === 0) { // Check if any tables exist. If none, its a new database.
+    if (tables.length === 0) {
       await db.execAsync("PRAGMA journal_mode = WAL;");
       await db.execAsync("PRAGMA foreign_keys = OFF;");
 
@@ -89,9 +90,8 @@ const setupDatabase = async () => {
 
       console.log("Database setup successful");
     } else {
-        console.log("Database already exists. Skipping setup");
+      console.log("Database already exists. Skipping setup");
     }
-
   } catch (error) {
     console.error("Error setting up the database:", error);
     throw new Error("Database setup failed");
