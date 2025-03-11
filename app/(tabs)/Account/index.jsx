@@ -2,11 +2,11 @@ import { View, Text, SafeAreaView, Image, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-import { getStoredUser, clearUser } from "../../database/queries";
-import images from "../../constants/images";
-import CustomButton from "../../components/CustomButton";
+import { getStoredUser, clearUser } from "../../../database/queries";
+import images from "../../../constants/images";
+import CustomButton from "../../../components/CustomButton";
 
-const Account = () => {
+const AccountIndex = () => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -106,14 +106,18 @@ const Account = () => {
                   <CustomButton
                     title="ADD EVENT"
                     type="primary"
-                    onPress={handleLogout}
+                    onPress={() => {
+                      router.push("/Account/AddEvent");
+                    }}
                     otherStyles="h-[35px] w-[190px]"
                   />
 
                   <CustomButton
                     title="EDIT EVENT"
                     type="secondary"
-                    onPress={handleLogout}
+                    onPress={() => {
+                      router.push("/Account/EditEvent");
+                    }}
                     otherStyles="h-[35px] w-[190px]"
                   />
                 </View>
@@ -175,4 +179,4 @@ const Account = () => {
   );
 };
 
-export default Account;
+export default AccountIndex;
