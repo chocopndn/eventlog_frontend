@@ -21,6 +21,7 @@ import warning from "../assets/icons/exclamation-triangle.png";
 import error from "../assets/icons/exclamation-circle.png";
 import success from "../assets/icons/check-circle.png";
 import qrscan from "../assets/icons/qr-scan.png";
+import xlogo from "../assets/icons/x.png";
 
 export default {
   logo,
@@ -44,4 +45,5 @@ export default {
   error,
   success,
   qrscan,
+  xlogo,
 };
