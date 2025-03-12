@@ -45,7 +45,8 @@
       "permissions": [
         "CAMERA",
         "RECORD_AUDIO"
-      ]
+      ],
+      "softwareKeyboardLayoutMode": "pan"
     }
   }
 }
