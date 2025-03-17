@@ -84,7 +84,7 @@ const AddEvent = () => {
             className="p-4"
           >
             <View>
-              <Text className="font-Arial text-primary">Departments</Text>
+              <Text className="font-Arial text-primary pl-2">Departments</Text>
               <SharpDropdown
                 data={departments}
                 onSelect={handleDepartmentSelect}
