@@ -7,16 +7,50 @@ import {
   Image,
   KeyboardAvoidingView,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
 import images from "../../../constants/images";
 import SharpDropdown from "../../../components/SharpDropdown2";
 import FormField from "../../../components/FormField3";
+import { API_URL } from "../../../config/config";
 
 const AddEvent = () => {
   const [eventName, setEventName] = useState("");
   const [venue, setVenue] = useState("");
   const [description, setDescription] = useState("");
+  const [departments, setDepartments] = useState([]);
+  const [selectedDepartments, setSelectedDepartments] = useState([]);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/api/departments`);
+        if (
+          response.status === 200 &&
+          Array.isArray(response.data.departments)
+        ) {
+          const departmentData = response.data.departments.map((dept) => ({
+            label: dept.name,
+            value: dept.id,
+          }));
+          setDepartments(departmentData);
+        } else {
+          console.error("Invalid API response:", response);
+          setDepartments([{ label: "Error Loading Departments", value: null }]);
+        }
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+        setDepartments([{ label: "Error Loading Departments", value: null }]);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
+
+  const handleDepartmentSelect = (values) => {
+    setSelectedDepartments(values);
+  };
 
   return (
     <SafeAreaView className="bg-secondary h-full">
@@ -50,30 +84,12 @@ const AddEvent = () => {
             className="p-4"
           >
             <View>
-              <Text className="font-Arial text-primary">Department</Text>
-              <SharpDropdown className="w-full" />
-            </View>
-
-            <View className="mt-4">
-              <Text className="font-Arial text-primary">Block/s Included</Text>
-              <SharpDropdown />
-            </View>
-
-            <View className="mt-4">
-              <Text className="font-Arial text-primary">Name of Event</Text>
-              <FormField value={eventName} onChangeText={setEventName} />
-            </View>
-            <View className="mt-4">
-              <Text className="font-Arial text-primary">Venue</Text>
-              <FormField value={venue} onChangeText={setVenue} />
-            </View>
-
-            <View className="mt-4">
-              <Text className="font-Arial text-primary">Description</Text>
-              <FormField
-                value={description}
-                onChangeText={setDescription}
-                containerHeight={100}
+              <Text className="font-Arial text-primary">Departments</Text>
+              <SharpDropdown
+                data={departments}
+                onSelect={handleDepartmentSelect}
+                placeholder="Select Departments"
+                value={selectedDepartments}
               />
             </View>
           </ScrollView>
