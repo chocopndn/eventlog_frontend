@@ -1,154 +1,143 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
-import { Dropdown } from "react-native-element-dropdown";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  StyleSheet,
+  FlatList,
+  Image,
+} from "react-native";
+import { useFonts } from "expo-font";
 import images from "../constants/images";
 
-const SharpDropdown2 = ({
-  title,
+const CustomMultiSelect = ({
   data = [],
-  defaultValue = null,
-  onSelect,
-  placeholder = "Select an option",
-  search = false,
+  placeholder = "Select departments",
+  onChange,
 }) => {
-  const [value, setValue] = useState(defaultValue);
-  const [isFocus, setIsFocus] = useState(false);
+  const [selected, setSelected] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [loaded] = useFonts({
+    Arial: require("../assets/fonts/Arial.ttf"),
+  });
 
-  useEffect(() => {
-    if (onSelect) {
-      onSelect(value);
+  if (!loaded) {
+    return null;
+  }
+
+  const toggleSelection = (item) => {
+    if (selected.includes(item.value)) {
+      setSelected(selected.filter((val) => val !== item.value));
+    } else {
+      setSelected([...selected, item.value]);
     }
-  }, [value, onSelect]);
+  };
 
-  useEffect(() => {
-    setValue(defaultValue);
-  }, [defaultValue]);
-
-  const dropdownData = useMemo(() => {
-    return data.length > 0
-      ? data
-      : [{ label: "No options available", value: null }];
-  }, [data]);
+  const renderItem = ({ item }) => (
+    <TouchableOpacity
+      style={[
+        styles.item,
+        selected.includes(item.value) && styles.selectedItem,
+      ]}
+      onPress={() => toggleSelection(item)}
+    >
+      <Text
+        style={[
+          styles.text,
+          selected.includes(item.value) && styles.selectedText,
+        ]}
+      >
+        {item.label}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
-      {title && title.trim() !== "" && (
-        <Text style={styles.title}>{title}</Text>
-      )}
-      <Dropdown
-        style={[styles.dropdown, isFocus ? styles.dropdownFocused : null]}
-        placeholder={placeholder}
-        placeholderStyle={styles.placeholderStyle}
-        selectedTextStyle={styles.selectedTextStyle}
-        inputSearchStyle={styles.inputSearchStyle}
-        data={dropdownData}
-        labelField="label"
-        valueField="value"
-        search={search}
-        maxHeight={300}
-        value={value}
-        onFocus={() => setIsFocus(true)}
-        onBlur={() => setIsFocus(false)}
-        onChange={(item) => {
-          setValue((prevValue) =>
-            prevValue === item.value ? null : item.value
-          );
-          setIsFocus(false);
-        }}
-        renderRightIcon={() =>
-          !isFocus && <Image source={images.arrowDown} style={styles.icon} />
-        }
-        containerStyle={styles.containerStyle}
-        renderItem={(item) => (
-          <TouchableOpacity
-            style={[
-              styles.listItem,
-              item.value === value ? styles.listItemSelected : null,
-            ]}
-            onPress={() => {
-              setValue((prevValue) =>
-                prevValue === item.value ? null : item.value
-              );
-              setIsFocus(false);
-            }}
-          >
-            <Text
-              style={[
-                styles.listItemText,
-                item.value === value ? styles.listItemTextSelected : null,
-              ]}
-              numberOfLines={2}
-              ellipsizeMode="tail"
+      <TouchableOpacity
+        style={styles.trigger}
+        onPress={() => setModalVisible(true)}
+      >
+        <Text style={styles.triggerText}>
+          {selected.length > 0
+            ? `${selected.length} departments selected`
+            : placeholder}
+        </Text>
+        <Image source={images.arrowDown} style={{ width: 24, height: 24 }} />
+      </TouchableOpacity>
+
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <FlatList
+              data={data}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.value}
+            />
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
             >
-              {item.label}
-            </Text>
-          </TouchableOpacity>
-        )}
-      />
+              <Text style={styles.text}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
 
-export default SharpDropdown2;
+export default CustomMultiSelect;
 
 const styles = StyleSheet.create({
-  dropdown: {
-    height: 46,
-    backgroundColor: "#FBF1E5",
+  container: { padding: 8 },
+  trigger: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 8,
     borderWidth: 2,
     borderColor: "#255586",
-    paddingHorizontal: 12,
-    justifyContent: "center",
   },
-  dropdownFocused: {
-    borderColor: "#255586",
-    borderWidth: 2,
-  },
-  placeholderStyle: {
-    color: "#255586",
-    textAlign: "center",
+  triggerText: {
     fontFamily: "Arial",
-  },
-  selectedTextStyle: {
-    fontSize: 18,
     color: "#255586",
-    textAlign: "center",
-    fontFamily: "SquadaOne",
   },
-  inputSearchStyle: {
-    height: 40,
-    fontSize: 16,
-    paddingHorizontal: 10,
-    fontFamily: "SquadaOne",
+  item: {
+    padding: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
   },
-  icon: {
-    width: 20,
-    height: 20,
-    tintColor: "#666",
-  },
-  containerStyle: {
-    backgroundColor: "#FBF1E5",
-    borderWidth: 1,
-    borderColor: "#ccc",
-  },
-  listItem: {
-    minHeight: 50,
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-    backgroundColor: "#FBF1E5",
-    justifyContent: "center",
-  },
-  listItemSelected: {
+  selectedItem: {
     backgroundColor: "#255586",
   },
-  listItemText: {
-    fontSize: 20,
-    fontFamily: "SquadaOne",
-    color: "#255586",
-    height: 45,
-    textAlignVertical: "center",
-  },
-  listItemTextSelected: {
+  selectedText: {
     color: "#FBF1E5",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "#FBF1E5",
+    padding: 10,
+    borderWidth: 4,
+    width: "80%",
+    borderColor: "#255586",
+  },
+  closeButton: {
+    marginTop: 10,
+    alignSelf: "flex-end",
+  },
+  text: {
+    fontFamily: "Arial",
+    color: "#255586",
   },
 });
