@@ -8,23 +8,15 @@ import {
   FlatList,
   Image,
 } from "react-native";
-import { useFonts } from "expo-font";
 import images from "../constants/images";
 
-const CustomMultiSelect = ({
+const SharpDropdown2 = ({
   data = [],
   placeholder = "Select departments",
   onChange,
 }) => {
   const [selected, setSelected] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [loaded] = useFonts({
-    Arial: require("../assets/fonts/Arial.ttf"),
-  });
-
-  if (!loaded) {
-    return null;
-  }
 
   const toggleSelection = (item) => {
     if (selected.includes(item.value)) {
@@ -41,6 +33,7 @@ const CustomMultiSelect = ({
         selected.includes(item.value) && styles.selectedItem,
       ]}
       onPress={() => toggleSelection(item)}
+      activeOpacity={1}
     >
       <Text
         style={[
@@ -92,7 +85,7 @@ const CustomMultiSelect = ({
   );
 };
 
-export default CustomMultiSelect;
+export default SharpDropdown2;
 
 const styles = StyleSheet.create({
   container: { padding: 8 },
@@ -110,11 +103,14 @@ const styles = StyleSheet.create({
   },
   item: {
     padding: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomWidth: 0,
+    justifyContent: "center",
+    height: 50,
   },
   selectedItem: {
     backgroundColor: "#255586",
+    borderColor: "#FBF1E5",
+    borderWidth: 1,
   },
   selectedText: {
     color: "#FBF1E5",
@@ -139,5 +135,6 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: "Arial",
     color: "#255586",
+    flexWrap: "wrap",
   },
 });
