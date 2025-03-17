@@ -57,7 +57,10 @@ const SharpDropdown2 = ({
             ? `${selected.length} departments selected`
             : placeholder}
         </Text>
-        <Image source={images.arrowDown} style={{ width: 24, height: 24 }} />
+        <Image
+          source={images.arrowDown}
+          style={{ width: 24, height: 24, tintColor: "#255586" }}
+        />
       </TouchableOpacity>
 
       <Modal
