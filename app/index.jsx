@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { StyleSheet, Text, Image, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
 
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
@@ -41,7 +42,13 @@ export default function App() {
       <Text style={styles.tagline}>Every CIT Event's Companion</Text>
 
       <View style={styles.buttons}>
-        <CustomButton type="primary" title="Log In" />
+        <CustomButton
+          type="primary"
+          title="Log In"
+          onPress={() => {
+            router.push("/login");
+          }}
+        />
         <CustomButton type="secondary" title="Register" />
       </View>
       <StatusBar style="auto" />
