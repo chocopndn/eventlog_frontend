@@ -48,7 +48,13 @@ const FormField = ({ type, placeholder, onChangeText, value }) => {
         value={value}
         onChangeText={handleInputChange}
         secureTextEntry={type === "password" && !showPassword}
-        keyboardType={type === "id" ? "numeric" : "default"}
+        keyboardType={
+          type === "id"
+            ? "numeric"
+            : type === "email"
+            ? "email-address"
+            : "default"
+        }
         autoCapitalize="none"
         autoCorrect={false}
       />
