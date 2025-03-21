@@ -30,6 +30,17 @@ const LoginLayout = () => {
           headerTintColor: theme.colors.secondary,
         }}
       />
+      <Stack.Screen
+        name="NewPassword"
+        options={{
+          headerShown: true,
+          headerTitle: "",
+          headerStyle: {
+            backgroundColor: theme.colors.primary,
+          },
+          headerTintColor: theme.colors.secondary,
+        }}
+      />
     </Stack>
   );
 };
