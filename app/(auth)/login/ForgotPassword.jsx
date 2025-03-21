@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import { router } from "expo-router";
 
 import FormField from "../../../components/FormField";
 import CustomButton from "../../../components/CustomButton";
@@ -19,15 +20,23 @@ const ForgotPassword = () => {
           Please enter your email to reset password
         </Text>
       </View>
-
-      <FormField
-        type="email"
-        placeholder="Email"
-        value={password}
-        onChangeText={setPassword}
-      />
-
-      <CustomButton type="secondary" title="RESET PASSWORD" />
+      <View style={styles.inputContainer}>
+        <FormField
+          type="email"
+          placeholder="Email"
+          value={password}
+          onChangeText={setPassword}
+        />
+      </View>
+      <View style={styles.buttonContainer}>
+        <CustomButton
+          type="secondary"
+          title="RESET PASSWORD"
+          onPress={() => {
+            router.push("/login/VerifyCode");
+          }}
+        />
+      </View>
 
       <StatusBar style="auto" />
     </SafeAreaView>
@@ -48,5 +57,11 @@ const styles = StyleSheet.create({
   info: {
     color: theme.colors.secondary,
     fontFamily: "Arial",
+  },
+  buttonContainer: {
+    marginTop: theme.spacing.medium,
+  },
+  inputContainer: {
+    marginTop: theme.spacing.medium,
   },
 });
