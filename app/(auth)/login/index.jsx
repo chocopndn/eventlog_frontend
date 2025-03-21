@@ -10,6 +10,7 @@ import globalStyles from "../../../constants/globalStyles";
 import Header from "../../../components/Header";
 import FormField from "../../../components/FormField";
 import CustomButton from "../../../components/CustomButton";
+import { router } from "expo-router";
 
 const Login = () => {
   const [id, setId] = useState("");
@@ -44,7 +45,11 @@ const Login = () => {
           </TouchableOpacity>
         </View>
         <View style={styles.forgotPassContainer}>
-          <TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              router.push("/login/ForgotPassword");
+            }}
+          >
             <Text style={styles.forgotPass}>Forgot Password?</Text>
           </TouchableOpacity>
         </View>
