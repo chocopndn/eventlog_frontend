@@ -18,6 +18,11 @@ const globalStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  icons: {
+    width: 24,
+    height: 24,
+    tintColor: theme.colors.gray,
+  },
 });
 
 export default globalStyles;
