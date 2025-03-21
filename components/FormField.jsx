@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 
 import theme from "../constants/theme.js";
 import globalStyles from "../constants/globalStyles.js";
@@ -13,8 +13,9 @@ import images from "../constants/images.js";
 
 const FormField = ({ type, placeholder, onChangeText, value }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const inputs = useRef([]);
 
-  const handleInputChange = (text) => {
+  const handleInputChange = (text, index) => {
     let formattedText = text;
 
     if (type === "id") {
@@ -23,7 +24,25 @@ const FormField = ({ type, placeholder, onChangeText, value }) => {
       formattedText = text.replace(/\s/g, "");
     }
 
-    onChangeText(formattedText);
+    if (type === "code") {
+      if (text.length > 1) return;
+
+      const newCode = [...value];
+      newCode[index] = text;
+      onChangeText(newCode);
+
+      if (text && index < value.length - 1) {
+        inputs.current[index + 1]?.focus();
+      }
+    } else {
+      onChangeText(formattedText);
+    }
+  };
+
+  const handleKeyPress = ({ nativeEvent }, index) => {
+    if (nativeEvent.key === "Backspace" && !value[index] && index > 0) {
+      inputs.current[index - 1]?.focus();
+    }
   };
 
   const getIcon = () => {
@@ -39,7 +58,23 @@ const FormField = ({ type, placeholder, onChangeText, value }) => {
     }
   };
 
-  return (
+  return type === "code" ? (
+    <View style={styles.codeContainer}>
+      {value.map((digit, index) => (
+        <TextInput
+          key={index}
+          ref={(ref) => (inputs.current[index] = ref)}
+          style={styles.codeInput}
+          keyboardType="number-pad"
+          maxLength={1}
+          value={digit}
+          onChangeText={(text) => handleInputChange(text, index)}
+          onKeyPress={(event) => handleKeyPress(event, index)}
+          autoFocus={index === 0}
+        />
+      ))}
+    </View>
+  ) : (
     <View style={styles.container}>
       {getIcon() && <Image source={getIcon()} style={globalStyles.icons} />}
       <TextInput
@@ -85,6 +120,25 @@ const styles = StyleSheet.create({
     fontFamily: "Arial",
     fontSize: theme.fontSizes.medium,
     flex: 1,
+    color: theme.colors.primary,
+  },
+  codeContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: theme.spacing.small,
+    marginBottom: theme.spacing.medium,
+  },
+  codeInput: {
+    width: 50,
+    height: 60,
+    textAlign: "center",
+    fontSize: theme.fontSizes.huge,
+    fontFamily: "SquadaOne",
+    color: theme.colors.primary,
+    backgroundColor: theme.colors.secondary,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    borderRadius: 8,
   },
 });
 
