@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "eventlog",
+    "scheme": "eventlog",
     "slug": "eventlog",
     "version": "1.0.0",
     "plugins": [
