@@ -4,7 +4,18 @@
     "slug": "eventlog",
     "version": "1.0.0",
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/SquadaOne.ttf",
+            "./assets/fonts/Arial.ttf",
+            "./assets/fonts/ArialBold.ttf",
+            "./assets/fonts/ArialItalic.ttf"
+          ]
+        }
+      ]
     ]
   }
 }
