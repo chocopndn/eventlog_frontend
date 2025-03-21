@@ -4,12 +4,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import Checkbox from "expo-checkbox";
 
-import theme from "../../constants/theme";
-import globalStyles from "../../constants/globalStyles";
+import theme from "../../../constants/theme";
+import globalStyles from "../../../constants/globalStyles";
 
-import Header from "../../components/Header";
-import FormField from "../../components/FormField";
-import CustomButton from "../../components/CustomButton";
+import Header from "../../../components/Header";
+import FormField from "../../../components/FormField";
+import CustomButton from "../../../components/CustomButton";
 
 const Login = () => {
   const [id, setId] = useState("");
