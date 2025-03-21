@@ -40,7 +40,7 @@ const VerifyCode = () => {
       <CustomButton
         type="secondary"
         title="VERIFY CODE"
-        onPress={() => router.push("/login/VerifyCode")}
+        onPress={() => router.push("/login/NewPassword")}
       />
 
       <View style={styles.resendContainer}>
