@@ -10,6 +10,8 @@ import theme from "../constants/theme";
 import globalStyles from "../constants/globalStyles";
 import images from "../constants/images";
 
+import CustomButton from "../components/CustomButton";
+
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
@@ -37,6 +39,11 @@ export default function App() {
         <Image source={images.logo} style={styles.logo} />
       </View>
       <Text style={styles.tagline}>Every CIT Event's Companion</Text>
+
+      <View style={styles.buttons}>
+        <CustomButton type="primary" title="Log In" />
+        <CustomButton type="secondary" title="Register" />
+      </View>
       <StatusBar style="auto" />
     </SafeAreaView>
   );
@@ -59,5 +66,8 @@ const styles = StyleSheet.create({
     fontFamily: "SquadaOne",
     color: theme.colors.primary,
     fontSize: theme.fontSizes.huge,
+  },
+  buttons: {
+    paddingTop: 20,
   },
 });
