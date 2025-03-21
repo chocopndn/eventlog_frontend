@@ -42,13 +42,15 @@ export default function App() {
       <Text style={styles.tagline}>Every CIT Event's Companion</Text>
 
       <View style={styles.buttons}>
-        <CustomButton
-          type="primary"
-          title="Log In"
-          onPress={() => {
-            router.push("/login");
-          }}
-        />
+        <View style={styles.loginContainer}>
+          <CustomButton
+            type="primary"
+            title="Log In"
+            onPress={() => {
+              router.push("/login");
+            }}
+          />
+        </View>
         <CustomButton type="secondary" title="Register" />
       </View>
       <StatusBar style="auto" />
@@ -76,5 +78,9 @@ const styles = StyleSheet.create({
   },
   buttons: {
     paddingTop: 20,
+  },
+  loginContainer: {
+    marginBottom: theme.spacing.medium,
+    marginTop: theme.spacing.medium,
   },
 });
