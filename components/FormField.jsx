@@ -4,6 +4,7 @@ import {
   Image,
   TouchableOpacity,
   StyleSheet,
+  Text,
 } from "react-native";
 import React, { useState, useRef } from "react";
 
@@ -11,7 +12,7 @@ import theme from "../constants/theme.js";
 import globalStyles from "../constants/globalStyles.js";
 import images from "../constants/images.js";
 
-const FormField = ({ type, placeholder, onChangeText, value }) => {
+const FormField = ({ type, title, placeholder, onChangeText, value }) => {
   const [showPassword, setShowPassword] = useState(false);
   const inputs = useRef([]);
 
@@ -59,48 +60,54 @@ const FormField = ({ type, placeholder, onChangeText, value }) => {
   };
 
   return type === "code" ? (
-    <View style={styles.codeContainer}>
-      {value.map((digit, index) => (
-        <TextInput
-          key={index}
-          ref={(ref) => (inputs.current[index] = ref)}
-          style={styles.codeInput}
-          keyboardType="number-pad"
-          maxLength={1}
-          value={digit}
-          onChangeText={(text) => handleInputChange(text, index)}
-          onKeyPress={(event) => handleKeyPress(event, index)}
-          autoFocus={index === 0}
-        />
-      ))}
+    <View style={styles.container}>
+      {title && <Text style={styles.title}>{title}</Text>}
+      <View style={styles.codeContainer}>
+        {value.map((digit, index) => (
+          <TextInput
+            key={index}
+            ref={(ref) => (inputs.current[index] = ref)}
+            style={styles.codeInput}
+            keyboardType="number-pad"
+            maxLength={1}
+            value={digit}
+            onChangeText={(text) => handleInputChange(text, index)}
+            onKeyPress={(event) => handleKeyPress(event, index)}
+            autoFocus={index === 0}
+          />
+        ))}
+      </View>
     </View>
   ) : (
     <View style={styles.container}>
-      {getIcon() && <Image source={getIcon()} style={globalStyles.icons} />}
-      <TextInput
-        style={styles.textInput}
-        placeholder={placeholder}
-        value={value}
-        onChangeText={handleInputChange}
-        secureTextEntry={type === "password" && !showPassword}
-        keyboardType={
-          type === "id"
-            ? "numeric"
-            : type === "email"
-            ? "email-address"
-            : "default"
-        }
-        autoCapitalize="none"
-        autoCorrect={false}
-      />
-      {type === "password" && (
-        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-          <Image
-            source={showPassword ? images.view : images.hide}
-            style={globalStyles.icons}
-          />
-        </TouchableOpacity>
-      )}
+      {title && <Text style={styles.title}>{title}</Text>}
+      <View style={styles.inputWrapper}>
+        {getIcon() && <Image source={getIcon()} style={globalStyles.icons} />}
+        <TextInput
+          style={styles.textInput}
+          placeholder={placeholder}
+          value={value}
+          onChangeText={handleInputChange}
+          secureTextEntry={type === "password" && !showPassword}
+          keyboardType={
+            type === "id"
+              ? "numeric"
+              : type === "email"
+              ? "email-address"
+              : "default"
+          }
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+        {type === "password" && (
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <Image
+              source={showPassword ? images.view : images.hide}
+              style={globalStyles.icons}
+            />
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 };
@@ -108,25 +115,32 @@ const FormField = ({ type, placeholder, onChangeText, value }) => {
 const styles = StyleSheet.create({
   container: {
     width: "80%",
+    marginBottom: theme.spacing.medium,
+  },
+  title: {
+    fontSize: theme.fontSizes.medium,
+    color: theme.colors.secondary,
+    marginBottom: theme.spacing.small,
+    fontFamily: "Arial",
+  },
+  inputWrapper: {
+    width: "100%",
     height: 46,
     paddingHorizontal: 10,
     borderRadius: theme.borderRadius.medium,
     backgroundColor: theme.colors.secondary,
     flexDirection: "row",
     alignItems: "center",
-    margin: theme.spacing.medium,
   },
   textInput: {
     fontFamily: "Arial",
     fontSize: theme.fontSizes.medium,
     flex: 1,
-    color: theme.colors.primary,
   },
   codeContainer: {
     flexDirection: "row",
     justifyContent: "center",
     gap: theme.spacing.small,
-    marginBottom: theme.spacing.medium,
   },
   codeInput: {
     width: 50,
