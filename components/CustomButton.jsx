@@ -1,6 +1,5 @@
-import { TouchableOpacity, Text, View, StyleSheet } from "react-native";
+import { Pressable, Text, TouchableOpacity, View } from "react-native";
 import React from "react";
-import theme from "../constants/theme";
 
 const CustomButton = ({
   type = "primary",
@@ -9,24 +8,30 @@ const CustomButton = ({
   otherStyles,
 }) => {
   return (
-    <View style={styles.container}>
+    <View>
       <TouchableOpacity
-        style={[
-          styles.buttonBase,
+        className={`
+      ${otherStyles} rounded-xl items-center justify-center m-3 w-[228px] h-[46px] ${
           type === "primary"
-            ? styles.primary
+            ? "bg-primary"
             : type === "secondary"
-            ? styles.secondary
-            : styles.default,
-          otherStyles,
-        ]}
+            ? "bg-secondary border-primary border-[2px]"
+            : "bg-gray-400"
+        }
+       
+    `}
         onPress={onPress}
       >
         <Text
-          style={[
-            styles.text,
-            type === "primary" ? styles.textPrimary : styles.textSecondary,
-          ]}
+          className={`font-SquadaOne text-[30px]
+      ${
+        type === "primary"
+          ? "text-secondary"
+          : type === "secondary"
+          ? "color-primary"
+          : "color-primary"
+      }
+    `}
         >
           {title}
         </Text>
@@ -34,39 +39,5 @@ const CustomButton = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-  },
-  buttonBase: {
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    width: 228,
-    height: 46,
-  },
-  primary: {
-    backgroundColor: theme.colors.primary,
-  },
-  secondary: {
-    backgroundColor: theme.colors.secondary,
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
-  },
-  default: {
-    backgroundColor: "gray",
-  },
-  text: {
-    fontFamily: "SquadaOne",
-    fontSize: 30,
-  },
-  textPrimary: {
-    color: theme.colors.secondary,
-  },
-  textSecondary: {
-    color: theme.colors.primary,
-  },
-});
 
 export default CustomButton;

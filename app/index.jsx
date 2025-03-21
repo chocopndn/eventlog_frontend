@@ -1,86 +1,81 @@
-import React, { useEffect } from "react";
-import { StyleSheet, Text, Image, View } from "react-native";
-import { StatusBar } from "expo-status-bar";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useEffect, useState } from "react";
+import {
+  Text,
+  View,
+  Image,
+  ActivityIndicator,
+  SafeAreaView,
+  StatusBar,
+  Platform,
+} from "react-native";
 import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { useFonts } from "expo-font";
-import * as SplashScreen from "expo-splash-screen";
-
-import theme from "../constants/theme";
-import globalStyles from "../constants/globalStyles";
 import images from "../constants/images";
-
+import { setupDatabase, initDB } from "../database/database";
 import CustomButton from "../components/CustomButton";
 
-SplashScreen.preventAutoHideAsync();
-
-export default function App() {
-  const [loaded, error] = useFonts({
-    Arial: require("../assets/fonts/Arial.ttf"),
-    ArialBold: require("../assets/fonts/ArialBold.ttf"),
-    ArialItalic: require("../assets/fonts/ArialItalic.ttf"),
-    SquadaOne: require("../assets/fonts/SquadaOne.ttf"),
-  });
+const App = () => {
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (loaded || error) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded, error]);
+    const initialize = async () => {
+      try {
+        if (Platform.OS !== "web") {
+          await setupDatabase();
+          await initDB();
+          const authToken = await AsyncStorage.getItem("authToken");
+          if (authToken) {
+            router.replace("/home");
+          } else {
+            setLoading(false);
+          }
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {}
+    };
 
-  if (!loaded && !error) {
-    return null;
+    initialize();
+  }, []);
+
+  if (loading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-secondary">
+        <ActivityIndicator size="large" color="#81b0ff" />
+      </View>
+    );
+  }
+
+  if (Platform.OS === "web") {
+    router.replace("/login");
   }
 
   return (
-    <SafeAreaView style={globalStyles.secondaryContainer}>
-      <Text style={styles.header}>EVENTLOG</Text>
-      <View style={styles.logoContainer}>
-        <Image source={images.logo} style={styles.logo} />
+    <SafeAreaView className="items-center justify-center h-full bg-secondary">
+      <Text className="text-[80px] font-SquadaOne color-primary">EVENTLOG</Text>
+      <View className="mt-5 mb-7">
+        <Image source={images.logo} className="w-[196px] h-[196px]" />
       </View>
-      <Text style={styles.tagline}>Every CIT Event's Companion</Text>
+      <Text className="font-SquadaOne color-primary text-[30px]">
+        Every CIT Event's Companion
+      </Text>
 
-      <View style={styles.buttons}>
-        <View style={styles.loginContainer}>
-          <CustomButton
-            type="primary"
-            title="Log In"
-            onPress={() => {
-              router.push("/login");
-            }}
-          />
-        </View>
-        <CustomButton type="secondary" title="Register" />
+      <View className="mt-5" pointerEvents="box-none">
+        <CustomButton
+          type="primary"
+          title="LOG IN"
+          onPress={() => router.push("./login")}
+        />
+        <CustomButton
+          type="secondary"
+          title="REGISTER"
+          onPress={() => router.push("/SignUp")}
+        />
       </View>
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
     </SafeAreaView>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  header: {
-    fontFamily: "SquadaOne",
-    color: theme.colors.primary,
-    fontSize: theme.fontSizes.display,
-  },
-  logo: {
-    width: 200,
-    height: 200,
-  },
-  logoContainer: {
-    padding: 20,
-  },
-  tagline: {
-    fontFamily: "SquadaOne",
-    color: theme.colors.primary,
-    fontSize: theme.fontSizes.huge,
-  },
-  buttons: {
-    paddingTop: 20,
-  },
-  loginContainer: {
-    marginBottom: theme.spacing.medium,
-    marginTop: theme.spacing.medium,
-  },
-});
+export default App;

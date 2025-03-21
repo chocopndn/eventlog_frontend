@@ -1,159 +1,76 @@
-import {
-  TextInput,
-  View,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-  Text,
-} from "react-native";
-import React, { useState, useRef } from "react";
+import { TextInput, View, Image, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
 
-import theme from "../constants/theme.js";
-import globalStyles from "../constants/globalStyles.js";
 import images from "../constants/images.js";
 
-const FormField = ({ type, title, placeholder, onChangeText, value }) => {
+const FormField = ({ type, placeholder, onChangeText, value }) => {
   const [showPassword, setShowPassword] = useState(false);
-  const inputs = useRef([]);
+  const [isFocused, setIsFocused] = useState(false);
 
-  const handleInputChange = (text, index) => {
-    let formattedText = text;
-
+  const handleInputChange = (text) => {
     if (type === "id") {
-      formattedText = text.replace(/[^0-9]/g, "");
-    } else if (type === "password") {
-      formattedText = text.replace(/\s/g, "");
-    }
-
-    if (type === "code") {
-      if (text.length > 1) return;
-
-      const newCode = [...value];
-      newCode[index] = text;
-      onChangeText(newCode);
-
-      if (text && index < value.length - 1) {
-        inputs.current[index + 1]?.focus();
-      }
+      const filteredText = text.replace(/[^0-9]/g, "");
+      onChangeText(filteredText);
     } else {
-      onChangeText(formattedText);
+      onChangeText(text);
     }
   };
 
-  const handleKeyPress = ({ nativeEvent }, index) => {
-    if (nativeEvent.key === "Backspace" && !value[index] && index > 0) {
-      inputs.current[index - 1]?.focus();
-    }
-  };
-
-  const getIcon = () => {
-    switch (type) {
-      case "id":
-        return images.idBadge;
-      case "email":
-        return images.email2;
-      case "password":
-        return images.lock;
-      default:
-        return null;
-    }
-  };
-
-  return type === "code" ? (
-    <View style={styles.container}>
-      {title && <Text style={styles.title}>{title}</Text>}
-      <View style={styles.codeContainer}>
-        {value.map((digit, index) => (
-          <TextInput
-            key={index}
-            ref={(ref) => (inputs.current[index] = ref)}
-            style={styles.codeInput}
-            keyboardType="number-pad"
-            maxLength={1}
-            value={digit}
-            onChangeText={(text) => handleInputChange(text, index)}
-            onKeyPress={(event) => handleKeyPress(event, index)}
-            autoFocus={index === 0}
-          />
-        ))}
-      </View>
-    </View>
-  ) : (
-    <View style={styles.container}>
-      {title && <Text style={styles.title}>{title}</Text>}
-      <View style={styles.inputWrapper}>
-        {getIcon() && <Image source={getIcon()} style={globalStyles.icons} />}
-        <TextInput
-          style={styles.textInput}
-          placeholder={placeholder}
-          value={value}
-          onChangeText={handleInputChange}
-          secureTextEntry={type === "password" && !showPassword}
-          keyboardType={
-            type === "id"
-              ? "numeric"
-              : type === "email"
-              ? "email-address"
-              : "default"
-          }
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-        {type === "password" && (
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+  return (
+    <View>
+      <View className="w-[311px] h-[46px] bg-secondary rounded-xl justify-center pl-3 m-5">
+        <View className="items-center flex-row w-full">
+          {type === "password" ? (
             <Image
-              source={showPassword ? images.view : images.hide}
-              style={globalStyles.icons}
+              source={images.lock}
+              className="h-[24px] w-[24px]"
+              style={{ tintColor: "#333333" }}
             />
-          </TouchableOpacity>
-        )}
+          ) : type === "id" ? (
+            <Image
+              source={images.idBadge}
+              className="h-[24px] w-[24px]"
+              style={{ tintColor: "#333333" }}
+            />
+          ) : type === "email2" ? (
+            <Image
+              source={images.email2}
+              className="h-[24px] w-[24px]"
+              style={{ tintColor: "#333333" }}
+            />
+          ) : null}
+
+          <TextInput
+            className="font-Arial text-[18px] flex-1 pl-2"
+            placeholder={placeholder}
+            value={value || ""}
+            onChangeText={handleInputChange}
+            secureTextEntry={type === "password" && !showPassword}
+            selectionColor={isFocused ? "#000" : "transparent"}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            keyboardType={type === "id" ? "numeric" : "default"}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+
+          {type === "password" && (
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+              className="pr-2"
+              style={{ tintColor: "#333333" }}
+            >
+              <Image
+                source={showPassword ? images.view : images.hide}
+                className="h-[24px] w-[24px] mr-2"
+                style={{ tintColor: "#333333" }}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    width: "80%",
-    marginBottom: theme.spacing.medium,
-  },
-  title: {
-    fontSize: theme.fontSizes.medium,
-    color: theme.colors.secondary,
-    marginBottom: theme.spacing.small,
-    fontFamily: "Arial",
-  },
-  inputWrapper: {
-    width: "100%",
-    height: 46,
-    paddingHorizontal: 10,
-    borderRadius: theme.borderRadius.medium,
-    backgroundColor: theme.colors.secondary,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  textInput: {
-    fontFamily: "Arial",
-    fontSize: theme.fontSizes.medium,
-    flex: 1,
-  },
-  codeContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: theme.spacing.small,
-  },
-  codeInput: {
-    width: 50,
-    height: 60,
-    textAlign: "center",
-    fontSize: theme.fontSizes.huge,
-    fontFamily: "SquadaOne",
-    color: theme.colors.primary,
-    backgroundColor: theme.colors.secondary,
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
-    borderRadius: 8,
-  },
-});
 
 export default FormField;

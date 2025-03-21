@@ -1,5 +1,4 @@
-const config = {
-  API_URL: process.env.EXPO_PUBLIC_API_URL,
+module.exports = {
+  API_URL: process.env.API_URL,
+  QR_PASS: process.env.QR_PASS
 };
-
-export default config;
