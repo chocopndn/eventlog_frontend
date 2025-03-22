@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { router, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import axios from "axios";
 
 import FormField from "../../../components/FormField";
