@@ -51,7 +51,11 @@ export default function App() {
             }}
           />
         </View>
-        <CustomButton type="secondary" title="Register" />
+        <CustomButton
+          type="secondary"
+          title="Register"
+          onPress={() => router.push("/signup")}
+        />
       </View>
       <StatusBar style="auto" />
     </SafeAreaView>
