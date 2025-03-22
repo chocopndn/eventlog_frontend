@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { router } from "expo-router";
+import { router, useRouter } from "expo-router";
 import axios from "axios";
 
 import FormField from "../../../components/FormField";
@@ -24,6 +24,7 @@ const ForgotPassword = () => {
   const [modalMessage, setModalMessage] = useState("");
   const [modalTitle, setModalTitle] = useState("");
   const [modalType, setModalType] = useState("");
+  const router = useRouter();
 
   const handleResetPassword = async () => {
     if (!validateEmail(email)) {
@@ -42,7 +43,7 @@ const ForgotPassword = () => {
       });
 
       if (response.status === 200) {
-        router.push("/login/VerifyCode");
+        router.push(`/login/VerifyCode?email=${encodeURIComponent(email)}`);
       }
     } catch (error) {
       setModalType("error");
