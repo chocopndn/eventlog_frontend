@@ -1,8 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, Image, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import axios from "axios";
+import { API_URL } from "../config/config";
+import { storeDepartments } from "../database/queries";
 
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
@@ -22,12 +25,31 @@ export default function App() {
     ArialItalic: require("../assets/fonts/ArialItalic.ttf"),
     SquadaOne: require("../assets/fonts/SquadaOne.ttf"),
   });
+  const [hasFetched, setHasFetched] = useState(false);
+
+  const [departments, setDepartments] = useState([]);
 
   useEffect(() => {
+    const fetchDepartments = async () => {
+      if (hasFetched) return;
+      try {
+        const response = await axios.get(`${API_URL}/api/departments`);
+        const fetchedDepartments = response.data?.departments || [];
+        setDepartments(fetchedDepartments);
+        setHasFetched(true);
+
+        await storeDepartments(fetchedDepartments);
+      } catch (error) {
+        console.error("Failed to fetch departments:", error);
+      }
+    };
+
+    fetchDepartments();
+
     if (loaded || error) {
       SplashScreen.hideAsync();
     }
-  }, [loaded, error]);
+  }, [hasFetched, loaded, error]);
 
   if (!loaded && !error) {
     return null;
