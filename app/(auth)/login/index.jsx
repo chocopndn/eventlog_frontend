@@ -58,7 +58,7 @@ const Login = () => {
 
       <View style={styles.registerContainer}>
         <Text style={styles.registerQ}>Don't have an account?</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push("/signup")}>
           <Text style={styles.registerLink}>Register</Text>
         </TouchableOpacity>
       </View>
