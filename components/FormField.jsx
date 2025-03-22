@@ -12,7 +12,14 @@ import theme from "../constants/theme.js";
 import globalStyles from "../constants/globalStyles.js";
 import images from "../constants/images.js";
 
-const FormField = ({ type, title, placeholder, onChangeText, value }) => {
+const FormField = ({
+  type,
+  title,
+  placeholder,
+  onChangeText,
+  value,
+  optional = false,
+}) => {
   const [showPassword, setShowPassword] = useState(false);
   const inputs = useRef([]);
 
@@ -61,7 +68,12 @@ const FormField = ({ type, title, placeholder, onChangeText, value }) => {
 
   return type === "code" ? (
     <View style={styles.container}>
-      {title && <Text style={styles.title}>{title}</Text>}
+      {title && (
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>{title}</Text>
+          {optional && <Text style={styles.optionalText}> (optional)</Text>}
+        </View>
+      )}
       <View style={styles.codeContainer}>
         {value.map((digit, index) => (
           <TextInput
@@ -80,7 +92,12 @@ const FormField = ({ type, title, placeholder, onChangeText, value }) => {
     </View>
   ) : (
     <View style={styles.container}>
-      {title && <Text style={styles.title}>{title}</Text>}
+      {title && (
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>{title}</Text>
+          {optional && <Text style={styles.optionalText}> (optional)</Text>}
+        </View>
+      )}
       <View style={styles.inputWrapper}>
         {getIcon() && <Image source={getIcon()} style={globalStyles.icons} />}
         <TextInput
@@ -117,10 +134,19 @@ const styles = StyleSheet.create({
     width: "80%",
     marginBottom: theme.spacing.medium,
   },
+  titleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: theme.spacing.small,
+  },
   title: {
     fontSize: theme.fontSizes.medium,
     color: theme.colors.secondary,
-    marginBottom: theme.spacing.small,
+    fontFamily: "Arial",
+  },
+  optionalText: {
+    fontSize: theme.fontSizes.small,
+    color: theme.colors.secondary,
     fontFamily: "Arial",
   },
   inputWrapper: {
