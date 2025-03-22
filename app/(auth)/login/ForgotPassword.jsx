@@ -3,15 +3,32 @@ import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
+import axios from "axios";
 
 import FormField from "../../../components/FormField";
 import CustomButton from "../../../components/CustomButton";
 
 import globalStyles from "../../../constants/globalStyles";
 import theme from "../../../constants/theme";
+import { API_URL } from "../../../config/config";
 
-const ResetPassword = () => {
-  const [password, setPassword] = useState("");
+const ForgotPassword = () => {
+  const [email, setEmail] = useState("");
+
+  const handleResetPassword = async () => {
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/reset-password`, {
+        email: email,
+      });
+
+      if (response.status === 200) {
+        router.push("/login/VerifyCode");
+      }
+    } catch (error) {
+      console.error("Error resetting password:", error);
+    }
+  };
+
   return (
     <SafeAreaView style={globalStyles.primaryContainer}>
       <View style={styles.headerContainer}>
@@ -24,26 +41,23 @@ const ResetPassword = () => {
         <FormField
           type="email"
           placeholder="Email"
-          value={password}
-          onChangeText={setPassword}
+          value={email}
+          onChangeText={setEmail}
         />
       </View>
       <View style={styles.buttonContainer}>
         <CustomButton
           type="secondary"
           title="RESET PASSWORD"
-          onPress={() => {
-            router.push("/login/VerifyCode");
-          }}
+          onPress={handleResetPassword}
         />
       </View>
-
       <StatusBar style="auto" />
     </SafeAreaView>
   );
 };
 
-export default ResetPassword;
+export default ForgotPassword;
 
 const styles = StyleSheet.create({
   forgotPassword: {
