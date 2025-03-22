@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { router, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import axios from "axios";
 
 import FormField from "../../../components/FormField";
@@ -22,6 +22,7 @@ const VerifyCode = () => {
   const [modalTitle, setModalTitle] = useState("");
   const [modalMessage, setModalMessage] = useState("");
   const [modalType, setModalType] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     if (timer > 0) {
@@ -51,7 +52,9 @@ const VerifyCode = () => {
       );
 
       if (response.status === 200) {
-        setTimeout(() => router.push("/login/NewPassword"));
+        setTimeout(() =>
+          router.push(`/login/NewPassword?email=${encodeURIComponent(email)}`)
+        );
       } else {
         setIsCodeValid(false);
         setModalType("error");
