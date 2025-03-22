@@ -19,6 +19,7 @@ const FormField = ({
   onChangeText,
   value,
   optional = false,
+  iconShow = true,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const inputs = useRef([]);
@@ -66,6 +67,13 @@ const FormField = ({
     }
   };
 
+  const getAutoCapitalize = () => {
+    if (type === "password" || type === "email") {
+      return "none";
+    }
+    return "sentences";
+  };
+
   return type === "code" ? (
     <View style={styles.container}>
       {title && (
@@ -99,7 +107,9 @@ const FormField = ({
         </View>
       )}
       <View style={styles.inputWrapper}>
-        {getIcon() && <Image source={getIcon()} style={globalStyles.icons} />}
+        {iconShow && getIcon() && (
+          <Image source={getIcon()} style={globalStyles.icons} />
+        )}
         <TextInput
           style={styles.textInput}
           placeholder={placeholder}
@@ -113,7 +123,7 @@ const FormField = ({
               ? "email-address"
               : "default"
           }
-          autoCapitalize="none"
+          autoCapitalize={getAutoCapitalize()}
           autoCorrect={false}
         />
         {type === "password" && (
