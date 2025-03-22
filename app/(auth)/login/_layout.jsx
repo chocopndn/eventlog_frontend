@@ -9,7 +9,7 @@ const LoginLayout = () => {
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen
-        name="ForgotPassword"
+        name="ResetPassword"
         options={{
           headerShown: true,
           headerTitle: "",

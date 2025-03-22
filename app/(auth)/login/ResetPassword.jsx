@@ -10,7 +10,7 @@ import CustomButton from "../../../components/CustomButton";
 import globalStyles from "../../../constants/globalStyles";
 import theme from "../../../constants/theme";
 
-const ForgotPassword = () => {
+const ResetPassword = () => {
   const [password, setPassword] = useState("");
   return (
     <SafeAreaView style={globalStyles.primaryContainer}>
@@ -43,7 +43,7 @@ const ForgotPassword = () => {
   );
 };
 
-export default ForgotPassword;
+export default ResetPassword;
 
 const styles = StyleSheet.create({
   forgotPassword: {
