@@ -56,6 +56,12 @@ const Login = () => {
       </View>
       <CustomButton type="secondary" title="Login" />
 
+      <View style={styles.registerContainer}>
+        <Text style={styles.registerQ}>Don't have an account?</Text>
+        <TouchableOpacity>
+          <Text style={styles.registerLink}>Register</Text>
+        </TouchableOpacity>
+      </View>
       <StatusBar style="auto" />
     </SafeAreaView>
   );
@@ -68,6 +74,7 @@ const styles = StyleSheet.create({
     color: theme.colors.secondary,
     fontSize: theme.fontSizes.display,
     fontFamily: "SquadaOne",
+    marginBottom: theme.spacing.medium,
   },
   checkbox: {
     marginRight: theme.spacing.small,
@@ -91,11 +98,24 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     width: "80%",
-    marginBottom: theme.spacing.medium,
+    marginBottom: theme.spacing.large,
   },
   forgotPass: {
     fontSize: theme.fontSizes.small,
     color: theme.colors.secondary,
     fontFamily: "Arial",
+  },
+  registerQ: {
+    color: theme.colors.secondary,
+    fontFamily: "Arial",
+    paddingRight: theme.spacing.small,
+  },
+  registerContainer: {
+    flexDirection: "row",
+    marginTop: theme.spacing.medium,
+  },
+  registerLink: {
+    color: theme.colors.secondary,
+    fontFamily: "ArialBold",
   },
 });
