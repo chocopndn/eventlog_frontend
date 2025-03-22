@@ -1,13 +1,15 @@
-import { Stack, useRouter } from "expo-router";
-
+import { Stack } from "expo-router";
 import theme from "../../../constants/theme";
 
 const LoginLayout = () => {
-  const router = useRouter();
-
   return (
     <Stack>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="index"
+        options={{
+          headerShown: false,
+        }}
+      />
       <Stack.Screen
         name="ForgotPassword"
         options={{
@@ -20,7 +22,7 @@ const LoginLayout = () => {
         }}
       />
       <Stack.Screen
-        name="VerifyCode"
+        name="NewPassword"
         options={{
           headerShown: true,
           headerTitle: "",
@@ -31,7 +33,7 @@ const LoginLayout = () => {
         }}
       />
       <Stack.Screen
-        name="NewPassword"
+        name="VerifyCode"
         options={{
           headerShown: true,
           headerTitle: "",
