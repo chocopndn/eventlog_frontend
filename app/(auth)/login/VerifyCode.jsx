@@ -2,18 +2,26 @@ import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
+import axios from "axios";
 
 import FormField from "../../../components/FormField";
 import CustomButton from "../../../components/CustomButton";
+import CustomModal from "../../../components/CustomModal";
 
 import globalStyles from "../../../constants/globalStyles";
 import theme from "../../../constants/theme";
+import { API_URL } from "../../../config/config";
 
 const VerifyCode = () => {
-  const [email, setEmail] = useState("chocopndn@gmail.com");
+  const { email } = useLocalSearchParams();
   const [code, setCode] = useState(["", "", "", "", ""]);
   const [timer, setTimer] = useState(60);
+  const [isCodeValid, setIsCodeValid] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalType, setModalType] = useState("");
 
   useEffect(() => {
     if (timer > 0) {
@@ -24,8 +32,40 @@ const VerifyCode = () => {
 
   const handleResend = () => {
     setTimer(60);
+  };
 
-    console.log("Resending code to:", email);
+  const handleVerifyCode = async () => {
+    const enteredCode = code.join("");
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/auth/reset-password/confirm`,
+        {
+          email,
+          reset_code: enteredCode,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        setTimeout(() => router.push("/login/NewPassword"));
+      } else {
+        setIsCodeValid(false);
+        setModalType("error");
+        setModalTitle("Error");
+        setModalMessage("Invalid code, please try again.");
+        setModalVisible(true);
+      }
+    } catch (error) {
+      setIsCodeValid(false);
+      setModalType("error");
+      setModalTitle("Error");
+      setModalMessage("Please check the code and try again.");
+      setModalVisible(true);
+    }
   };
 
   return (
@@ -35,12 +75,17 @@ const VerifyCode = () => {
         <Text style={styles.info}>Enter the 5-digit code sent to {email}</Text>
       </View>
 
-      <FormField type="code" value={code} onChangeText={setCode} />
+      <FormField
+        type="code"
+        value={code}
+        onChangeText={setCode}
+        error={!isCodeValid ? "Invalid code, please try again." : ""}
+      />
 
       <CustomButton
         type="secondary"
         title="VERIFY CODE"
-        onPress={() => router.push("/login/NewPassword")}
+        onPress={handleVerifyCode}
       />
 
       <View style={styles.resendContainer}>
@@ -53,6 +98,14 @@ const VerifyCode = () => {
           </TouchableOpacity>
         )}
       </View>
+
+      <CustomModal
+        visible={modalVisible}
+        title={modalTitle}
+        message={modalMessage}
+        type={modalType}
+        onClose={() => setModalVisible(false)}
+      />
 
       <StatusBar style="auto" />
     </SafeAreaView>
