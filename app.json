@@ -16,7 +16,8 @@
             "./assets/fonts/ArialItalic.ttf"
           ]
         }
-      ]
+      ],
+      "expo-sqlite"
     ]
   }
 }
