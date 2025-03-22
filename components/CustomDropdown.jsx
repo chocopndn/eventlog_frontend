@@ -39,7 +39,7 @@ const CustomDropdown = ({
         placeholderStyle={styles.placeholderStyle}
         selectedTextStyle={styles.selectedTextStyle}
         itemTextStyle={styles.itemTextStyle}
-        activeColor={theme.colors.primary}
+        itemContainerStyle={styles.itemContainerStyle}
       />
     </View>
   );
@@ -69,10 +69,12 @@ const styles = StyleSheet.create({
   },
   selectedTextStyle: {
     fontSize: 16,
-    color: theme.colors.secondary,
   },
   itemTextStyle: {
     color: theme.colors.primary,
+  },
+  itemContainerStyle: {
+    backgroundColor: theme.colors.secondary,
   },
 });
 
