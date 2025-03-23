@@ -1,8 +1,9 @@
 import { Platform } from "react-native";
 import initDB from "./database";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const storeDepartments = async (departments) => {
-  if (Platform.OS === "android" || Platform.OS === "ios") {
+  if (Platform.OS !== "web") {
     try {
       const dbInstance = await initDB();
       if (!dbInstance) {
@@ -78,7 +79,35 @@ export const clearAllTablesData = async () => {
     } catch (error) {
       console.error("Error clearing all tables data:", error);
     }
+  }
+};
+
+export const getRoleId = async () => {
+  if (Platform.OS !== "web") {
+    try {
+      const idNumber = await AsyncStorage.getItem("id_number");
+      if (!idNumber) {
+        console.error("id_number not found in AsyncStorage");
+        return null;
+      }
+
+      const dbInstance = await initDB();
+      if (!dbInstance) {
+        console.error("Database initialization failed.");
+        return null;
+      }
+
+      const result = await dbInstance.getAsync(
+        "SELECT role_id FROM users WHERE id_number = ?",
+        [idNumber]
+      );
+      return result?.role_id;
+    } catch (error) {
+      console.error("Error getting role ID:", error);
+      return null;
+    }
   } else {
     console.log("SQLite only supported on Android and iOS.");
+    return null;
   }
 };
