@@ -1,12 +1,29 @@
 import { Tabs, TabList, TabTrigger, TabSlot } from "expo-router/ui";
 import { View, Image, Text, StyleSheet } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
+
+import { getRoleId } from "../../database/queries";
 
 import images from "../../constants/images";
 import theme from "../../constants/theme";
 
 const TabsLayout = () => {
-  return (
+  const [roleId, setRoleId] = useState(null);
+
+  useEffect(() => {
+    const fetchRoleId = async () => {
+      try {
+        const fetchedRoleId = await getRoleId();
+        setRoleId(fetchedRoleId);
+      } catch (error) {
+        console.error("Error fetching role ID:", error);
+      }
+    };
+
+    fetchRoleId();
+  }, []);
+
+  return roleId === 1 || roleId === 2 || roleId === 3 ? (
     <Tabs>
       <TabSlot />
 
@@ -47,6 +64,34 @@ const TabsLayout = () => {
             <Image source={images.user} style={styles.tabIcon} />
             <View style={styles.tabTextContainer}>
               <Text style={styles.tabText}>Account</Text>
+            </View>
+          </View>
+        </TabTrigger>
+      </TabList>
+    </Tabs>
+  ) : (
+    <Tabs>
+      <TabSlot />
+
+      <TabList style={styles.tabList}>
+        <TabTrigger name="Home" href="/(tabs)/home">
+          <View style={styles.tabItem}>
+            <Image source={images.home} style={styles.tabIcon} />
+            <View style={styles.tabTextContainer}>
+              <Text style={styles.tabText}>Home</Text>
+            </View>
+          </View>
+        </TabTrigger>
+
+        <View style={styles.logoContainer}>
+          <Image source={images.logo} style={styles.logoImage} />
+        </View>
+
+        <TabTrigger name="QRCode" href="/(tabs)/QRCode">
+          <View style={styles.tabItem}>
+            <Image source={images.scanner} style={styles.tabIcon} />
+            <View style={styles.tabTextContainer}>
+              <Text style={styles.tabText}>QR Code</Text>
             </View>
           </View>
         </TabTrigger>
