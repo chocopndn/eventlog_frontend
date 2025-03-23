@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import Checkbox from "expo-checkbox";
@@ -25,6 +25,33 @@ const Login = () => {
   const [modalType, setModalType] = useState("");
   const [modalTitle, setModalTitle] = useState("");
 
+  useEffect(() => {
+    const loadRememberedCredentials = async () => {
+      try {
+        const rememberedId = await AsyncStorage.getItem("rememberedId");
+        const rememberedPassword = await AsyncStorage.getItem(
+          "rememberedPassword"
+        );
+        const rememberedChecked = await AsyncStorage.getItem(
+          "rememberedChecked"
+        );
+
+        if (
+          rememberedId &&
+          rememberedPassword &&
+          rememberedChecked === "true"
+        ) {
+          setId(rememberedId);
+          setPassword(rememberedPassword);
+          setChecked(true);
+        }
+      } catch (error) {
+        console.error("Error loading remembered credentials:", error);
+      }
+    };
+    loadRememberedCredentials();
+  }, []);
+
   const handleLogin = async () => {
     if (!id || !password) {
       setModalTitle("Login Error");
@@ -42,6 +69,15 @@ const Login = () => {
 
       if (response.status === 200) {
         await AsyncStorage.setItem("userToken", response.data.token);
+        if (isChecked) {
+          await AsyncStorage.setItem("rememberedId", id);
+          await AsyncStorage.setItem("rememberedPassword", password);
+          await AsyncStorage.setItem("rememberedChecked", "true");
+        } else {
+          await AsyncStorage.removeItem("rememberedId");
+          await AsyncStorage.removeItem("rememberedPassword");
+          await AsyncStorage.removeItem("rememberedChecked");
+        }
         router.replace("/(tabs)/home");
       } else {
         setModalTitle("Login Failed");
