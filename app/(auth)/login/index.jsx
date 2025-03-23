@@ -3,19 +3,64 @@ import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import Checkbox from "expo-checkbox";
+import axios from "axios";
+import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import CustomModal from "../../../components/CustomModal";
 
 import theme from "../../../constants/theme";
 import globalStyles from "../../../constants/globalStyles";
-
 import Header from "../../../components/Header";
 import FormField from "../../../components/FormField";
 import CustomButton from "../../../components/CustomButton";
-import { router } from "expo-router";
+import { API_URL } from "../../../config/config";
 
 const Login = () => {
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [isChecked, setChecked] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalType, setModalType] = useState("");
+  const [modalTitle, setModalTitle] = useState("");
+
+  const handleLogin = async () => {
+    if (!id || !password) {
+      setModalTitle("Login Error");
+      setModalMessage("Please enter your credentials.");
+      setModalType("error");
+      setModalVisible(true);
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/login`, {
+        id_number: id,
+        password: password,
+      });
+
+      if (response.status === 200) {
+        await AsyncStorage.setItem("userToken", response.data.token);
+        router.replace("/(tabs)/home");
+      } else {
+        setModalTitle("Login Failed");
+        setModalMessage(
+          response.data.message || "Invalid credentials. Please try again."
+        );
+        setModalType("error");
+        setModalVisible(true);
+      }
+    } catch (error) {
+      setModalTitle("Login Error");
+      setModalMessage(
+        error.response?.data?.message || "An error occurred during login."
+      );
+      setModalType("error");
+      setModalVisible(true);
+    }
+  };
+
   return (
     <SafeAreaView style={globalStyles.primaryContainer}>
       <Header type="primary" />
@@ -54,13 +99,7 @@ const Login = () => {
           </TouchableOpacity>
         </View>
       </View>
-      <CustomButton
-        type="secondary"
-        title="Login"
-        onPress={() => {
-          router.replace("/(tabs)/home");
-        }}
-      />
+      <CustomButton type="secondary" title="Login" onPress={handleLogin} />
 
       <View style={styles.registerContainer}>
         <Text style={styles.registerQ}>Don't have an account?</Text>
@@ -69,6 +108,13 @@ const Login = () => {
         </TouchableOpacity>
       </View>
       <StatusBar style="auto" />
+      <CustomModal
+        visible={modalVisible}
+        title={modalTitle}
+        message={modalMessage}
+        type={modalType}
+        onClose={() => setModalVisible(false)}
+      />
     </SafeAreaView>
   );
 };
