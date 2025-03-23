@@ -54,7 +54,13 @@ const Login = () => {
           </TouchableOpacity>
         </View>
       </View>
-      <CustomButton type="secondary" title="Login" />
+      <CustomButton
+        type="secondary"
+        title="Login"
+        onPress={() => {
+          router.replace("/(tabs)/home");
+        }}
+      />
 
       <View style={styles.registerContainer}>
         <Text style={styles.registerQ}>Don't have an account?</Text>
