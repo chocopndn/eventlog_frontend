@@ -6,6 +6,7 @@ import Checkbox from "expo-checkbox";
 import axios from "axios";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { storeUser } from "../../../database/queries";
 
 import CustomModal from "../../../components/CustomModal";
 
@@ -78,6 +79,8 @@ const Login = () => {
           await AsyncStorage.removeItem("rememberedPassword");
           await AsyncStorage.removeItem("rememberedChecked");
         }
+        await storeUser(response.data.user);
+
         router.replace("/(tabs)/home");
       } else {
         setModalTitle("Login Failed");
