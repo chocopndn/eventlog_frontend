@@ -97,7 +97,7 @@ export const getRoleId = async () => {
         return null;
       }
 
-      const result = await dbInstance.getAsync(
+      const result = await dbInstance.getFirstAsync(
         "SELECT role_id FROM users WHERE id_number = ?",
         [idNumber]
       );
