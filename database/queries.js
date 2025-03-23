@@ -50,3 +50,35 @@ export const storeUser = async (user) => {
     }
   }
 };
+
+export const clearAllTablesData = async () => {
+  if (Platform.OS !== "web") {
+    try {
+      const dbInstance = await initDB();
+      if (!dbInstance) {
+        console.error("Database initialization failed.");
+        return;
+      }
+
+      await dbInstance.execAsync(`
+        DELETE FROM attendance;
+        DELETE FROM event_blocks;
+        DELETE FROM event_dates;
+        DELETE FROM events;
+        DELETE FROM event_names;
+        DELETE FROM users;
+        DELETE FROM blocks;
+        DELETE FROM courses;
+        DELETE FROM year_levels;
+        DELETE FROM departments;
+        DELETE FROM roles;
+      `);
+
+      console.log("All tables data cleared successfully.");
+    } catch (error) {
+      console.error("Error clearing all tables data:", error);
+    }
+  } else {
+    console.log("SQLite only supported on Android and iOS.");
+  }
+};
