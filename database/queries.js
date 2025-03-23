@@ -82,7 +82,7 @@ export const clearAllTablesData = async () => {
   }
 };
 
-export const getRoleId = async () => {
+export const getRoleID = async () => {
   if (Platform.OS !== "web") {
     try {
       const idNumber = await AsyncStorage.getItem("id_number");

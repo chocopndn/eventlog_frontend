@@ -2,7 +2,7 @@ import { Tabs, TabList, TabTrigger, TabSlot } from "expo-router/ui";
 import { View, Image, Text, StyleSheet } from "react-native";
 import React, { useEffect, useState } from "react";
 
-import { getRoleId } from "../../database/queries";
+import { getRoleID } from "../../database/queries";
 
 import images from "../../constants/images";
 import theme from "../../constants/theme";
@@ -13,7 +13,7 @@ const TabsLayout = () => {
   useEffect(() => {
     const fetchRoleId = async () => {
       try {
-        const fetchedRoleId = await getRoleId();
+        const fetchedRoleId = await getRoleID();
         setRoleId(fetchedRoleId);
       } catch (error) {
         console.error("Error fetching role ID:", error);
