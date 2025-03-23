@@ -70,6 +70,8 @@ const Login = () => {
 
       if (response.status === 200) {
         await AsyncStorage.setItem("userToken", response.data.token);
+        await AsyncStorage.setItem("id_number", response.data.user.id_number);
+
         if (isChecked) {
           await AsyncStorage.setItem("rememberedId", id);
           await AsyncStorage.setItem("rememberedPassword", password);
