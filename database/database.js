@@ -1,24 +1,21 @@
-import * as SQLite from "expo-sqlite";
+import { Platform } from "react-native";
 
+let SQLite;
 let db;
 
-const dropDepartmentsTable = async () => {
-  try {
-    db = await SQLite.openDatabaseAsync("eventlog.db");
-    await db.execAsync("DROP TABLE IF EXISTS departments;");
-  } catch (error) {
-    console.error("Error dropping departments table:", error);
-  }
-};
+if (Platform.OS !== "web") {
+  SQLite = require("expo-sqlite");
+}
 
 const initDB = async () => {
-  if (!db) {
-    try {
-      db = await SQLite.openDatabaseAsync("eventlog.db");
+  if (Platform.OS === "android" || Platform.OS === "ios") {
+    if (!db) {
+      try {
+        db = await SQLite.openDatabaseAsync("eventlog.db");
 
-      await db.execAsync(`PRAGMA journal_mode = WAL;`);
+        await db.execAsync(`PRAGMA journal_mode = WAL;`);
 
-      await db.execAsync(`
+        await db.execAsync(`
         CREATE TABLE IF NOT EXISTS roles (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL UNIQUE
@@ -99,15 +96,18 @@ const initDB = async () => {
           ('Officer'),
           ('Admin'),
           ('Super Admin');
-      `);
+        `);
 
+        return db;
+      } catch (error) {
+        console.error("Error initializing database:", error);
+        throw error;
+      }
+    } else {
       return db;
-    } catch (error) {
-      console.error("Error initializing database:", error);
-      throw error;
     }
   } else {
-    return db;
+    console.log("SQLite only supported on Android and iOS.");
   }
 };
 
