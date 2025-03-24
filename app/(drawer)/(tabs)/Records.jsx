@@ -1,9 +1,11 @@
 import { StyleSheet, Text, View } from "react-native";
 import React from "react";
 
+import globalStyles from "../../../constants/globalStyles";
+
 const Records = () => {
   return (
-    <View>
+    <View style={globalStyles.secondaryContainer}>
       <Text>Records</Text>
     </View>
   );
