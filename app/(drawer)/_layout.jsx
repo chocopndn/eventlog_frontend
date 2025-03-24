@@ -1,13 +1,15 @@
 import { Drawer } from "expo-router/drawer";
 import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
 import { router, usePathname } from "expo-router";
-import { StyleSheet, View, Text, Image } from "react-native";
+import { StyleSheet, View, Text, Image, Dimensions } from "react-native";
 import { DrawerToggleButton } from "@react-navigation/drawer";
 import { getRoleID } from "../../database/queries";
 import { useEffect, useState } from "react";
 
 import images from "../../constants/images";
 import theme from "../../constants/theme";
+
+const screenWidth = Dimensions.get("window").width;
 
 const CustomDrawerContent = (props) => {
   const [roleId, setRoleId] = useState(null);
@@ -131,7 +133,10 @@ export default function DrawerLayout() {
       screenOptions={{
         headerShown: true,
         headerLeft: () => <DrawerToggleButton />,
-        drawerStyle: { backgroundColor: theme.colors.secondary, width: "80%" },
+        drawerStyle: {
+          backgroundColor: theme.colors.secondary,
+          width: screenWidth * 0.8,
+        },
       }}
     >
       <Drawer.Screen
