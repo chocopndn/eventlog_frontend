@@ -1,13 +1,15 @@
 import { Drawer } from "expo-router/drawer";
 import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
 import { router, usePathname } from "expo-router";
-import { StyleSheet, View, Text } from "react-native";
+import { StyleSheet, View, Text, Image } from "react-native";
 import { DrawerToggleButton } from "@react-navigation/drawer";
 import { getRoleID } from "../../database/queries";
 import { useEffect, useState } from "react";
 
+import images from "../../constants/images";
+import theme from "../../constants/theme";
+
 const CustomDrawerContent = (props) => {
-  const pathName = usePathname();
   const [roleId, setRoleId] = useState(null);
 
   useEffect(() => {
@@ -34,33 +36,58 @@ const CustomDrawerContent = (props) => {
     <DrawerContentScrollView {...props}>
       <DrawerItem
         label="Home"
-        labelStyle={[
-          styles.navItemLabel,
-          { color: pathName === "/(drawer)/(tabs)/home" ? "#fff" : "#000" },
-        ]}
         onPress={() => router.push("/(drawer)/(tabs)/home")}
+        labelStyle={styles.navItemLabel}
+        icon={() => <Image source={images.home} style={styles.icon} />}
       />
       <DrawerItem
         label="Admins"
-        labelStyle={[
-          styles.navItemLabel,
-          { color: pathName === "/(drawer)/admins" ? "#fff" : "#000" },
-        ]}
         onPress={() => router.push("/(drawer)/admins")}
+        labelStyle={styles.navItemLabel}
+        icon={() => <Image source={images.admin} style={styles.icon} />}
       />
       <DrawerItem
         label="Courses"
-        labelStyle={[
-          styles.navItemLabel,
-          { color: pathName === "/(drawer)/courses" ? "#fff" : "#000" },
-        ]}
         onPress={() => router.push("/(drawer)/courses")}
+        labelStyle={styles.navItemLabel}
+        icon={() => <Image source={images.course} style={styles.icon} />}
+      />
+      <DrawerItem
+        label="Departments"
+        onPress={() => router.push("/(drawer)/departments")}
+        labelStyle={styles.navItemLabel}
+        icon={() => <Image source={images.department} style={styles.icon} />}
+      />
+      <DrawerItem
+        label="Events"
+        onPress={() => router.push("/(drawer)/events")}
+        labelStyle={styles.navItemLabel}
+        icon={() => <Image source={images.event} style={styles.icon} />}
+      />
+      <DrawerItem
+        label="Records"
+        onPress={() => router.push("/(drawer)/records")}
+        labelStyle={styles.navItemLabel}
+        icon={() => <Image source={images.calendar} style={styles.icon} />}
+      />
+      <DrawerItem
+        label="Roles"
+        onPress={() => router.push("/(drawer)/roles")}
+        labelStyle={styles.navItemLabel}
+        icon={() => <Image source={images.role} style={styles.icon} />}
+      />
+      <DrawerItem
+        label="Students"
+        onPress={() => router.push("/(drawer)/students")}
+        labelStyle={styles.navItemLabel}
+        icon={() => <Image source={images.student} style={styles.icon} />}
       />
     </DrawerContentScrollView>
   );
 };
 
 export default function DrawerLayout() {
+  const pathName = usePathname();
   const [roleId, setRoleId] = useState(null);
 
   useEffect(() => {
@@ -109,7 +136,7 @@ export default function DrawerLayout() {
       <Drawer.Screen
         name="(tabs)"
         options={{
-          headerTitle: "Home",
+          headerTitle: pathName === "/home" ? "Home" : "QRCode",
         }}
       />
       <Drawer.Screen
@@ -124,15 +151,41 @@ export default function DrawerLayout() {
           headerTitle: "Courses",
         }}
       />
+      <Drawer.Screen
+        name="departments"
+        options={{
+          headerTitle: "Departments",
+        }}
+      />
+      <Drawer.Screen
+        name="events"
+        options={{
+          headerTitle: "Events",
+        }}
+      />
+      <Drawer.Screen
+        name="records"
+        options={{
+          headerTitle: "Records",
+        }}
+      />
+      <Drawer.Screen
+        name="roles"
+        options={{
+          headerTitle: "Roles",
+        }}
+      />
+      <Drawer.Screen
+        name="students"
+        options={{
+          headerTitle: "Students",
+        }}
+      />
     </Drawer>
   );
 }
 
 const styles = StyleSheet.create({
-  navItemLabel: {
-    marginLeft: -20,
-    fontSize: 18,
-  },
   noAccessContainer: {
     flex: 1,
     justifyContent: "center",
@@ -141,5 +194,14 @@ const styles = StyleSheet.create({
   noAccessText: {
     fontSize: 18,
     color: "red",
+  },
+  icon: {
+    width: 24,
+    height: 24,
+    tintColor: theme.colors.primary,
+  },
+  navItemLabel: {
+    color: theme.colors.primary,
+    fontSize: theme.fontSizes.medium,
   },
 });
