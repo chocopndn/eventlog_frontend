@@ -22,6 +22,12 @@ import error from "../assets/icons/exclamation-circle.png";
 import success from "../assets/icons/check-circle.png";
 import qrscan from "../assets/icons/qr-scan.png";
 import xlogo from "../assets/icons/x.png";
+import admin from "../assets/icons/admin.png";
+import course from "../assets/icons/course.png";
+import department from "../assets/icons/department.png";
+import event from "../assets/icons/event.png";
+import role from "../assets/icons/role.png";
+import student from "../assets/icons/student.png";
 
 export default {
   logo,
@@ -46,4 +52,10 @@ export default {
   success,
   qrscan,
   xlogo,
+  admin,
+  course,
+  department,
+  event,
+  role,
+  student,
 };
