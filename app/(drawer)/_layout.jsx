@@ -131,6 +131,7 @@ export default function DrawerLayout() {
       screenOptions={{
         headerShown: true,
         headerLeft: () => <DrawerToggleButton />,
+        drawerStyle: { backgroundColor: theme.colors.secondary, width: "80%" },
       }}
     >
       <Drawer.Screen
