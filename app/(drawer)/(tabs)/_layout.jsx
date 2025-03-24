@@ -24,7 +24,7 @@ const TabsLayout = () => {
     fetchRoleId();
   }, []);
 
-  return (
+  return roleId !== 4 ? (
     <Tabs>
       <TabSlot
         screenOptions={{
@@ -62,6 +62,34 @@ const TabsLayout = () => {
           <View style={styles.tabItem}>
             <Image source={images.user} style={styles.tabIcon} />
             <Text style={styles.tabText}>Account</Text>
+          </View>
+        </TabTrigger>
+      </TabList>
+    </Tabs>
+  ) : (
+    <Tabs>
+      <TabSlot
+        screenOptions={{
+          headerLeft: () => <DrawerToggleButton tintColor="#000" />,
+        }}
+      />
+
+      <TabList style={styles.tabList}>
+        <TabTrigger name="Home" href="/(tabs)/home">
+          <View style={styles.tabItem}>
+            <Image source={images.home} style={styles.tabIcon} />
+            <Text style={styles.tabText}>Home</Text>
+          </View>
+        </TabTrigger>
+
+        <View style={styles.logoContainer}>
+          <Image source={images.logo} style={styles.logoImage} />
+        </View>
+
+        <TabTrigger name="QRCode" href="/(tabs)/QRCode">
+          <View style={styles.tabItem}>
+            <Image source={images.scanner} style={styles.tabIcon} />
+            <Text style={styles.tabText}>QR Code</Text>
           </View>
         </TabTrigger>
       </TabList>

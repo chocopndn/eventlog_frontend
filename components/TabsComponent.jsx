@@ -2,11 +2,26 @@ import { Link, useRouter } from "expo-router";
 import { View, Image, Text, StyleSheet, TouchableOpacity } from "react-native";
 import images from "../constants/images";
 import theme from "../constants/theme";
+import { getRoleID } from "../database/queries";
+import { useState, useEffect } from "react";
 
 export default function TabsComponent() {
   const router = useRouter();
+  const [roleId, setRoleId] = useState(null);
 
-  return (
+  useEffect(() => {
+    const fetchRoleId = async () => {
+      try {
+        const fetchedRoleId = await getRoleID();
+        setRoleId(fetchedRoleId);
+      } catch (error) {
+        console.error("Error fetching role ID:", error);
+      }
+    };
+    fetchRoleId();
+  }, []);
+
+  return roleId !== 4 ? (
     <View style={styles.tabList}>
       <TouchableOpacity
         style={styles.tabItem}
@@ -42,6 +57,28 @@ export default function TabsComponent() {
       >
         <Image source={images.user} style={styles.tabIcon} />
         <Text style={styles.tabText}>Account</Text>
+      </TouchableOpacity>
+    </View>
+  ) : (
+    <View style={styles.tabList}>
+      <TouchableOpacity
+        style={styles.tabItem}
+        onPress={() => router.push("/(drawer)/(tabs)/home")}
+      >
+        <Image source={images.home} style={styles.tabIcon} />
+        <Text style={styles.tabText}>Home</Text>
+      </TouchableOpacity>
+
+      <View style={styles.logoContainer}>
+        <Image source={images.logo} style={styles.logoImage} />
+      </View>
+
+      <TouchableOpacity
+        style={styles.tabItem}
+        onPress={() => router.push("/(drawer)/(tabs)/QRCode")}
+      >
+        <Image source={images.scanner} style={styles.tabIcon} />
+        <Text style={styles.tabText}>QR Code</Text>
       </TouchableOpacity>
     </View>
   );
