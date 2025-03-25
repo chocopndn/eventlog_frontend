@@ -58,7 +58,7 @@ const TabsLayout = () => {
           </View>
         </TabTrigger>
 
-        <TabTrigger name="accounts" href="/(tabs)/account">
+        <TabTrigger name="account" href="/(tabs)/account">
           <View style={styles.tabItem}>
             <Image source={images.user} style={styles.tabIcon} />
             <Text style={styles.tabText}>Account</Text>
@@ -125,8 +125,8 @@ const styles = StyleSheet.create({
     transform: [{ translateY: 0 }],
   },
   logoImage: {
-    height: 100,
-    width: 100,
+    height: 90,
+    width: 90,
     borderWidth: 6,
     borderColor: theme.colors.primary,
     borderRadius: 50,
