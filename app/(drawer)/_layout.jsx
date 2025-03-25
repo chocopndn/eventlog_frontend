@@ -5,6 +5,7 @@ import { StyleSheet, View, Text, Image, Dimensions } from "react-native";
 import { DrawerToggleButton } from "@react-navigation/drawer";
 import { getRoleID } from "../../database/queries";
 import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import images from "../../constants/images";
 import theme from "../../constants/theme";
@@ -34,56 +35,87 @@ const CustomDrawerContent = (props) => {
     );
   }
 
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.removeItem("userToken");
+      await AsyncStorage.removeItem("id_number");
+      router.replace("/login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
   return (
-    <DrawerContentScrollView {...props}>
-      <DrawerItem
-        label="Home"
-        onPress={() => router.push("/(drawer)/(tabs)/home")}
-        labelStyle={styles.navItemLabel}
-        icon={() => <Image source={images.home} style={styles.icon} />}
-      />
-      <DrawerItem
-        label="Admins"
-        onPress={() => router.push("/(drawer)/admins")}
-        labelStyle={styles.navItemLabel}
-        icon={() => <Image source={images.admin} style={styles.icon} />}
-      />
-      <DrawerItem
-        label="Courses"
-        onPress={() => router.push("/(drawer)/courses")}
-        labelStyle={styles.navItemLabel}
-        icon={() => <Image source={images.course} style={styles.icon} />}
-      />
-      <DrawerItem
-        label="Departments"
-        onPress={() => router.push("/(drawer)/departments")}
-        labelStyle={styles.navItemLabel}
-        icon={() => <Image source={images.department} style={styles.icon} />}
-      />
-      <DrawerItem
-        label="Events"
-        onPress={() => router.push("/(drawer)/events")}
-        labelStyle={styles.navItemLabel}
-        icon={() => <Image source={images.event} style={styles.icon} />}
-      />
-      <DrawerItem
-        label="Records"
-        onPress={() => router.push("/(drawer)/records")}
-        labelStyle={styles.navItemLabel}
-        icon={() => <Image source={images.calendar} style={styles.icon} />}
-      />
-      <DrawerItem
-        label="Roles"
-        onPress={() => router.push("/(drawer)/roles")}
-        labelStyle={styles.navItemLabel}
-        icon={() => <Image source={images.role} style={styles.icon} />}
-      />
-      <DrawerItem
-        label="Students"
-        onPress={() => router.push("/(drawer)/students")}
-        labelStyle={styles.navItemLabel}
-        icon={() => <Image source={images.student} style={styles.icon} />}
-      />
+    <DrawerContentScrollView {...props} contentContainerStyle={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
+        <DrawerItem
+          label="Home"
+          onPress={() => router.push("/(drawer)/(tabs)/home")}
+          labelStyle={styles.navItemLabel}
+          icon={() => <Image source={images.home} style={styles.icon} />}
+        />
+        <DrawerItem
+          label="Admins"
+          onPress={() => router.push("/(drawer)/admins")}
+          labelStyle={styles.navItemLabel}
+          icon={() => <Image source={images.admin} style={styles.icon} />}
+        />
+        <DrawerItem
+          label="Courses"
+          onPress={() => router.push("/(drawer)/courses")}
+          labelStyle={styles.navItemLabel}
+          icon={() => <Image source={images.course} style={styles.icon} />}
+        />
+        <DrawerItem
+          label="Departments"
+          onPress={() => router.push("/(drawer)/departments")}
+          labelStyle={styles.navItemLabel}
+          icon={() => <Image source={images.department} style={styles.icon} />}
+        />
+        <DrawerItem
+          label="Events"
+          onPress={() => router.push("/(drawer)/events")}
+          labelStyle={styles.navItemLabel}
+          icon={() => <Image source={images.event} style={styles.icon} />}
+        />
+        <DrawerItem
+          label="Records"
+          onPress={() => router.push("/(drawer)/records")}
+          labelStyle={styles.navItemLabel}
+          icon={() => <Image source={images.calendar} style={styles.icon} />}
+        />
+        <DrawerItem
+          label="Roles"
+          onPress={() => router.push("/(drawer)/roles")}
+          labelStyle={styles.navItemLabel}
+          icon={() => <Image source={images.role} style={styles.icon} />}
+        />
+        <DrawerItem
+          label="Students"
+          onPress={() => router.push("/(drawer)/students")}
+          labelStyle={styles.navItemLabel}
+          icon={() => <Image source={images.student} style={styles.icon} />}
+        />
+      </View>
+      <View>
+        <DrawerItem
+          label="Account"
+          onPress={() => router.push("/(drawer)/account")}
+          labelStyle={styles.navItemLabel}
+          icon={() => <Image source={images.student} style={styles.icon} />}
+        />
+        <DrawerItem
+          label="Logout"
+          onPress={handleLogout}
+          labelStyle={[styles.navItemLabel, { color: "red" }]}
+          icon={() => (
+            <Image
+              source={images.logout}
+              style={[styles.icon, { tintColor: "red" }]}
+            />
+          )}
+        />
+      </View>
     </DrawerContentScrollView>
   );
 };
@@ -143,6 +175,8 @@ export default function DrawerLayout() {
         name="(tabs)"
         options={{
           headerTitle: pathName === "/home" ? "Home" : "QRCode",
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: theme.colors.secondary,
         }}
       />
       <Drawer.Screen
@@ -185,6 +219,12 @@ export default function DrawerLayout() {
         name="students"
         options={{
           headerTitle: "Students",
+        }}
+      />
+      <Drawer.Screen
+        name="account"
+        options={{
+          headerTitle: "Account",
         }}
       />
     </Drawer>

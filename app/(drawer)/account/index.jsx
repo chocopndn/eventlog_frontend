@@ -1,16 +1,19 @@
 import { StyleSheet, Text, View } from "react-native";
 import React from "react";
 
+import TabsComponent from "../../../components/TabsComponent";
 import globalStyles from "../../../constants/globalStyles";
 
-const Accounts = () => {
+const AccountScreen = () => {
   return (
     <View style={globalStyles.secondaryContainer}>
-      <Text>Account</Text>
+      <Text style={styles.title}>Account</Text>
+
+      <TabsComponent />
     </View>
   );
 };
 
-export default Accounts;
+export default AccountScreen;
 
 const styles = StyleSheet.create({});
