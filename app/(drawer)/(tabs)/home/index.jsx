@@ -12,24 +12,37 @@ import { router } from "expo-router";
 
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
+import CollapsibleDropdown from "../../../../components/CollapsibleDropdown";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const screenWidth = Dimensions.get("window").width;
 
 const Home = () => {
   return (
-    <View style={globalStyles.secondaryContainer}>
-      <Text style={styles.textHeader}>EVENTLOG</Text>
-      <Text style={styles.title}>LIST OF EVENTS</Text>
-      <View style={styles.line}></View>
-      <TouchableOpacity onPress={() => router.push("/home/Welcome")}>
-        <View style={styles.welcomeContainer}>
-          <Text style={styles.welcomeText}>WELCOME EVENTLOG USERS!</Text>
+    <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View>
+        <View style={{ alignItems: "center" }}>
+          <Text style={styles.textHeader}>EVENTLOG</Text>
+          <Text style={styles.title}>LIST OF EVENTS</Text>
+          <View style={styles.line}></View>
         </View>
-      </TouchableOpacity>
-      <ScrollView></ScrollView>
+        <TouchableOpacity onPress={() => router.push("/home/Welcome")}>
+          <View style={styles.welcomeContainer}>
+            <Text style={styles.welcomeText}>WELCOME EVENTLOG USERS!</Text>
+          </View>
+        </TouchableOpacity>
+        <ScrollView
+          style={{ marginBottom: 20 }}
+          contentContainerStyle={styles.scrollview}
+          showsVerticalScrollIndicator={false}
+        >
+          <CollapsibleDropdown title="Foundation Day" date="October 22, 2025" />
+          <CollapsibleDropdown title="Technolympics" date="December 21, 2025" />
+        </ScrollView>
+      </View>
 
       <StatusBar style="light" />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -41,7 +54,6 @@ const styles = StyleSheet.create({
     fontFamily: "SquadaOne",
     color: theme.colors.primary,
     paddingBottom: theme.spacing.large,
-    paddingTop: theme.spacing.large,
   },
   title: {
     fontSize: theme.fontSizes.huge,
@@ -67,5 +79,10 @@ const styles = StyleSheet.create({
     fontFamily: "SquadaOne",
     fontSize: theme.fontSizes.large,
     color: theme.colors.primary,
+  },
+  scrollview: {
+    marginTop: 20,
+    width: "100%",
+    paddingBottom: 20,
   },
 });
