@@ -6,7 +6,7 @@ import { router } from "expo-router";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URL } from "../config/config";
-import { storeDepartments } from "../database/queries";
+import { storeDepartments, storeBlocks } from "../database/queries";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import theme from "../constants/theme";
@@ -17,14 +17,13 @@ import CustomButton from "../components/CustomButton";
 SplashScreen.preventAutoHideAsync();
 
 export default function App() {
-  const [loaded, error] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     Arial: require("../assets/fonts/Arial.ttf"),
     ArialBold: require("../assets/fonts/ArialBold.ttf"),
     ArialItalic: require("../assets/fonts/ArialItalic.ttf"),
     SquadaOne: require("../assets/fonts/SquadaOne.ttf"),
   });
   const [hasFetched, setHasFetched] = useState(false);
-  const [departments, setDepartments] = useState([]);
   const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
@@ -32,20 +31,26 @@ export default function App() {
       try {
         const token = await AsyncStorage.getItem("userToken");
         if (token) {
-          router.replace("/(tabs)/home");
           await SplashScreen.hideAsync();
+          router.replace("/(tabs)/home");
           return;
         }
 
-        if (!loaded && !error) return;
+        if (!fontsLoaded || fontError) return;
 
         if (!hasFetched) {
-          const response = await axios.get(`${API_URL}/api/departments`);
-          const fetchedDepartments = response.data?.departments || [];
+          const deptResponse = await axios.get(`${API_URL}/api/departments`);
+          const fetchedDepartments = deptResponse.data?.data || [];
           await storeDepartments(fetchedDepartments);
+
+          const blocksResponse = await axios.get(`${API_URL}/api/blocks`);
+          const fetchedBlocks = blocksResponse.data?.data || [];
+          await storeBlocks(blocksResponse.data);
+
           setHasFetched(true);
         }
       } catch (error) {
+        console.error("Error during app preparation:", error);
       } finally {
         setAppReady(true);
         await SplashScreen.hideAsync();
@@ -53,13 +58,9 @@ export default function App() {
     };
 
     prepareApp();
-  }, [loaded, error, hasFetched]);
+  }, [fontsLoaded, fontError, hasFetched]);
 
-  if (!appReady) {
-    return null;
-  }
-
-  if (!loaded) {
+  if (!appReady || !fontsLoaded) {
     return null;
   }
 
@@ -70,14 +71,13 @@ export default function App() {
         <Image source={images.logo} style={styles.logo} />
       </View>
       <Text style={styles.tagline}>Every CIT Event's Companion</Text>
+
       <View style={styles.buttons}>
         <View style={styles.loginContainer}>
           <CustomButton
             type="primary"
             title="Log In"
-            onPress={() => {
-              router.push("/login");
-            }}
+            onPress={() => router.push("/login")}
           />
         </View>
         <CustomButton
@@ -96,10 +96,13 @@ const styles = StyleSheet.create({
     fontFamily: "SquadaOne",
     color: theme.colors.primary,
     fontSize: theme.fontSizes.display,
+    textAlign: "center",
+    marginTop: 20,
   },
   logo: {
     width: 200,
     height: 200,
+    alignSelf: "center",
   },
   logoContainer: {
     padding: 20,
@@ -108,9 +111,11 @@ const styles = StyleSheet.create({
     fontFamily: "SquadaOne",
     color: theme.colors.primary,
     fontSize: theme.fontSizes.huge,
+    textAlign: "center",
   },
   buttons: {
     paddingTop: 20,
+    paddingHorizontal: 20,
   },
   loginContainer: {
     marginBottom: theme.spacing.medium,
