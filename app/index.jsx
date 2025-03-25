@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, Image, View } from "react-native";
+import { StyleSheet, Text, Image, View, Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -13,6 +13,8 @@ import theme from "../constants/theme";
 import globalStyles from "../constants/globalStyles";
 import images from "../constants/images";
 import CustomButton from "../components/CustomButton";
+import CustomModal from "../components/CustomModal";
+import NetInfo from "@react-native-community/netinfo";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,12 +27,33 @@ export default function App() {
   });
   const [hasFetched, setHasFetched] = useState(false);
   const [appReady, setAppReady] = useState(false);
+  const [isOfflineModalVisible, setIsOfflineModalVisible] = useState(false);
 
   useEffect(() => {
     const prepareApp = async () => {
       try {
         const token = await AsyncStorage.getItem("userToken");
         if (token) {
+          if (!hasFetched) {
+            try {
+              const deptResponse = await axios.get(
+                `${API_URL}/api/departments`
+              );
+              const fetchedDepartments = deptResponse.data?.data || [];
+              await storeDepartments(fetchedDepartments);
+            } catch (error) {
+              console.error("Error fetching departments:", error);
+            }
+
+            try {
+              const blocksResponse = await axios.get(`${API_URL}/api/blocks`);
+              const fetchedBlocks = blocksResponse.data?.data || [];
+              await storeBlocks(blocksResponse.data);
+            } catch (error) {
+              console.error("Error fetching blocks:", error);
+            }
+            setHasFetched(true);
+          }
           await SplashScreen.hideAsync();
           router.replace("/(tabs)/home");
           return;
@@ -39,14 +62,21 @@ export default function App() {
         if (!fontsLoaded || fontError) return;
 
         if (!hasFetched) {
-          const deptResponse = await axios.get(`${API_URL}/api/departments`);
-          const fetchedDepartments = deptResponse.data?.data || [];
-          await storeDepartments(fetchedDepartments);
+          try {
+            const deptResponse = await axios.get(`${API_URL}/api/departments`);
+            const fetchedDepartments = deptResponse.data?.data || [];
+            await storeDepartments(fetchedDepartments);
+          } catch (error) {
+            console.error("Error fetching departments:", error);
+          }
 
-          const blocksResponse = await axios.get(`${API_URL}/api/blocks`);
-          const fetchedBlocks = blocksResponse.data?.data || [];
-          await storeBlocks(blocksResponse.data);
-
+          try {
+            const blocksResponse = await axios.get(`${API_URL}/api/blocks`);
+            const fetchedBlocks = blocksResponse.data?.data || [];
+            await storeBlocks(blocksResponse.data);
+          } catch (error) {
+            console.error("Error fetching blocks:", error);
+          }
           setHasFetched(true);
         }
       } catch (error) {
@@ -59,6 +89,54 @@ export default function App() {
 
     prepareApp();
   }, [fontsLoaded, fontError, hasFetched]);
+
+  const handleLoginPress = async () => {
+    const netInfoState = await NetInfo.fetch();
+    if (!netInfoState.isConnected) {
+      setIsOfflineModalVisible(true);
+      return;
+    }
+
+    try {
+      const deptResponse = await axios.get(`${API_URL}/api/departments`);
+      const fetchedDepartments = deptResponse.data?.data || [];
+      await storeDepartments(fetchedDepartments);
+
+      const blocksResponse = await axios.get(`${API_URL}/api/blocks`);
+      const fetchedBlocks = blocksResponse.data?.data || [];
+      await storeBlocks(blocksResponse.data);
+
+      router.push("/login");
+    } catch (error) {
+      console.error("Error fetching departments or blocks:", error);
+    }
+  };
+
+  const handleRegisterPress = async () => {
+    const netInfoState = await NetInfo.fetch();
+    if (!netInfoState.isConnected) {
+      setIsOfflineModalVisible(true);
+      return;
+    }
+
+    try {
+      const deptResponse = await axios.get(`${API_URL}/api/departments`);
+      const fetchedDepartments = deptResponse.data?.data || [];
+      await storeDepartments(fetchedDepartments);
+
+      const blocksResponse = await axios.get(`${API_URL}/api/blocks`);
+      const fetchedBlocks = blocksResponse.data?.data || [];
+      await storeBlocks(blocksResponse.data);
+
+      router.push("/signup");
+    } catch (error) {
+      console.error("Error fetching departments or blocks:", error);
+    }
+  };
+
+  const closeOfflineModal = () => {
+    setIsOfflineModalVisible(false);
+  };
 
   if (!appReady || !fontsLoaded) {
     return null;
@@ -77,16 +155,24 @@ export default function App() {
           <CustomButton
             type="primary"
             title="Log In"
-            onPress={() => router.push("/login")}
+            onPress={handleLoginPress}
           />
         </View>
         <CustomButton
           type="secondary"
           title="Register"
-          onPress={() => router.push("/signup")}
+          onPress={handleRegisterPress}
         />
       </View>
       <StatusBar style="auto" />
+
+      <CustomModal
+        visible={isOfflineModalVisible}
+        title="No Internet Connection"
+        message="Please check your internet connection and try again."
+        type="error"
+        onClose={closeOfflineModal}
+      />
     </SafeAreaView>
   );
 }
