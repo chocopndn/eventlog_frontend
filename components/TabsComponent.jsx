@@ -116,8 +116,8 @@ const styles = StyleSheet.create({
     transform: [{ translateY: 0 }],
   },
   logoImage: {
-    height: 100,
-    width: 100,
+    height: 90,
+    width: 90,
     borderWidth: 6,
     borderColor: theme.colors.primary,
     borderRadius: 50,
