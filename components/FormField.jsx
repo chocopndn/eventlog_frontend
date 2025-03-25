@@ -6,7 +6,7 @@ import {
   StyleSheet,
   Text,
 } from "react-native";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 
 import theme from "../constants/theme.js";
 import globalStyles from "../constants/globalStyles.js";
@@ -24,35 +24,45 @@ const FormField = ({
   const [showPassword, setShowPassword] = useState(false);
   const inputs = useRef([]);
 
-  const handleInputChange = (text, index) => {
-    let formattedText = text;
+  const handleInputChange = useCallback(
+    (text, index) => {
+      let formattedText = text;
 
-    if (type === "id") {
-      formattedText = text.replace(/[^0-9]/g, "");
-    } else if (type === "password") {
-      formattedText = text.replace(/\s/g, "");
-    }
-
-    if (type === "code") {
-      if (text.length > 1) return;
-
-      const newCode = [...value];
-      newCode[index] = text;
-      onChangeText(newCode);
-
-      if (text && index < value.length - 1) {
-        inputs.current[index + 1]?.focus();
+      if (type === "id") {
+        formattedText = text.replace(/[^0-9]/g, "");
+      } else if (type === "password") {
+        formattedText = text.replace(/\s/g, "");
       }
-    } else {
-      onChangeText(formattedText);
-    }
-  };
 
-  const handleKeyPress = ({ nativeEvent }, index) => {
-    if (nativeEvent.key === "Backspace" && !value[index] && index > 0) {
-      inputs.current[index - 1]?.focus();
-    }
-  };
+      if (type === "code") {
+        if (text.length > 1) return;
+
+        const newCode = [...value];
+        newCode[index] = text;
+        if (newCode.join("") !== value.join("")) {
+          onChangeText(newCode);
+        }
+
+        if (text && index < value.length - 1) {
+          inputs.current[index + 1]?.focus();
+        }
+      } else {
+        if (formattedText !== value) {
+          onChangeText(formattedText);
+        }
+      }
+    },
+    [type, value, onChangeText]
+  );
+
+  const handleKeyPress = useCallback(
+    ({ nativeEvent }, index) => {
+      if (nativeEvent.key === "Backspace" && !value[index] && index > 0) {
+        inputs.current[index - 1]?.focus();
+      }
+    },
+    [value]
+  );
 
   const getIcon = () => {
     switch (type) {
