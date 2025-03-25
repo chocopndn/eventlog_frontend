@@ -36,8 +36,16 @@ const Home = () => {
           contentContainerStyle={styles.scrollview}
           showsVerticalScrollIndicator={false}
         >
-          <CollapsibleDropdown title="Foundation Day" date="October 22, 2025" />
-          <CollapsibleDropdown title="Technolympics" date="December 21, 2025" />
+          <CollapsibleDropdown
+            title="Foundation Day"
+            date="October 22, 2025"
+            venue="VHNPB Building"
+            am_in="6:30-7:30"
+            am_out="11:00-12:00"
+            pm_in="12:00-1:00"
+            pm_out="5:00-6:00"
+            personnel="Year Level Representatives, Governor, or Year Level Adviser"
+          />
         </ScrollView>
       </View>
 
@@ -63,11 +71,10 @@ const styles = StyleSheet.create({
   line: {
     borderColor: theme.colors.primary,
     borderWidth: 1,
-    width: screenWidth * 0.8,
+    width: "100%",
     height: 2,
   },
   welcomeContainer: {
-    width: screenWidth * 0.8,
     height: 50,
     borderWidth: 2,
     borderColor: theme.colors.primary,
