@@ -1,7 +1,8 @@
 import { StyleSheet, Text, View, Dimensions, Image } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getRoleID } from "../../../../database/queries";
 
 const screenWidth = Dimensions.get("screen").width;
 
@@ -10,8 +11,23 @@ import theme from "../../../../constants/theme";
 import images from "../../../../constants/images";
 
 const Welcome = () => {
+  const [roleID, setRoleID] = useState(null);
+
+  useEffect(() => {
+    const fetchRoleID = async () => {
+      const id = await getRoleID();
+      setRoleID(id);
+    };
+    fetchRoleID();
+  }, []);
+
   return (
-    <SafeAreaView style={globalStyles.secondaryContainer}>
+    <SafeAreaView
+      style={[
+        globalStyles.secondaryContainer,
+        roleID === 4 && { paddingTop: 0 },
+      ]}
+    >
       <View style={styles.info}>
         <View style={styles.infoContainer}>
           <View style={styles.welcomeContainer}>
@@ -83,8 +99,7 @@ const styles = StyleSheet.create({
   info: {
     flex: 1,
     backgroundColor: theme.colors.primary,
-
-    marginBottom: 20,
+    marginBottom: 30,
   },
   infoContainer: {
     flex: 1,
