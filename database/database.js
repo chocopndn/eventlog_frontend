@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import { createViews } from "./views";
 
 let SQLite;
 let db;
@@ -35,7 +36,7 @@ const initDB = async () => {
             department_id INTEGER NOT NULL
           );
           CREATE TABLE IF NOT EXISTS blocks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY,
             name TEXT NOT NULL UNIQUE,
             course_id INTEGER NOT NULL,
             year_level_id INTEGER NOT NULL,
@@ -45,6 +46,7 @@ const initDB = async () => {
             id_number TEXT PRIMARY KEY,
             role_id INTEGER NOT NULL,
             block_id INTEGER NULL,
+            department_id INTEGER NOT NULL,
             first_name TEXT NOT NULL,
             middle_name TEXT,
             last_name TEXT NOT NULL,
@@ -95,7 +97,16 @@ const initDB = async () => {
             ('Officer'),
             ('Admin'),
             ('Super Admin');
+
+          INSERT OR IGNORE INTO year_levels (name)
+          VALUES
+            ('1st Year'),
+            ('2nd Year'),
+            ('3rd Year'),
+            ('4th Year');
         `);
+
+        await createViews(db);
 
         return db;
       } catch (error) {
