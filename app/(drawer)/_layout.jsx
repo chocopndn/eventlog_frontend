@@ -102,7 +102,7 @@ const CustomDrawerContent = (props) => {
           label="Account"
           onPress={() => router.push("/(drawer)/account")}
           labelStyle={styles.navItemLabel}
-          icon={() => <Image source={images.student} style={styles.icon} />}
+          icon={() => <Image source={images.user} style={styles.icon} />}
         />
         <DrawerItem
           label="Logout"
