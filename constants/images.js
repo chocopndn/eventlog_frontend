@@ -28,6 +28,7 @@ import department from "../assets/icons/department.png";
 import event from "../assets/icons/event.png";
 import role from "../assets/icons/role.png";
 import student from "../assets/icons/student.png";
+import logout from "../assets/icons/logout.png";
 
 export default {
   logo,
@@ -58,4 +59,5 @@ export default {
   event,
   role,
   student,
+  logout,
 };
