@@ -56,7 +56,7 @@ export default function App() {
   }
 
   return (
-    <SafeAreaView style={globalStyles.secondaryContainer}>
+    <SafeAreaView style={[globalStyles.secondaryContainer, { padding: 0 }]}>
       <Text style={styles.header}>EVENTLOG</Text>
       <View style={styles.logoContainer}>
         <Image source={images.logo} style={styles.logo} />

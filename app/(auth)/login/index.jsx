@@ -103,7 +103,7 @@ const Login = () => {
   };
 
   return (
-    <SafeAreaView style={globalStyles.primaryContainer}>
+    <SafeAreaView style={[globalStyles.primaryContainer, { padding: 0 }]}>
       <Header type="primary" />
       <Text style={styles.header}>WELCOME!</Text>
       <FormField

@@ -129,7 +129,7 @@ const SignUp = () => {
   };
 
   return (
-    <SafeAreaView style={globalStyles.primaryContainer}>
+    <SafeAreaView style={[globalStyles.primaryContainer, { padding: 0 }]}>
       <View style={styles.headerContainer}>
         <Header type="primary" />
         <Text style={styles.headerText}>REGISTER</Text>
