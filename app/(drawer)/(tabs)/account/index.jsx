@@ -1,16 +1,26 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, Image } from "react-native";
 import React from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import CustomButton from "../../../../components/CustomButton";
 import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
+import {
+  clearAllTablesData,
+  getUserDetails,
+} from "../../../../database/queries";
+
+import Header from "../../../../components/Header";
 
 const Account = () => {
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem("userToken");
-      await AsyncStorage.removeItem("id_number");
+      await clearAllTablesData();
+      await AsyncStorage.multiRemove(["userToken", "id_number"]);
+
       router.replace("/login");
     } catch (error) {
       console.error("Error logging out:", error);
@@ -18,19 +28,86 @@ const Account = () => {
   };
 
   return (
-    <View style={globalStyles.secondaryContainer}>
-      <Text style={styles.title}>Account</Text>
+    <SafeAreaView
+      style={[
+        globalStyles.secondaryContainer,
+        { paddingLeft: 0, paddingRight: 0 },
+      ]}
+    >
+      <Header type="secondary" />
+      <Text style={styles.title}>ACCOUNT</Text>
+
+      <View style={styles.detailsWrapper}>
+        <View style={[styles.detailsContainer, { borderBottomWidth: 0 }]}>
+          <Text style={styles.detailsTitle}>Name: </Text>
+          <Text style={styles.details}>Dhanrev Mina</Text>
+        </View>
+
+        <View style={[styles.detailsContainer, { borderBottomWidth: 0 }]}>
+          <Text style={styles.detailsTitle}>ID Number: </Text>
+          <Text style={styles.details}>19015236</Text>
+        </View>
+
+        <View style={[styles.detailsContainer, { borderBottomWidth: 0 }]}>
+          <Text style={styles.detailsTitle}>Block: </Text>
+          <Text style={styles.details}>3A - NON</Text>
+        </View>
+
+        <View style={[styles.detailsContainer, { borderBottomWidth: 0 }]}>
+          <Text style={styles.detailsTitle}>Department: </Text>
+          <Text style={styles.details}>CIT</Text>
+        </View>
+
+        <View style={styles.detailsContainer}>
+          <Text style={styles.detailsTitle}>Email: </Text>
+          <Text style={styles.details}>chocopndn@gmail.com</Text>
+        </View>
+      </View>
 
       <CustomButton
-        type="secondary"
+        type="primary"
         title="Logout"
         onPress={handleLogout}
         otherStyles={styles.logoutButton}
       />
-    </View>
+      <StatusBar style="auto" />
+    </SafeAreaView>
   );
 };
 
 export default Account;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create({
+  title: {
+    fontSize: theme.fontSizes.display,
+    fontFamily: theme.fontFamily.SquadaOne,
+    color: theme.colors.primary,
+  },
+  name: {
+    fontSize: theme.fontSizes.extraLarge,
+    fontFamily: theme.fontFamily.Arial,
+    color: theme.colors.primary,
+  },
+  detailsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    borderWidth: 2,
+    padding: theme.spacing.medium,
+    borderColor: theme.colors.primary,
+  },
+  details: {
+    fontSize: theme.fontSizes.medium,
+    fontFamily: theme.fontFamily.Arial,
+    color: theme.colors.primary,
+  },
+  detailsTitle: {
+    fontSize: theme.fontSizes.medium,
+    fontFamily: theme.fontFamily.ArialBold,
+    color: theme.colors.primary,
+  },
+  detailsWrapper: {
+    width: "90%",
+    marginBottom: theme.spacing.medium,
+  },
+});
