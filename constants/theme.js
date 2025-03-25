@@ -24,6 +24,12 @@ const theme = {
     medium: 10,
     large: 20,
   },
+  fontFamily: {
+    Arial: "Arial",
+    ArialBold: "ArialBold",
+    ArialItalic: "ArialItalic",
+    SquadaOne: "SquadaOne",
+  },
 };
 
 export default theme;
