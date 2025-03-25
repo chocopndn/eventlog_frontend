@@ -1,5 +1,7 @@
 import { StyleSheet, Text, View, Dimensions, Image } from "react-native";
 import React from "react";
+import { StatusBar } from "expo-status-bar";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const screenWidth = Dimensions.get("screen").width;
 
@@ -9,7 +11,7 @@ import images from "../../../../constants/images";
 
 const Welcome = () => {
   return (
-    <View style={globalStyles.secondaryContainer}>
+    <SafeAreaView style={globalStyles.secondaryContainer}>
       <View style={styles.container}>
         <View style={styles.welcomContainer}>
           <Text style={styles.welcomeText}>WELCOME EVENTLOG USERS!</Text>
@@ -58,7 +60,8 @@ const Welcome = () => {
           </View>
         </View>
       </View>
-    </View>
+      <StatusBar style="auto" />
+    </SafeAreaView>
   );
 };
 
@@ -66,11 +69,12 @@ export default Welcome;
 
 const styles = StyleSheet.create({
   container: {
-    padding: theme.spacing.large,
+    paddingLeft: theme.spacing.medium,
+    paddingRight: theme.spacing.medium,
+    paddingBottom: theme.spacing.medium,
   },
   welcomContainer: {
     backgroundColor: theme.colors.primary,
-    width: screenWidth * 0.9,
     height: 50,
     alignItems: "center",
     justifyContent: "center",
