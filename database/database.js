@@ -1,5 +1,4 @@
 import { Platform } from "react-native";
-import { createViews } from "./views";
 
 let SQLite;
 let db;
@@ -92,7 +91,7 @@ const initDB = async () => {
             pm_out TIME
           );
           INSERT OR IGNORE INTO roles (name)
-          VALUES 
+          VALUES
             ('Student'),
             ('Officer'),
             ('Admin'),
@@ -105,8 +104,6 @@ const initDB = async () => {
             ('3rd Year'),
             ('4th Year');
         `);
-
-        await createViews(db);
 
         return db;
       } catch (error) {

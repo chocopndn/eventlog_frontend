@@ -131,9 +131,9 @@ export const storeBlocks = async (blocksData) => {
     const insertQuery = `
       INSERT OR REPLACE INTO blocks (
         id,
-        name, 
-        course_id, 
-        year_level_id, 
+        name,
+        course_id,
+        year_level_id,
         department_id
       ) VALUES (?, ?, ?, ?, ?)
     `;
