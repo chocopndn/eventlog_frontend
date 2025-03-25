@@ -7,12 +7,14 @@ const globalStyles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    padding: theme.spacing.medium,
   },
   secondaryContainer: {
     backgroundColor: theme.colors.secondary,
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    padding: theme.spacing.medium,
   },
   icons: {
     width: 24,
