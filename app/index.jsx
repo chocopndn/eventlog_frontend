@@ -4,16 +4,14 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URL } from "../config/config";
 import { storeDepartments } from "../database/queries";
-
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
-
 import theme from "../constants/theme";
 import globalStyles from "../constants/globalStyles";
 import images from "../constants/images";
-
 import CustomButton from "../components/CustomButton";
 
 SplashScreen.preventAutoHideAsync();
@@ -26,32 +24,42 @@ export default function App() {
     SquadaOne: require("../assets/fonts/SquadaOne.ttf"),
   });
   const [hasFetched, setHasFetched] = useState(false);
-
   const [departments, setDepartments] = useState([]);
+  const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
-    const fetchDepartments = async () => {
-      if (hasFetched) return;
+    const prepareApp = async () => {
       try {
-        const response = await axios.get(`${API_URL}/api/departments`);
-        const fetchedDepartments = response.data?.departments || [];
-        setDepartments(fetchedDepartments);
-        setHasFetched(true);
+        const token = await AsyncStorage.getItem("userToken");
+        if (token) {
+          router.replace("/(tabs)/home");
+          await SplashScreen.hideAsync();
+          return;
+        }
 
-        await storeDepartments(fetchedDepartments);
+        if (!loaded && !error) return;
+
+        if (!hasFetched) {
+          const response = await axios.get(`${API_URL}/api/departments`);
+          const fetchedDepartments = response.data?.departments || [];
+          await storeDepartments(fetchedDepartments);
+          setHasFetched(true);
+        }
       } catch (error) {
-        console.error("Failed to fetch departments:", error);
+      } finally {
+        setAppReady(true);
+        await SplashScreen.hideAsync();
       }
     };
 
-    fetchDepartments();
+    prepareApp();
+  }, [loaded, error, hasFetched]);
 
-    if (loaded || error) {
-      SplashScreen.hideAsync();
-    }
-  }, [hasFetched, loaded, error]);
+  if (!appReady) {
+    return null;
+  }
 
-  if (!loaded && !error) {
+  if (!loaded) {
     return null;
   }
 
@@ -62,7 +70,6 @@ export default function App() {
         <Image source={images.logo} style={styles.logo} />
       </View>
       <Text style={styles.tagline}>Every CIT Event's Companion</Text>
-
       <View style={styles.buttons}>
         <View style={styles.loginContainer}>
           <CustomButton
