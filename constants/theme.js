@@ -14,6 +14,7 @@ const theme = {
     display: 70,
   },
   spacing: {
+    xsmall: 4,
     small: 8,
     medium: 16,
     large: 24,
