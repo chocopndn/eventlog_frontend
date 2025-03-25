@@ -34,12 +34,13 @@ export const storeUser = async (user) => {
       }
 
       const insertQuery =
-        "INSERT OR IGNORE INTO users (id_number, role_id, block_id, first_name, middle_name, last_name, suffix, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        "INSERT OR IGNORE INTO users (id_number, role_id, block_id, department_id, first_name, middle_name, last_name, suffix, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
       await dbInstance.runAsync(insertQuery, [
         user.id_number,
         user.role_id,
         user.block_id,
+        user.department_id,
         user.first_name,
         user.middle_name,
         user.last_name,
@@ -74,8 +75,6 @@ export const clearAllTablesData = async () => {
         DELETE FROM departments;
         DELETE FROM roles;
       `);
-
-      console.log("All tables data cleared successfully.");
     } catch (error) {
       console.error("Error clearing all tables data:", error);
     }
@@ -109,5 +108,46 @@ export const getRoleID = async () => {
   } else {
     console.log("SQLite only supported on Android and iOS.");
     return null;
+  }
+};
+
+export const storeBlocks = async (blocksData) => {
+  if (Platform.OS === "web") {
+    return;
+  }
+
+  try {
+    const blocks = blocksData?.data || blocksData || [];
+
+    if (!blocks.length) {
+      return;
+    }
+
+    const dbInstance = await initDB();
+    if (!dbInstance) {
+      return;
+    }
+
+    const insertQuery = `
+      INSERT OR REPLACE INTO blocks (
+        id,
+        name, 
+        course_id, 
+        year_level_id, 
+        department_id
+      ) VALUES (?, ?, ?, ?, ?)
+    `;
+
+    for (const block of blocks) {
+      await dbInstance.runAsync(insertQuery, [
+        block.block_id,
+        block.block_name,
+        block.course_id,
+        block.year_level_id,
+        block.department_id || null,
+      ]);
+    }
+  } catch (error) {
+    throw error;
   }
 };
