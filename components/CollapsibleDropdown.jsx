@@ -4,7 +4,16 @@ import Collapsible from "react-native-collapsible";
 
 import theme from "../constants/theme";
 
-const CollapsibleDropdown = ({ title, date }) => {
+const CollapsibleDropdown = ({
+  title,
+  date,
+  venue,
+  am_in,
+  am_out,
+  pm_in,
+  pm_out,
+  personnel,
+}) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
   return (
@@ -18,7 +27,40 @@ const CollapsibleDropdown = ({ title, date }) => {
       </TouchableOpacity>
       <Collapsible collapsed={isCollapsed}>
         <View style={styles.content}>
-          <Text>blahblah</Text>
+          <View>
+            <Text style={styles.contentTitle}>VENUE OF TIME IN/OUT:</Text>
+            <Text style={styles.details}>{venue}</Text>
+          </View>
+          <View style={styles.timeContainer}>
+            <View style={styles.contentContainer}>
+              <Text style={styles.contentTitle}>TIME IN:</Text>
+              <View style={styles.time}>
+                <Text style={styles.timeOfDay}>Morning:</Text>
+                <Text style={styles.detailsTime}>{am_in}</Text>
+              </View>
+              <View style={styles.time}>
+                <Text style={styles.timeOfDay}>Afternoon:</Text>
+                <Text style={styles.detailsTime}>{am_out}</Text>
+              </View>
+            </View>
+
+            <View style={styles.contentContainer}>
+              <Text style={styles.contentTitle}>TIME OUT:</Text>
+              <View style={styles.time}>
+                <Text style={styles.timeOfDay}>Morning:</Text>
+                <Text style={styles.detailsTime}>{pm_in}</Text>
+              </View>
+              <View style={styles.time}>
+                <Text style={styles.timeOfDay}>Afternoon:</Text>
+                <Text style={styles.detailsTime}>{pm_out}</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.contentContainer}>
+            <Text style={styles.contentTitle}>SCAN PERSONNEL:</Text>
+            <Text style={styles.details}>{personnel}</Text>
+          </View>
         </View>
       </Collapsible>
     </View>
@@ -52,11 +94,41 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
     borderColor: theme.colors.primary,
     height: 200,
+    justifyContent: "center",
   },
   date: {
     fontSize: theme.fontSizes.small,
     fontFamily: "SquadaOne",
     color: theme.colors.primary,
     paddingTop: theme.spacing.xsmall,
+  },
+  contentTitle: {
+    fontFamily: "ArialBold",
+    color: theme.colors.primary,
+  },
+  details: {
+    color: theme.colors.primary,
+    fontSize: theme.fontSizes.extraSmall,
+    fontFamily: "Arial",
+  },
+  time: {
+    flexDirection: "row",
+  },
+  timeContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  timeOfDay: {
+    color: theme.colors.primary,
+    fontSize: theme.fontSizes.extraSmall,
+    fontFamily: "ArialBold",
+  },
+  detailsTime: {
+    color: theme.colors.primary,
+    fontSize: theme.fontSizes.extraSmall,
+    fontFamily: "Arial",
+  },
+  contentContainer: {
+    paddingTop: theme.spacing.medium,
   },
 });
