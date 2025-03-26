@@ -47,11 +47,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContainer: {
     width: "80%",
     padding: 20,
-    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: theme.colors.secondary,
@@ -60,6 +60,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 10,
     elevation: 100,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
   },
   title: {
     fontSize: theme.fontSizes.huge,
