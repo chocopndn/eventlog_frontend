@@ -21,6 +21,7 @@ const FormField = ({
   optional = false,
   iconShow = true,
   borderColor = "primary",
+  titleColor = "primary",
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const inputs = useRef([]);
@@ -88,11 +89,16 @@ const FormField = ({
   const resolvedBorderColor =
     borderColor === "secondary" ? theme.colors.secondary : theme.colors.primary;
 
+  const resolvedTitleColor =
+    titleColor === "secondary" ? theme.colors.secondary : theme.colors.primary;
+
   return type === "code" ? (
     <View style={styles.container}>
       {title && (
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>{title}</Text>
+          <Text style={[styles.title, { color: resolvedTitleColor }]}>
+            {title}
+          </Text>
           {optional && <Text style={styles.optionalText}> (optional)</Text>}
         </View>
       )}
@@ -116,7 +122,9 @@ const FormField = ({
     <View style={styles.container}>
       {title && (
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>{title}</Text>
+          <Text style={[styles.title, { color: resolvedTitleColor }]}>
+            {title}
+          </Text>
           {optional && <Text style={styles.optionalText}> (optional)</Text>}
         </View>
       )}
@@ -164,7 +172,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: theme.fontSizes.medium,
-    color: theme.colors.secondary,
     fontFamily: "Arial",
   },
   optionalText: {
@@ -180,7 +187,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.secondary,
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 2, // Added border width
+    borderWidth: 2,
   },
   textInput: {
     fontFamily: "Arial",
