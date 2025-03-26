@@ -1,4 +1,10 @@
-import { StyleSheet, Text, View, ScrollView } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
 import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -11,12 +17,15 @@ import CustomDropdown from "../../../../components/CustomDropdown";
 import FormField from "../../../../components/FormField";
 import DatePickerComponent from "../../../../components/DateTimePicker";
 import CustomButton from "../../../../components/CustomButton";
+import DurationPicker from "../../../../components/DurationPicker";
 
 const AddEvent = () => {
   const [departments, setDepartments] = useState([]);
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
   const [errorDepartments, setErrorDepartments] = useState(null);
+  const [selectedDuration, setSelectedDuration] = useState(0);
+  const [isDurationPickerVisible, setDurationPickerVisible] = useState(false);
 
   const [blocks, setBlocks] = useState([]);
   const [selectedBlocks, setSelectedBlocks] = useState([]);
@@ -159,6 +168,8 @@ const AddEvent = () => {
         <ScrollView
           style={{ width: "100%" }}
           contentContainerStyle={styles.scrollviewContent}
+          nestedScrollEnabled={true}
+          showsVerticalScrollIndicator={false}
         >
           <View style={{ width: "100%" }}>
             {loadingDepartments ? (
@@ -236,6 +247,18 @@ const AddEvent = () => {
                 <DatePickerComponent type="time" label="TIME OUT" />
               </View>
             </View>
+            <TouchableOpacity
+              style={styles.duration}
+              onPress={() => setDurationPickerVisible(true)}
+            >
+              <Text style={styles.durationText}>Select Duration</Text>
+            </TouchableOpacity>
+
+            <DurationPicker
+              visible={isDurationPickerVisible}
+              onClose={() => setDurationPickerVisible(false)}
+              onDurationSelect={setSelectedDuration}
+            />
 
             <View style={styles.buttonContainer}>
               <CustomButton title="POST" />
@@ -296,5 +319,19 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: theme.spacing.medium,
+  },
+  duration: {
+    width: "100%",
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    marginTop: theme.spacing.medium,
+    height: 50,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  durationText: {
+    color: theme.colors.primary,
+    fontFamily: theme.fontFamily.Arial,
+    fontSize: theme.fontSizes.medium,
   },
 });
