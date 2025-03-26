@@ -181,6 +181,7 @@ const SignUp = () => {
           <CustomDropdown
             placeholder="Select Department"
             title="Department"
+            titleColor="secondary"
             data={departments}
             onSelect={(value) => handleInputChange("department_id", value)}
           />
