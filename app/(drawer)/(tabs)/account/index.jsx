@@ -98,7 +98,7 @@ const Account = () => {
             <CustomButton
               type="secondary"
               title="EDIT EVENT"
-              onPress={() => router.push("/account/EditEvent")}
+              onPress={() => router.push("/account/EventsList")}
               otherStyles={styles.button}
             />
           </View>
