@@ -9,6 +9,8 @@ import theme from "../../../../constants/theme";
 
 import CustomDropdown from "../../../../components/CustomDropdown";
 import FormField from "../../../../components/FormField";
+import DatePickerComponent from "../../../../components/DateTimePicker";
+import CustomButton from "../../../../components/CustomButton";
 
 const AddEvent = () => {
   const [departments, setDepartments] = useState([]);
@@ -218,6 +220,26 @@ const AddEvent = () => {
               title="Venue"
               design="sharp"
             />
+            <DatePickerComponent type="date" title="Date of Event" />
+
+            <View style={styles.dateTimeWrapper}>
+              <Text style={styles.timeOfDay}>Morning</Text>
+              <View style={styles.timePickerContainer}>
+                <DatePickerComponent type="time" label="TIME IN" />
+                <DatePickerComponent type="time" label="TIME OUT" />
+              </View>
+            </View>
+            <View style={styles.dateTimeWrapper}>
+              <Text style={styles.timeOfDay}>Afternoon</Text>
+              <View style={styles.timePickerContainer}>
+                <DatePickerComponent type="time" label="TIME IN" />
+                <DatePickerComponent type="time" label="TIME OUT" />
+              </View>
+            </View>
+
+            <View style={styles.buttonContainer}>
+              <CustomButton title="POST" />
+            </View>
           </View>
         </ScrollView>
       </View>
@@ -259,5 +281,20 @@ const styles = StyleSheet.create({
     borderRightWidth: 0,
     width: "100%",
     alignItems: "center",
+  },
+  timePickerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  timeOfDay: {
+    color: theme.colors.primary,
+    fontFamily: theme.fontFamily.Arial,
+    fontSize: theme.fontSizes.medium,
+  },
+  dateTimeWrapper: {
+    marginTop: theme.spacing.medium,
+  },
+  buttonContainer: {
+    marginTop: theme.spacing.medium,
   },
 });
