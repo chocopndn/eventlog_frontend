@@ -4,7 +4,14 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 
 import theme from "../constants/theme";
 
-const DatePickerComponent = ({ type = "date", label, title }) => {
+const DatePickerComponent = ({
+  type = "date",
+  label,
+  title,
+  onDateChange,
+  selectedDates,
+  mode,
+}) => {
   const [date, setDate] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
 
@@ -12,20 +19,53 @@ const DatePickerComponent = ({ type = "date", label, title }) => {
     setShowPicker(false);
     if (selectedDate) {
       setDate(selectedDate);
+      if (onDateChange) {
+        if (mode === "multiple") {
+          if (selectedDates) {
+            const newDate = selectedDate;
+            const existingDateIndex = selectedDates.findIndex(
+              (d) => d.toDateString() === newDate.toDateString()
+            );
+            if (existingDateIndex > -1) {
+              const updatedDates = [...selectedDates];
+              updatedDates.splice(existingDateIndex, 1);
+              onDateChange(updatedDates);
+            } else {
+              onDateChange([...selectedDates, newDate]);
+            }
+          } else {
+            onDateChange([newDate]);
+          }
+        } else {
+          onDateChange(selectedDate);
+        }
+      }
     }
   };
 
   const handleLongPress = () => {
     setDate(null);
+    if (onDateChange) {
+      if (mode === "multiple") {
+        onDateChange([]);
+      } else {
+        onDateChange(null);
+      }
+    }
   };
 
   const formattedDate = date
     ? type === "date"
       ? date.toDateString()
-      : date.toLocaleTimeString()
+      : date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     : type === "date"
     ? "Select a date"
     : "Select a time";
+
+  const displayValue =
+    mode === "multiple" && selectedDates && selectedDates.length > 0
+      ? selectedDates.map((d) => d.toDateString()).join(", ")
+      : formattedDate;
 
   return (
     <View>
@@ -37,17 +77,36 @@ const DatePickerComponent = ({ type = "date", label, title }) => {
           onLongPress={handleLongPress}
         >
           {label ? <Text style={styles.label}>{label}</Text> : null}
-          <Text style={[styles.dateDisplay, !date && styles.placeholderText]}>
-            {formattedDate}
+          <Text
+            style={[
+              styles.dateDisplay,
+              (!date && mode !== "multiple" && styles.placeholderText) ||
+                (mode === "multiple" &&
+                  (!selectedDates || selectedDates.length === 0) &&
+                  styles.placeholderText),
+            ]}
+          >
+            {displayValue === ""
+              ? type === "date"
+                ? "Select date(s)"
+                : "Select a time"
+              : displayValue}
           </Text>
         </TouchableOpacity>
 
         {showPicker && (
           <DateTimePicker
-            value={date || new Date()}
+            value={
+              date ||
+              (mode === "multiple" && selectedDates && selectedDates.length > 0
+                ? selectedDates[0]
+                : new Date()) ||
+              new Date()
+            }
             mode={type}
             display="default"
             onChange={onChange}
+            is24Hour={true}
           />
         )}
       </View>
