@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { Dropdown, MultiSelect } from "react-native-element-dropdown";
 import theme from "../constants/theme";
 
@@ -64,8 +64,12 @@ const CustomDropdown = ({
           itemTextStyle={styles.itemTextStyle}
           itemContainerStyle={styles.itemContainerStyle}
           inputSearchStyle={styles.inputSearchStyle}
-          selectedStyle={styles.selectedStyle}
           searchPlaceholderTextColor={theme.colors.gray}
+          renderSelectedItem={(item, unSelect) => (
+            <TouchableOpacity
+              onPress={() => unSelect && unSelect(item)}
+            ></TouchableOpacity>
+          )}
         />
       ) : (
         <Dropdown
