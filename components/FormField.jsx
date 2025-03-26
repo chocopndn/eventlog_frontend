@@ -22,6 +22,7 @@ const FormField = ({
   iconShow = true,
   borderColor = "primary",
   titleColor = "primary",
+  design,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const inputs = useRef([]);
@@ -92,6 +93,8 @@ const FormField = ({
   const resolvedTitleColor =
     titleColor === "secondary" ? theme.colors.secondary : theme.colors.primary;
 
+  const borderRadius = design === "sharp" ? 0 : theme.borderRadius.medium;
+
   return type === "code" ? (
     <View style={styles.container}>
       {title && (
@@ -107,7 +110,10 @@ const FormField = ({
           <TextInput
             key={index}
             ref={(ref) => (inputs.current[index] = ref)}
-            style={[styles.codeInput, { borderColor: resolvedBorderColor }]}
+            style={[
+              styles.codeInput,
+              { borderColor: resolvedBorderColor, borderRadius },
+            ]}
             keyboardType="number-pad"
             maxLength={1}
             value={digit}
@@ -128,7 +134,12 @@ const FormField = ({
           {optional && <Text style={styles.optionalText}> (optional)</Text>}
         </View>
       )}
-      <View style={[styles.inputWrapper, { borderColor: resolvedBorderColor }]}>
+      <View
+        style={[
+          styles.inputWrapper,
+          { borderColor: resolvedBorderColor, borderRadius },
+        ]}
+      >
         {iconShow && getIcon() && (
           <Image source={getIcon()} style={globalStyles.icons} />
         )}
@@ -183,7 +194,6 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 46,
     paddingHorizontal: 10,
-    borderRadius: theme.borderRadius.medium,
     backgroundColor: theme.colors.secondary,
     flexDirection: "row",
     alignItems: "center",
@@ -208,7 +218,6 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     backgroundColor: theme.colors.secondary,
     borderWidth: 2,
-    borderRadius: 8,
   },
 });
 
