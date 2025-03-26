@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   buttons: {
     paddingTop: 20,
     paddingHorizontal: 20,
-    width: "80%",
+    width: "70%",
   },
   loginContainer: {
     marginBottom: theme.spacing.medium,
