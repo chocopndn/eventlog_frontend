@@ -23,6 +23,7 @@ const FormField = ({
   borderColor = "primary",
   titleColor = "primary",
   design,
+  multiline = false,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const inputs = useRef([]);
@@ -138,13 +139,14 @@ const FormField = ({
         style={[
           styles.inputWrapper,
           { borderColor: resolvedBorderColor, borderRadius },
+          multiline && styles.multilineInputWrapper,
         ]}
       >
         {iconShow && getIcon() && (
           <Image source={getIcon()} style={globalStyles.icons} />
         )}
         <TextInput
-          style={styles.textInput}
+          style={[styles.textInput, multiline && styles.multilineInput]}
           placeholder={placeholder}
           value={value}
           onChangeText={handleInputChange}
@@ -158,6 +160,8 @@ const FormField = ({
           }
           autoCapitalize={getAutoCapitalize()}
           autoCorrect={false}
+          multiline={multiline}
+          numberOfLines={multiline ? 4 : 1}
         />
         {type === "password" && (
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
@@ -199,10 +203,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 2,
   },
+  multilineInputWrapper: {
+    height: 92,
+    alignItems: "flex-start",
+    paddingVertical: 10,
+  },
   textInput: {
     fontFamily: "Arial",
     fontSize: theme.fontSizes.medium,
     flex: 1,
+  },
+  multilineInput: {
+    height: 92,
+    textAlignVertical: "top",
   },
   codeContainer: {
     flexDirection: "row",
