@@ -20,6 +20,7 @@ const FormField = ({
   value,
   optional = false,
   iconShow = true,
+  borderColor = "primary",
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const inputs = useRef([]);
@@ -84,6 +85,9 @@ const FormField = ({
     return "sentences";
   };
 
+  const resolvedBorderColor =
+    borderColor === "secondary" ? theme.colors.secondary : theme.colors.primary;
+
   return type === "code" ? (
     <View style={styles.container}>
       {title && (
@@ -97,7 +101,7 @@ const FormField = ({
           <TextInput
             key={index}
             ref={(ref) => (inputs.current[index] = ref)}
-            style={styles.codeInput}
+            style={[styles.codeInput, { borderColor: resolvedBorderColor }]}
             keyboardType="number-pad"
             maxLength={1}
             value={digit}
@@ -116,7 +120,7 @@ const FormField = ({
           {optional && <Text style={styles.optionalText}> (optional)</Text>}
         </View>
       )}
-      <View style={styles.inputWrapper}>
+      <View style={[styles.inputWrapper, { borderColor: resolvedBorderColor }]}>
         {iconShow && getIcon() && (
           <Image source={getIcon()} style={globalStyles.icons} />
         )}
@@ -151,7 +155,6 @@ const FormField = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: "80%",
     marginBottom: theme.spacing.medium,
   },
   titleContainer: {
@@ -177,6 +180,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.secondary,
     flexDirection: "row",
     alignItems: "center",
+    borderWidth: 2, // Added border width
   },
   textInput: {
     fontFamily: "Arial",
@@ -197,7 +201,6 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     backgroundColor: theme.colors.secondary,
     borderWidth: 2,
-    borderColor: theme.colors.primary,
     borderRadius: 8,
   },
 });
