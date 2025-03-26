@@ -19,7 +19,7 @@ const AccountLayout = () => {
           headerStyle: { backgroundColor: theme.colors.primary },
           headerTintColor: theme.colors.secondary,
         }}
-      />{" "}
+      />
       <Stack.Screen
         name="EventsList"
         options={{
