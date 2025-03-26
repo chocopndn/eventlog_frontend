@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,12 +10,25 @@ import {
 import WheelPickerExpo from "react-native-wheel-picker-expo";
 import theme from "../constants/theme";
 
-const DurationPicker = ({ visible, onClose, onDurationSelect }) => {
+const DurationPicker = ({
+  visible,
+  onClose,
+  onDurationSelect,
+  selectedDuration,
+}) => {
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
 
+  useEffect(() => {
+    if (visible && selectedDuration !== undefined) {
+      setHours(Math.floor(selectedDuration / 60));
+      setMinutes(selectedDuration % 60);
+    }
+  }, [visible, selectedDuration]);
+
   const handleDone = () => {
-    onDurationSelect(hours * 60 + minutes);
+    const totalMinutes = hours * 60 + minutes;
+    onDurationSelect(totalMinutes);
     onClose();
   };
 
@@ -35,25 +48,22 @@ const DurationPicker = ({ visible, onClose, onDurationSelect }) => {
               onChange={({ item }) => setHours(item.value)}
               height={150}
               width={100}
+              backgroundColor={theme.colors.secondary}
             />
             <Text style={styles.separator}>:</Text>
             <WheelPickerExpo
-              items={Array.from({ length: 60 }, (_, i) => ({
-                label: `${i} mins`,
-                value: i,
+              items={Array.from({ length: 12 }, (_, i) => ({
+                label: `${i * 5} mins`,
+                value: i * 5,
               }))}
               selectedValue={minutes}
               onChange={({ item }) => setMinutes(item.value)}
               height={150}
               width={100}
+              backgroundColor={theme.colors.secondary}
             />
           </View>
 
-          <Text style={styles.selectedText}>
-            Selected: {hours * 60 + minutes} minutes
-          </Text>
-
-          {/* Done Button */}
           <TouchableOpacity style={styles.doneButton} onPress={handleDone}>
             <Text style={styles.doneButtonText}>Done</Text>
           </TouchableOpacity>
@@ -66,20 +76,19 @@ const DurationPicker = ({ visible, onClose, onDurationSelect }) => {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
     justifyContent: "flex-end",
   },
   modalContainer: {
-    backgroundColor: "#fff",
+    backgroundColor: theme.colors.secondary,
     padding: 20,
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
     alignItems: "center",
-    elevation: 5,
+    borderTopWidth: 2,
+    borderColor: theme.colors.primary,
   },
   title: {
     fontSize: theme.fontSizes.medium,
     color: theme.colors.primary,
+    fontFamily: theme.fontFamily.Arial,
     marginBottom: 10,
   },
   pickerRow: {
@@ -93,21 +102,16 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     marginHorizontal: 10,
   },
-  selectedText: {
-    marginTop: 10,
-    fontSize: theme.fontSizes.small,
-    color: theme.colors.secondary,
-  },
   doneButton: {
-    marginTop: 10,
+    marginTop: theme.spacing.large,
     backgroundColor: theme.colors.primary,
     padding: 10,
-    borderRadius: 5,
+    borderRadius: theme.borderRadius.medium,
     width: "50%",
     alignItems: "center",
   },
   doneButtonText: {
-    color: "#fff",
+    color: theme.colors.secondary,
     fontSize: theme.fontSizes.medium,
   },
 });
