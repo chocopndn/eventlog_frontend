@@ -4,11 +4,11 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import axios from "axios";
 import { API_URL } from "../../../../config/config";
 
 import globalStyles from "../../../../constants/globalStyles";
@@ -19,8 +19,8 @@ import FormField from "../../../../components/FormField";
 import DatePickerComponent from "../../../../components/DateTimePicker";
 import CustomButton from "../../../../components/CustomButton";
 import DurationPicker from "../../../../components/DurationPicker";
+import CustomModal from "../../../../components/CustomModal";
 import { getStoredUser } from "../../../../database/queries";
-import axios from "axios";
 
 const AddEvent = () => {
   const [departments, setDepartments] = useState([]);
@@ -29,6 +29,10 @@ const AddEvent = () => {
   const [errorDepartments, setErrorDepartments] = useState(null);
   const [selectedDuration, setSelectedDuration] = useState(0);
   const [isDurationPickerVisible, setDurationPickerVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalType, setModalType] = useState("");
+  const [modalTitle, setModalTitle] = useState("");
 
   const [blocks, setBlocks] = useState([]);
   const [selectedBlocks, setSelectedBlocks] = useState([]);
@@ -163,8 +167,8 @@ const AddEvent = () => {
   useEffect(() => {
     const loadUser = async () => {
       const user = await getStoredUser();
-      if (user && user.admin_id_number) {
-        setAdminId(user.admin_id_number);
+      if (user && user.id_number) {
+        setAdminId(user.id_number);
       }
     };
     loadUser();
@@ -282,84 +286,84 @@ const AddEvent = () => {
   };
 
   const handlePostEvent = async () => {
-    if (!selectedEvent) {
-      Alert.alert("Error", "Please select an event name.");
+    if (!selectedEvent || !selectedEvent.value) {
+      setModalTitle("Error");
+      setModalMessage("Please select an event name.");
+      setModalType("error");
+      setModalVisible(true);
       return;
     }
     if (!venue) {
-      Alert.alert("Error", "Please enter the venue.");
+      setModalTitle("Error");
+      setModalMessage("Please enter the venue.");
+      setModalType("error");
+      setModalVisible(true);
       return;
     }
     if (selectedDepartments.length === 0) {
-      Alert.alert("Error", "Please select at least one department.");
+      setModalTitle("Error");
+      setModalMessage("Please select at least one department.");
+      setModalType("error");
+      setModalVisible(true);
       return;
     }
-    if (selectedDates.length === 0) {
-      Alert.alert("Error", "Please select at least one date for the event.");
+    if (selectedDates.length === 0 || !Array.isArray(selectedDates)) {
+      setModalTitle("Error");
+      setModalMessage("Please select at least one valid date for the event.");
+      setModalType("error");
+      setModalVisible(true);
       return;
     }
     if (!amIn || !amOut || !pmIn || !pmOut) {
-      Alert.alert(
-        "Error",
+      setModalTitle("Error");
+      setModalMessage(
         "Please select time in and out for both morning and afternoon."
       );
+      setModalType("error");
+      setModalVisible(true);
       return;
     }
     if (selectedDuration === 0) {
-      Alert.alert("Error", "Please select the duration of the event.");
+      setModalTitle("Error");
+      setModalMessage("Please select the duration of the event.");
+      setModalType("error");
+      setModalVisible(true);
       return;
     }
     if (!adminId) {
-      Alert.alert("Error", "Admin ID not found. Please try again.");
+      setModalTitle("Error");
+      setModalMessage("Admin ID not found. Please try again.");
+      setModalType("error");
+      setModalVisible(true);
       return;
     }
 
-    const formattedAmIn = amIn
-      ? `${amIn.getHours().toString().padStart(2, "0")}:${amIn
-          .getMinutes()
-          .toString()
-          .padStart(2, "0")}:${amIn.getSeconds().toString().padStart(2, "0")}`
-      : null;
-    const formattedAmOut = amOut
-      ? `${amOut.getHours().toString().padStart(2, "0")}:${amOut
-          .getMinutes()
-          .toString()
-          .padStart(2, "0")}:${amOut.getSeconds().toString().padStart(2, "0")}`
-      : null;
-    const formattedPmIn = pmIn
-      ? `${pmIn.getHours().toString().padStart(2, "0")}:${pmIn
-          .getMinutes()
-          .toString()
-          .padStart(2, "0")}:${pmIn.getSeconds().toString().padStart(2, "0")}`
-      : null;
-    const formattedPmOut = pmOut
-      ? `${pmOut.getHours().toString().padStart(2, "0")}:${pmOut
-          .getMinutes()
-          .toString()
-          .padStart(2, "0")}:${pmOut.getSeconds().toString().padStart(2, "0")}`
-      : null;
+    const formatTime = (time) =>
+      time
+        ? `${time.getHours().toString().padStart(2, "0")}:${time
+            .getMinutes()
+            .toString()
+            .padStart(2, "0")}:${time.getSeconds().toString().padStart(2, "0")}`
+        : null;
 
     const eventData = {
       event_name_id: selectedEvent.value,
-      venue: venue,
-      description: description,
+      venue,
+      description,
       department_id: selectedDepartments,
       block_ids: selectedBlocks,
       date: selectedDates.map((date) => date.toISOString().split("T")[0]),
-      am_in: formattedAmIn,
-      am_out: formattedAmOut,
-      pm_in: formattedPmIn,
-      pm_out: formattedPmOut,
+      am_in: formatTime(amIn),
+      am_out: formatTime(amOut),
+      pm_in: formatTime(pmIn),
+      pm_out: formatTime(pmOut),
       duration: selectedDuration,
       scan_personnel:
         "Year Level Representatives, Governor, or Year Level Adviser",
       admin_id_number: adminId,
     };
 
-    console.log(
-      "Data being passed to API:",
-      JSON.stringify(eventData, null, 2)
-    );
+    console.log("Data being sent to API:", JSON.stringify(eventData, null, 2));
 
     try {
       const response = await axios.post(
@@ -370,7 +374,10 @@ const AddEvent = () => {
       console.log("API Response:", JSON.stringify(response.data, null, 2));
 
       if (response.status === 200 && response.data.success) {
-        Alert.alert("Success", "Event added successfully!");
+        setModalTitle("Success");
+        setModalMessage("Event added successfully!");
+        setModalType("success");
+        setModalVisible(true);
 
         setSelectedEvent(null);
         setVenue("");
@@ -384,14 +391,19 @@ const AddEvent = () => {
         setPmOut(null);
         setSelectedDuration(0);
       } else {
-        Alert.alert("Error", response.data?.message || "Failed to add event.");
+        setModalTitle("Error");
+        setModalMessage(response.data?.message || "Failed to add event.");
+        setModalType("error");
+        setModalVisible(true);
       }
     } catch (error) {
-      console.error("Error adding event:", error);
-      Alert.alert(
-        "Error",
-        "Failed to add event. Please check your network connection."
+      setModalTitle("Error");
+      setModalMessage(
+        error.response?.data?.message ||
+          "Failed to add event. Please check your network connection."
       );
+      setModalType("error");
+      setModalVisible(true);
     }
   };
 
@@ -543,6 +555,13 @@ const AddEvent = () => {
           </View>
         </ScrollView>
       </View>
+      <CustomModal
+        visible={modalVisible}
+        title={modalTitle}
+        message={modalMessage}
+        type={modalType}
+        onClose={() => setModalVisible(false)}
+      />
       <StatusBar style="light" />
     </SafeAreaView>
   );
