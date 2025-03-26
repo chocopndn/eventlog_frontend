@@ -177,35 +177,34 @@ const AddEvent = () => {
   const handleDepartmentSelect = (values) => {
     setSelectedDepartments(values);
     setSelectedBlocks([]);
-    console.log("Selected Departments:", values);
   };
 
   const handleBlockSelect = (values) => {
     setSelectedBlocks(values);
-    console.log("Selected Blocks:", values);
   };
 
   const handleEventNameSelect = (value) => {
     setSelectedEvent(value);
-    console.log("Selected Event Name ID:", value);
   };
 
   const handleVenueChange = (text) => {
     setVenue(text);
-    console.log("Venue Input:", text);
   };
 
   const handleDescriptionChange = (text) => {
     setDescription(text);
-    console.log("Description Input:", text);
   };
 
-  const handleDateChange = (dates) => {
-    setSelectedDates(dates);
-    console.log(
-      "Selected Dates:",
-      dates ? dates.map((date) => date.toISOString().split("T")[0]) : []
-    );
+  const handleDateChange = (date) => {
+    if (!date) {
+      return;
+    }
+
+    if (Array.isArray(date)) {
+      setSelectedDates(date.map((d) => new Date(d)));
+    } else {
+      setSelectedDates([new Date(date)]);
+    }
   };
 
   const handleAmInChange = (time) => {
@@ -214,16 +213,6 @@ const AddEvent = () => {
     sampleTime.setMinutes(21);
     sampleTime.setSeconds(3);
     setAmIn(sampleTime);
-    console.log(
-      "Morning Time In:",
-      `${sampleTime.getHours().toString().padStart(2, "0")}:${sampleTime
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}:${sampleTime
-        .getSeconds()
-        .toString()
-        .padStart(2, "0")}`
-    );
   };
 
   const handleAmOutChange = (time) => {
@@ -232,16 +221,6 @@ const AddEvent = () => {
     sampleTime.setMinutes(21);
     sampleTime.setSeconds(3);
     setAmOut(sampleTime);
-    console.log(
-      "Morning Time Out:",
-      `${sampleTime.getHours().toString().padStart(2, "0")}:${sampleTime
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}:${sampleTime
-        .getSeconds()
-        .toString()
-        .padStart(2, "0")}`
-    );
   };
 
   const handlePmInChange = (time) => {
@@ -250,16 +229,6 @@ const AddEvent = () => {
     sampleTime.setMinutes(21);
     sampleTime.setSeconds(3);
     setPmIn(sampleTime);
-    console.log(
-      "Afternoon Time In:",
-      `${sampleTime.getHours().toString().padStart(2, "0")}:${sampleTime
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}:${sampleTime
-        .getSeconds()
-        .toString()
-        .padStart(2, "0")}`
-    );
   };
 
   const handlePmOutChange = (time) => {
@@ -268,21 +237,10 @@ const AddEvent = () => {
     sampleTime.setMinutes(21);
     sampleTime.setSeconds(3);
     setPmOut(sampleTime);
-    console.log(
-      "Afternoon Time Out:",
-      `${sampleTime.getHours().toString().padStart(2, "0")}:${sampleTime
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}:${sampleTime
-        .getSeconds()
-        .toString()
-        .padStart(2, "0")}`
-    );
   };
 
   const handleDurationSelect = (duration) => {
     setSelectedDuration(duration);
-    console.log("Selected Duration:", duration);
   };
 
   const handlePostEvent = async () => {
@@ -352,7 +310,10 @@ const AddEvent = () => {
       description,
       department_id: selectedDepartments,
       block_ids: selectedBlocks,
-      date: selectedDates.map((date) => date.toISOString().split("T")[0]),
+      date:
+        selectedDates.length > 0
+          ? selectedDates.map((d) => d.toISOString().split("T")[0])
+          : null,
       am_in: formatTime(amIn),
       am_out: formatTime(amOut),
       pm_in: formatTime(pmIn),
@@ -363,15 +324,11 @@ const AddEvent = () => {
       admin_id_number: adminId,
     };
 
-    console.log("Data being sent to API:", JSON.stringify(eventData, null, 2));
-
     try {
       const response = await axios.post(
         API_URL + "/api/events/admin/add",
         eventData
       );
-
-      console.log("API Response:", JSON.stringify(response.data, null, 2));
 
       if (response.status === 200 && response.data.success) {
         setModalTitle("Success");
@@ -496,8 +453,7 @@ const AddEvent = () => {
               type="date"
               title="Date of Event"
               onDateChange={handleDateChange}
-              selectedDates={selectedDates}
-              mode="multiple"
+              selectedValue={selectedDates}
             />
 
             <View style={styles.dateTimeWrapper}>
