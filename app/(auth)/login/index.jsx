@@ -106,18 +106,20 @@ const Login = () => {
     <SafeAreaView style={[globalStyles.primaryContainer, { padding: 0 }]}>
       <Header type="primary" />
       <Text style={styles.header}>WELCOME!</Text>
-      <FormField
-        type="id"
-        value={id}
-        onChangeText={setId}
-        placeholder="ID Number"
-      />
-      <FormField
-        type="password"
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Password"
-      />
+      <View style={styles.form}>
+        <FormField
+          type="id"
+          value={id}
+          onChangeText={setId}
+          placeholder="ID Number"
+        />
+        <FormField
+          type="password"
+          value={password}
+          onChangeText={setPassword}
+          placeholder="Password"
+        />
+      </View>
       <View style={styles.rememberForgotContainer}>
         <View style={styles.rememberMeContainer}>
           <Checkbox
@@ -140,7 +142,9 @@ const Login = () => {
           </TouchableOpacity>
         </View>
       </View>
-      <CustomButton type="secondary" title="Login" onPress={handleLogin} />
+      <View style={styles.buttonContainer}>
+        <CustomButton type="secondary" title="Login" onPress={handleLogin} />
+      </View>
 
       <View style={styles.registerContainer}>
         <Text style={styles.registerQ}>Don't have an account?</Text>
@@ -210,5 +214,11 @@ const styles = StyleSheet.create({
   registerLink: {
     color: theme.colors.secondary,
     fontFamily: "ArialBold",
+  },
+  form: {
+    width: "80%",
+  },
+  buttonContainer: {
+    width: "70%",
   },
 });
