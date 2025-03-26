@@ -23,9 +23,25 @@ const CustomDropdown = ({
     }
   }, [value, selectedValue]);
 
-  const handleChange = (item) => {
-    setSelectedValue(item);
-    onSelect?.(item);
+  const handleChange = (items) => {
+    if (multiSelect) {
+      if (items.includes("select_all")) {
+        if (selectedValue.length === data.length) {
+          setSelectedValue([]);
+          onSelect?.([]);
+        } else {
+          const allValues = data.map((item) => item.value);
+          setSelectedValue(allValues);
+          onSelect?.(allValues);
+        }
+      } else {
+        setSelectedValue(items);
+        onSelect?.(items);
+      }
+    } else {
+      setSelectedValue(items);
+      onSelect?.(items);
+    }
   };
 
   const getDropdownStyle = () => {
@@ -52,7 +68,7 @@ const CustomDropdown = ({
       {title ? <Text style={getTitleStyle()}>{title}</Text> : null}
       {multiSelect ? (
         <MultiSelect
-          data={data.length > 0 ? data : []}
+          data={[{ label: "Select All", value: "select_all" }, ...data]}
           labelField="label"
           valueField="value"
           value={selectedValue}
@@ -66,9 +82,7 @@ const CustomDropdown = ({
           inputSearchStyle={styles.inputSearchStyle}
           searchPlaceholderTextColor={theme.colors.gray}
           renderSelectedItem={(item, unSelect) => (
-            <TouchableOpacity
-              onPress={() => unSelect && unSelect(item)}
-            ></TouchableOpacity>
+            <TouchableOpacity onPress={() => unSelect && unSelect(item)} />
           )}
         />
       ) : (
