@@ -87,6 +87,18 @@ const Account = () => {
             <Text style={styles.details}>{user?.email || "N/A"}</Text>
           </View>
         </View>
+        <CustomButton
+          type="primary"
+          title="ADD EVENT"
+          onPress={() => router.push("/account/AddEvent")}
+          otherStyles={styles.logoutButton}
+        />
+        <CustomButton
+          type="secondary"
+          title="EDIT EVENT"
+          onPress={() => router.push("/account/EditEvent")}
+          otherStyles={styles.logoutButton}
+        />
         <View style={styles.contactUsContainer}>
           <Text style={styles.contactUs}>Contact Us</Text>
           <View style={styles.line} />
