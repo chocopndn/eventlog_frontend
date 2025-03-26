@@ -72,11 +72,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   dateButton: {
-    backgroundColor: theme.colors.secondary,
     height: 46,
+    width: "100%",
+    backgroundColor: theme.colors.secondary,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
   },
   dateDisplay: {
     color: theme.colors.primary,
