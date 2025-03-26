@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, Image, ScrollView } from "react-native";
 import React, { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
@@ -12,6 +12,7 @@ import {
   getStoredUser,
 } from "../../../../database/queries";
 import Header from "../../../../components/Header";
+import images from "../../../../constants/images";
 
 const Account = () => {
   const [user, setUser] = useState(null);
@@ -26,7 +27,7 @@ const Account = () => {
       }
     };
     fetchUserData();
-  }, []);
+  });
 
   const handleLogout = async () => {
     try {
@@ -42,44 +43,81 @@ const Account = () => {
     <SafeAreaView
       style={[
         globalStyles.secondaryContainer,
-        { paddingLeft: 0, paddingRight: 0 },
+        {
+          paddingLeft: 0,
+          paddingRight: 0,
+          paddingBottom: 0,
+          marginTop: theme.spacing.large,
+        },
       ]}
     >
       <Header type="secondary" />
       <Text style={styles.title}>ACCOUNT</Text>
-      <View style={styles.detailsWrapper}>
-        <View style={[styles.detailsContainer, { borderBottomWidth: 0 }]}>
-          <Text style={styles.detailsTitle}>Name: </Text>
-          <Text style={styles.details}>
-            {user?.first_name || "N/A"} {user?.middle_name || ""}{" "}
-            {user?.last_name || "N/A"} {user?.suffix || ""}
-          </Text>
-        </View>
-        <View style={[styles.detailsContainer, { borderBottomWidth: 0 }]}>
-          <Text style={styles.detailsTitle}>ID Number: </Text>
-          <Text style={styles.details}>{user?.id_number || "N/A"}</Text>
-        </View>
-        {user?.block_name !== null && (
+      <ScrollView
+        contentContainerStyle={{
+          width: "100%",
+          paddingBottom: theme.spacing.xlarge,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.detailsWrapper}>
           <View style={[styles.detailsContainer, { borderBottomWidth: 0 }]}>
-            <Text style={styles.detailsTitle}>Block: </Text>
-            <Text style={styles.details}>{user?.block_name || "N/A"}</Text>
+            <Text style={styles.detailsTitle}>Name: </Text>
+            <Text style={styles.details}>
+              {user?.first_name || "N/A"} {user?.middle_name || ""}{" "}
+              {user?.last_name || "N/A"} {user?.suffix || ""}
+            </Text>
           </View>
-        )}
-        <View style={[styles.detailsContainer, { borderBottomWidth: 0 }]}>
-          <Text style={styles.detailsTitle}>Department: </Text>
-          <Text style={styles.details}>{user?.department_code || "N/A"}</Text>
+          <View style={[styles.detailsContainer, { borderBottomWidth: 0 }]}>
+            <Text style={styles.detailsTitle}>ID Number: </Text>
+            <Text style={styles.details}>{user?.id_number || "N/A"}</Text>
+          </View>
+          {user?.block_name !== null && (
+            <View style={[styles.detailsContainer, { borderBottomWidth: 0 }]}>
+              <Text style={styles.detailsTitle}>Block: </Text>
+              <Text style={styles.details}>{user?.block_name || "N/A"}</Text>
+            </View>
+          )}
+          <View style={[styles.detailsContainer, { borderBottomWidth: 0 }]}>
+            <Text style={styles.detailsTitle}>Department: </Text>
+            <Text style={styles.details}>{user?.department_code || "N/A"}</Text>
+          </View>
+          <View style={styles.detailsContainer}>
+            <Text style={styles.detailsTitle}>Email: </Text>
+            <Text style={styles.details}>{user?.email || "N/A"}</Text>
+          </View>
         </View>
-        <View style={styles.detailsContainer}>
-          <Text style={styles.detailsTitle}>Email: </Text>
-          <Text style={styles.details}>{user?.email || "N/A"}</Text>
+        <View style={styles.contactUsContainer}>
+          <Text style={styles.contactUs}>Contact Us</Text>
+          <View style={styles.line} />
+          <Text style={styles.school}>UNIVERSITY OF CAGAYAN VALLEY</Text>
+          <Text style={styles.department}>
+            COLLEGE OF INFORMATION TECHNOLOGY
+          </Text>
+          <Text style={styles.address}>
+            VHNP Building 4th Floor - New Site Campus, Balzain, Tuguegarao City,
+            Cagayan
+          </Text>
+          <View>
+            <View style={styles.socialsContainer}>
+              <Image source={images.email} style={styles.icon} />
+              <Text style={styles.socialText}>
+                cit_eventlogsupport@gmail.com
+              </Text>
+            </View>
+            <View style={styles.socialsContainer}>
+              <Image source={images.facebook} style={styles.icon} />
+              <Text style={styles.socialText}>CITofficial.UCV</Text>
+            </View>
+          </View>
         </View>
-      </View>
-      <CustomButton
-        type="primary"
-        title="Logout"
-        onPress={handleLogout}
-        otherStyles={styles.logoutButton}
-      />
+        <CustomButton
+          type="primary"
+          title="Logout"
+          onPress={handleLogout}
+          otherStyles={styles.logoutButton}
+        />
+      </ScrollView>
       <StatusBar style="auto" />
     </SafeAreaView>
   );
@@ -117,7 +155,56 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
   },
   detailsWrapper: {
-    width: "90%",
     marginBottom: theme.spacing.medium,
+  },
+  contactUs: {
+    fontSize: theme.fontSizes.medium,
+    fontFamily: theme.fontFamily.ArialBold,
+    color: theme.colors.primary,
+  },
+  line: {
+    borderColor: theme.colors.primary,
+    borderWidth: 1,
+    width: "100%",
+  },
+  contactUsContainer: {
+    padding: theme.spacing.medium,
+    marginBottom: theme.spacing.medium,
+    alignItems: "center",
+  },
+  school: {
+    fontSize: theme.fontSizes.small,
+    fontFamily: theme.fontFamily.Arial,
+    color: theme.colors.primary,
+  },
+  department: {
+    fontSize: theme.fontSizes.small,
+    fontFamily: theme.fontFamily.Arial,
+    color: theme.colors.primary,
+  },
+  address: {
+    textAlign: "center",
+    fontSize: theme.fontSizes.small,
+    fontFamily: theme.fontFamily.Arial,
+    color: theme.colors.primary,
+  },
+  icon: {
+    tintColor: theme.colors.primary,
+    width: 24,
+    height: 24,
+  },
+  socialText: {
+    fontSize: theme.fontSizes.small,
+    fontFamily: theme.fontFamily.Arial,
+    color: theme.colors.primary,
+    paddingLeft: theme.spacing.medium,
+  },
+  socialsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingTop: theme.spacing.medium,
+  },
+  logoutButton: {
+    marginTop: theme.spacing.medium,
   },
 });
