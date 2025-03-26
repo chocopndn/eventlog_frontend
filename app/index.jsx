@@ -3,10 +3,7 @@ import { StyleSheet, Text, Image, View, Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_URL } from "../config/config";
-import { storeDepartments, storeBlocks } from "../database/queries";
 import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import theme from "../constants/theme";
@@ -25,7 +22,6 @@ export default function App() {
     ArialItalic: require("../assets/fonts/ArialItalic.ttf"),
     SquadaOne: require("../assets/fonts/SquadaOne.ttf"),
   });
-  const [hasFetched, setHasFetched] = useState(false);
   const [appReady, setAppReady] = useState(false);
   const [isOfflineModalVisible, setIsOfflineModalVisible] = useState(false);
 
@@ -34,51 +30,12 @@ export default function App() {
       try {
         const token = await AsyncStorage.getItem("userToken");
         if (token) {
-          if (!hasFetched) {
-            try {
-              const deptResponse = await axios.get(
-                `${API_URL}/api/departments`
-              );
-              const fetchedDepartments = deptResponse.data?.data || [];
-              await storeDepartments(fetchedDepartments);
-            } catch (error) {
-              console.error("Error fetching departments:", error);
-            }
-
-            try {
-              const blocksResponse = await axios.get(`${API_URL}/api/blocks`);
-              const fetchedBlocks = blocksResponse.data?.data || [];
-              await storeBlocks(blocksResponse.data);
-            } catch (error) {
-              console.error("Error fetching blocks:", error);
-            }
-            setHasFetched(true);
-          }
           await SplashScreen.hideAsync();
           router.replace("/(tabs)/home");
           return;
         }
 
         if (!fontsLoaded || fontError) return;
-
-        if (!hasFetched) {
-          try {
-            const deptResponse = await axios.get(`${API_URL}/api/departments`);
-            const fetchedDepartments = deptResponse.data?.data || [];
-            await storeDepartments(fetchedDepartments);
-          } catch (error) {
-            console.error("Error fetching departments:", error);
-          }
-
-          try {
-            const blocksResponse = await axios.get(`${API_URL}/api/blocks`);
-            const fetchedBlocks = blocksResponse.data?.data || [];
-            await storeBlocks(blocksResponse.data);
-          } catch (error) {
-            console.error("Error fetching blocks:", error);
-          }
-          setHasFetched(true);
-        }
       } catch (error) {
         console.error("Error during app preparation:", error);
       } finally {
@@ -88,7 +45,7 @@ export default function App() {
     };
 
     prepareApp();
-  }, [fontsLoaded, fontError, hasFetched]);
+  }, [fontsLoaded, fontError]);
 
   const handleLoginPress = async () => {
     const netInfoState = await NetInfo.fetch();
@@ -96,20 +53,7 @@ export default function App() {
       setIsOfflineModalVisible(true);
       return;
     }
-
-    try {
-      const deptResponse = await axios.get(`${API_URL}/api/departments`);
-      const fetchedDepartments = deptResponse.data?.data || [];
-      await storeDepartments(fetchedDepartments);
-
-      const blocksResponse = await axios.get(`${API_URL}/api/blocks`);
-      const fetchedBlocks = blocksResponse.data?.data || [];
-      await storeBlocks(blocksResponse.data);
-
-      router.push("/login");
-    } catch (error) {
-      console.error("Error fetching departments or blocks:", error);
-    }
+    router.push("/login");
   };
 
   const handleRegisterPress = async () => {
@@ -118,20 +62,7 @@ export default function App() {
       setIsOfflineModalVisible(true);
       return;
     }
-
-    try {
-      const deptResponse = await axios.get(`${API_URL}/api/departments`);
-      const fetchedDepartments = deptResponse.data?.data || [];
-      await storeDepartments(fetchedDepartments);
-
-      const blocksResponse = await axios.get(`${API_URL}/api/blocks`);
-      const fetchedBlocks = blocksResponse.data?.data || [];
-      await storeBlocks(blocksResponse.data);
-
-      router.push("/signup");
-    } catch (error) {
-      console.error("Error fetching departments or blocks:", error);
-    }
+    router.push("/signup");
   };
 
   const closeOfflineModal = () => {
