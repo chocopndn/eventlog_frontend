@@ -55,7 +55,7 @@ const Account = () => {
       <Text style={styles.title}>ACCOUNT</Text>
       <ScrollView
         contentContainerStyle={{
-          width: "100%",
+          width: "80%",
           paddingBottom: theme.spacing.xlarge,
         }}
         showsVerticalScrollIndicator={false}
@@ -87,19 +87,21 @@ const Account = () => {
             <Text style={styles.details}>{user?.email || "N/A"}</Text>
           </View>
         </View>
-        <CustomButton
-          type="primary"
-          title="ADD EVENT"
-          onPress={() => router.push("/account/AddEvent")}
-          otherStyles={styles.logoutButton}
-        />
-        <CustomButton
-          type="secondary"
-          title="EDIT EVENT"
-          onPress={() => router.push("/account/EditEvent")}
-          otherStyles={styles.logoutButton}
-        />
         <View style={styles.contactUsContainer}>
+          <View style={styles.buttonContainer}>
+            <CustomButton
+              type="primary"
+              title="ADD EVENT"
+              onPress={() => router.push("/account/AddEvent")}
+              otherStyles={styles.button}
+            />
+            <CustomButton
+              type="secondary"
+              title="EDIT EVENT"
+              onPress={() => router.push("/account/EditEvent")}
+              otherStyles={styles.button}
+            />
+          </View>
           <Text style={styles.contactUs}>Contact Us</Text>
           <View style={styles.line} />
           <Text style={styles.school}>UNIVERSITY OF CAGAYAN VALLEY</Text>
@@ -122,13 +124,15 @@ const Account = () => {
               <Text style={styles.socialText}>CITofficial.UCV</Text>
             </View>
           </View>
+          <View style={[styles.buttonContainer, styles.logout]}>
+            <CustomButton
+              type="primary"
+              title="Logout"
+              onPress={handleLogout}
+              otherStyles={styles.button}
+            />
+          </View>
         </View>
-        <CustomButton
-          type="primary"
-          title="Logout"
-          onPress={handleLogout}
-          otherStyles={styles.logoutButton}
-        />
       </ScrollView>
       <StatusBar style="auto" />
     </SafeAreaView>
@@ -166,13 +170,11 @@ const styles = StyleSheet.create({
     fontFamily: theme.fontFamily.ArialBold,
     color: theme.colors.primary,
   },
-  detailsWrapper: {
-    marginBottom: theme.spacing.medium,
-  },
   contactUs: {
     fontSize: theme.fontSizes.medium,
     fontFamily: theme.fontFamily.ArialBold,
     color: theme.colors.primary,
+    marginTop: theme.spacing.medium,
   },
   line: {
     borderColor: theme.colors.primary,
@@ -188,11 +190,13 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.small,
     fontFamily: theme.fontFamily.Arial,
     color: theme.colors.primary,
+    marginTop: theme.spacing.medium,
   },
   department: {
     fontSize: theme.fontSizes.small,
     fontFamily: theme.fontFamily.Arial,
     color: theme.colors.primary,
+    textAlign: "center",
   },
   address: {
     textAlign: "center",
@@ -216,7 +220,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingTop: theme.spacing.medium,
   },
-  logoutButton: {
+  button: {
+    marginTop: theme.spacing.medium,
+  },
+  buttonContainer: {
+    width: "80%",
+  },
+  logout: {
     marginTop: theme.spacing.medium,
   },
 });
