@@ -283,7 +283,7 @@ const AddEvent = () => {
     }
     if (selectedDuration === 0) {
       setModalTitle("Error");
-      setModalMessage("Please select the duration of the event.");
+      setModalMessage("Select scanning duration from the chosen time.");
       setModalType("error");
       setModalVisible(true);
       return;
