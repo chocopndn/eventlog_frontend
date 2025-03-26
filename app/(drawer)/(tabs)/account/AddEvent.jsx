@@ -21,6 +21,11 @@ const AddEvent = () => {
   const [loadingBlocks, setLoadingBlocks] = useState(false);
   const [errorBlocks, setErrorBlocks] = useState(null);
 
+  const [eventNames, setEventNames] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [loadingEventNames, setLoadingEventNames] = useState(true);
+  const [errorEventNames, setErrorEventNames] = useState(null);
+
   useEffect(() => {
     const fetchDepartments = async () => {
       setLoadingDepartments(true);
@@ -43,9 +48,7 @@ const AddEvent = () => {
           setDepartments(dropdownData);
         } else {
           setErrorDepartments(
-            new Error(
-              "Invalid data format from API: Expected a successful response with a 'departments' array."
-            )
+            new Error("Invalid data format from API: Expected an array.")
           );
         }
       } catch (err) {
@@ -99,6 +102,41 @@ const AddEvent = () => {
 
     fetchBlocks();
   }, [selectedDepartments]);
+
+  useEffect(() => {
+    const fetchEventNames = async () => {
+      setLoadingEventNames(true);
+      setErrorEventNames(null);
+      try {
+        const response = await fetch(API_URL + "/api/events/names");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const responseData = await response.json();
+        if (
+          responseData &&
+          responseData.success &&
+          Array.isArray(responseData.eventNames)
+        ) {
+          const dropdownData = responseData.eventNames.map((event) => ({
+            label: event.name,
+            value: event.id,
+          }));
+          setEventNames(dropdownData);
+        } else {
+          setErrorEventNames(
+            new Error("Invalid data format from API: Expected an array.")
+          );
+        }
+      } catch (err) {
+        setErrorEventNames(err);
+      } finally {
+        setLoadingEventNames(false);
+      }
+    };
+
+    fetchEventNames();
+  }, []);
 
   const handleDepartmentSelect = (values) => {
     setSelectedDepartments(values);
@@ -154,6 +192,23 @@ const AddEvent = () => {
                   blocks.length === 0 ? "No Blocks Available" : "Select Block/s"
                 }
                 multiSelect={true}
+              />
+            )}
+
+            {loadingEventNames ? (
+              <Text>Loading Events...</Text>
+            ) : errorEventNames ? (
+              <Text style={{ color: "red" }}>
+                Error: {errorEventNames.message}
+              </Text>
+            ) : (
+              <CustomDropdown
+                title="Name of Event"
+                data={eventNames}
+                display="sharp"
+                onSelect={(value) => setSelectedEvent(value)}
+                value={selectedEvent}
+                placeholder="Select Event"
               />
             )}
 
