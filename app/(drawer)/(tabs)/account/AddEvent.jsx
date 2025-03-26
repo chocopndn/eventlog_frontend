@@ -244,6 +244,22 @@ const AddEvent = () => {
   };
 
   const handlePostEvent = async () => {
+    if (selectedDepartments.length === 0) {
+      setModalTitle("Error");
+      setModalMessage("Please select at least one department.");
+      setModalType("error");
+      setModalVisible(true);
+      return;
+    }
+
+    if (selectedBlocks.length === 0) {
+      setModalTitle("Error");
+      setModalMessage("Please select at least one block.");
+      setModalType("error");
+      setModalVisible(true);
+      return;
+    }
+
     if (!selectedEvent || !selectedEvent.value) {
       setModalTitle("Error");
       setModalMessage("Please select an event name.");
@@ -258,6 +274,15 @@ const AddEvent = () => {
       setModalVisible(true);
       return;
     }
+
+    if (description.trim() === "") {
+      setModalTitle("Error");
+      setModalMessage("Please enter a description for the event.");
+      setModalType("error");
+      setModalVisible(true);
+      return;
+    }
+
     if (selectedDepartments.length === 0) {
       setModalTitle("Error");
       setModalMessage("Please select at least one department.");
@@ -267,7 +292,7 @@ const AddEvent = () => {
     }
     if (selectedDates.length === 0 || !Array.isArray(selectedDates)) {
       setModalTitle("Error");
-      setModalMessage("Please select at least one valid date for the event.");
+      setModalMessage("Please select a valid date for the event.");
       setModalType("error");
       setModalVisible(true);
       return;
@@ -459,35 +484,43 @@ const AddEvent = () => {
             <View style={styles.dateTimeWrapper}>
               <Text style={styles.timeOfDay}>Morning</Text>
               <View style={styles.timePickerContainer}>
-                <DatePickerComponent
-                  type="time"
-                  label="TIME IN"
-                  onDateChange={handleAmInChange}
-                  selectedValue={amIn}
-                />
-                <DatePickerComponent
-                  type="time"
-                  label="TIME OUT"
-                  onDateChange={handleAmOutChange}
-                  selectedValue={amOut}
-                />
+                <View style={{ width: "48%" }}>
+                  <DatePickerComponent
+                    type="time"
+                    label="TIME IN"
+                    onDateChange={handleAmInChange}
+                    selectedValue={amIn}
+                  />
+                </View>
+                <View style={{ width: "48%" }}>
+                  <DatePickerComponent
+                    type="time"
+                    label="TIME OUT"
+                    onDateChange={handleAmOutChange}
+                    selectedValue={amOut}
+                  />
+                </View>
               </View>
             </View>
             <View style={styles.dateTimeWrapper}>
               <Text style={styles.timeOfDay}>Afternoon</Text>
               <View style={styles.timePickerContainer}>
-                <DatePickerComponent
-                  type="time"
-                  label="TIME IN"
-                  onDateChange={handlePmInChange}
-                  selectedValue={pmIn}
-                />
-                <DatePickerComponent
-                  type="time"
-                  label="TIME OUT"
-                  onDateChange={handlePmOutChange}
-                  selectedValue={pmOut}
-                />
+                <View style={{ width: "48%" }}>
+                  <DatePickerComponent
+                    type="time"
+                    label="TIME IN"
+                    onDateChange={handlePmInChange}
+                    selectedValue={pmIn}
+                  />
+                </View>
+                <View style={{ width: "48%" }}>
+                  <DatePickerComponent
+                    type="time"
+                    label="TIME OUT"
+                    onDateChange={handlePmOutChange}
+                    selectedValue={pmOut}
+                  />
+                </View>
               </View>
             </View>
             <TouchableOpacity
