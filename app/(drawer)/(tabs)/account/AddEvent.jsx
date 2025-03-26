@@ -12,13 +12,18 @@ import CustomDropdown from "../../../../components/CustomDropdown";
 const AddEvent = () => {
   const [departments, setDepartments] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [loadingDepartments, setLoadingDepartments] = useState(true);
+  const [errorDepartments, setErrorDepartments] = useState(null);
+
+  const [blocks, setBlocks] = useState([]);
+  const [selectedBlocks, setSelectedBlocks] = useState([]);
+  const [loadingBlocks, setLoadingBlocks] = useState(false);
+  const [errorBlocks, setErrorBlocks] = useState(null);
 
   useEffect(() => {
     const fetchDepartments = async () => {
-      setLoading(true);
-      setError(null);
+      setLoadingDepartments(true);
+      setErrorDepartments(null);
       try {
         const response = await fetch(API_URL + "/api/departments");
         if (!response.ok) {
@@ -32,28 +37,77 @@ const AddEvent = () => {
         ) {
           const dropdownData = responseData.departments.map((dept) => ({
             label: dept.department_name,
-            value: dept.department_code,
+            value: dept.department_id,
           }));
           setDepartments(dropdownData);
         } else {
-          setError(
+          setErrorDepartments(
             new Error(
               "Invalid data format from API: Expected a successful response with a 'departments' array."
             )
           );
         }
       } catch (err) {
-        setError(err);
+        setErrorDepartments(err);
       } finally {
-        setLoading(false);
+        setLoadingDepartments(false);
       }
     };
 
     fetchDepartments();
   }, []);
 
+  useEffect(() => {
+    const fetchBlocks = async (departmentId) => {
+      if (!departmentId) {
+        setBlocks([]);
+        return;
+      }
+      setLoadingBlocks(true);
+      setErrorBlocks(null);
+      try {
+        const response = await fetch(API_URL + `/api/blocks/${departmentId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const responseData = await response.json();
+        if (
+          responseData &&
+          responseData.success &&
+          Array.isArray(responseData.data)
+        ) {
+          const dropdownData = responseData.data.map((block) => ({
+            label: block.name,
+            value: block.id,
+          }));
+          setBlocks(dropdownData);
+        } else {
+          const errorMessage = `Invalid data format from API: Expected a successful response with a 'data' array containing blocks. Response was: ${JSON.stringify(
+            responseData
+          )}`;
+          setErrorBlocks(new Error(errorMessage));
+        }
+      } catch (err) {
+        setErrorBlocks(err);
+      } finally {
+        setLoadingBlocks(false);
+      }
+    };
+
+    if (selectedDepartment) {
+      fetchBlocks(selectedDepartment);
+    } else {
+      setBlocks([]);
+    }
+  }, [selectedDepartment]);
+
   const handleDepartmentSelect = (value) => {
     setSelectedDepartment(value);
+    setSelectedBlocks([]);
+  };
+
+  const handleBlockSelect = (values) => {
+    setSelectedBlocks(values);
   };
 
   return (
@@ -68,26 +122,39 @@ const AddEvent = () => {
           contentContainerStyle={styles.scrollviewContent}
         >
           <View style={{ width: "100%" }}>
-            {loading ? (
+            {loadingDepartments ? (
               <Text>Loading Departments...</Text>
+            ) : errorDepartments ? (
+              <Text style={{ color: "red" }}>
+                Error: {errorDepartments.message}
+              </Text>
             ) : (
               <CustomDropdown
                 placeholder="Select Department"
                 title="Department"
                 data={departments}
                 display="sharp"
-                onSelect={(value) => handleInputChange("department_id", value)}
+                onSelect={handleDepartmentSelect}
+                value={selectedDepartment}
               />
             )}
-            {loading ? (
-              <Text>Loading Departments...</Text>
+
+            {loadingBlocks ? (
+              <Text>Loading Blocks...</Text>
+            ) : errorBlocks ? (
+              <Text style={{ color: "red" }}>Error: {errorBlocks.message}</Text>
             ) : (
               <CustomDropdown
-                placeholder="Select Blocks"
+                placeholder="Select Block/s"
                 title="Block/s Included"
-                data={departments}
+                data={blocks}
                 display="sharp"
-                onSelect={(value) => handleInputChange("department_id", value)}
+                onSelect={handleBlockSelect}
+                value={selectedBlocks}
+                isMultiSelect={true}
+                placeholder={
+                  blocks.length === 0 ? "No Blocks Available" : "Select Block/s"
+                }
               />
             )}
           </View>
