@@ -11,7 +11,7 @@ import CustomDropdown from "../../../../components/CustomDropdown";
 
 const AddEvent = () => {
   const [departments, setDepartments] = useState([]);
-  const [selectedDepartment, setSelectedDepartment] = useState(null);
+  const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
   const [errorDepartments, setErrorDepartments] = useState(null);
 
@@ -36,7 +36,7 @@ const AddEvent = () => {
           Array.isArray(responseData.departments)
         ) {
           const dropdownData = responseData.departments.map((dept) => ({
-            label: dept.department_name,
+            label: dept.department_code,
             value: dept.department_id,
           }));
           setDepartments(dropdownData);
@@ -58,35 +58,37 @@ const AddEvent = () => {
   }, []);
 
   useEffect(() => {
-    const fetchBlocks = async (departmentId) => {
-      if (!departmentId) {
+    const fetchBlocks = async () => {
+      if (selectedDepartments.length === 0) {
         setBlocks([]);
         return;
       }
       setLoadingBlocks(true);
       setErrorBlocks(null);
       try {
-        const response = await fetch(API_URL + `/api/blocks/${departmentId}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const responseData = await response.json();
-        if (
-          responseData &&
-          responseData.success &&
-          Array.isArray(responseData.data)
-        ) {
-          const dropdownData = responseData.data.map((block) => ({
-            label: block.name,
-            value: block.id,
-          }));
-          setBlocks(dropdownData);
-        } else {
-          const errorMessage = `Invalid data format from API: Expected a successful response with a 'data' array containing blocks. Response was: ${JSON.stringify(
-            responseData
-          )}`;
-          setErrorBlocks(new Error(errorMessage));
-        }
+        const blockRequests = selectedDepartments.map((departmentId) =>
+          fetch(API_URL + `/api/blocks/${departmentId}`).then((res) =>
+            res.json()
+          )
+        );
+        const responses = await Promise.all(blockRequests);
+
+        let mergedBlocks = [];
+        responses.forEach((responseData) => {
+          if (
+            responseData &&
+            responseData.success &&
+            Array.isArray(responseData.data)
+          ) {
+            mergedBlocks = [...mergedBlocks, ...responseData.data];
+          }
+        });
+
+        const uniqueBlocks = Array.from(
+          new Map(mergedBlocks.map((block) => [block.id, block])).values()
+        ).map((block) => ({ label: block.name, value: block.id }));
+
+        setBlocks(uniqueBlocks);
       } catch (err) {
         setErrorBlocks(err);
       } finally {
@@ -94,15 +96,11 @@ const AddEvent = () => {
       }
     };
 
-    if (selectedDepartment) {
-      fetchBlocks(selectedDepartment);
-    } else {
-      setBlocks([]);
-    }
-  }, [selectedDepartment]);
+    fetchBlocks();
+  }, [selectedDepartments]);
 
-  const handleDepartmentSelect = (value) => {
-    setSelectedDepartment(value);
+  const handleDepartmentSelect = (values) => {
+    setSelectedDepartments(values);
     setSelectedBlocks([]);
   };
 
@@ -135,7 +133,8 @@ const AddEvent = () => {
                 data={departments}
                 display="sharp"
                 onSelect={handleDepartmentSelect}
-                value={selectedDepartment}
+                value={selectedDepartments}
+                multiSelect={true}
               />
             )}
 
@@ -145,16 +144,15 @@ const AddEvent = () => {
               <Text style={{ color: "red" }}>Error: {errorBlocks.message}</Text>
             ) : (
               <CustomDropdown
-                placeholder="Select Block/s"
                 title="Block/s Included"
                 data={blocks}
                 display="sharp"
                 onSelect={handleBlockSelect}
                 value={selectedBlocks}
-                isMultiSelect={true}
                 placeholder={
                   blocks.length === 0 ? "No Blocks Available" : "Select Block/s"
                 }
+                multiSelect={true}
               />
             )}
           </View>
