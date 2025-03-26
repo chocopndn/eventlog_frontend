@@ -231,6 +231,14 @@ const AddEvent = () => {
               title="Venue"
               design="sharp"
             />
+            <FormField
+              type="text"
+              borderColor="primary"
+              title="Description"
+              design="sharp"
+              multiline={true}
+            />
+
             <DatePickerComponent type="date" title="Date of Event" />
 
             <View style={styles.dateTimeWrapper}>
