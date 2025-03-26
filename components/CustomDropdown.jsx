@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { Dropdown } from "react-native-element-dropdown";
+import { Dropdown, MultiSelect } from "react-native-element-dropdown";
 import theme from "../constants/theme";
 
 const CustomDropdown = ({
@@ -11,8 +11,11 @@ const CustomDropdown = ({
   title,
   display,
   titleColor = "primary",
+  multiSelect = false,
 }) => {
-  const [selectedValue, setSelectedValue] = useState(value || null);
+  const [selectedValue, setSelectedValue] = useState(
+    multiSelect ? value || [] : value || null
+  );
 
   useEffect(() => {
     if (value !== undefined && value !== selectedValue) {
@@ -21,10 +24,8 @@ const CustomDropdown = ({
   }, [value, selectedValue]);
 
   const handleChange = (item) => {
-    if (selectedValue !== item.value) {
-      setSelectedValue(item.value);
-      onSelect?.(item.value);
-    }
+    setSelectedValue(item);
+    onSelect?.(item);
   };
 
   const getDropdownStyle = () => {
@@ -35,12 +36,9 @@ const CustomDropdown = ({
       backgroundColor: theme.colors.secondary,
       padding: theme.spacing.medium,
     };
-
-    if (display === "sharp") {
-      return { ...baseStyle, borderRadius: 0 };
-    } else {
-      return { ...baseStyle, borderRadius: theme.borderRadius.medium };
-    }
+    return display === "sharp"
+      ? { ...baseStyle, borderRadius: 0 }
+      : { ...baseStyle, borderRadius: theme.borderRadius.medium };
   };
 
   const getTitleStyle = () => {
@@ -52,19 +50,38 @@ const CustomDropdown = ({
   return (
     <View style={styles.container}>
       {title ? <Text style={getTitleStyle()}>{title}</Text> : null}
-      <Dropdown
-        data={data.length > 0 ? data : []}
-        labelField="label"
-        valueField="value"
-        value={selectedValue}
-        onChange={handleChange}
-        placeholder={placeholder}
-        style={getDropdownStyle()}
-        placeholderStyle={styles.placeholderStyle}
-        selectedTextStyle={styles.selectedTextStyle}
-        itemTextStyle={styles.itemTextStyle}
-        itemContainerStyle={styles.itemContainerStyle}
-      />
+      {multiSelect ? (
+        <MultiSelect
+          data={data.length > 0 ? data : []}
+          labelField="label"
+          valueField="value"
+          value={selectedValue}
+          onChange={handleChange}
+          placeholder={placeholder}
+          style={getDropdownStyle()}
+          placeholderStyle={styles.placeholderStyle}
+          selectedTextStyle={styles.selectedTextStyle}
+          itemTextStyle={styles.itemTextStyle}
+          itemContainerStyle={styles.itemContainerStyle}
+          inputSearchStyle={styles.inputSearchStyle}
+          selectedStyle={styles.selectedStyle}
+          searchPlaceholderTextColor={theme.colors.gray}
+        />
+      ) : (
+        <Dropdown
+          data={data.length > 0 ? data : []}
+          labelField="label"
+          valueField="value"
+          value={selectedValue}
+          onChange={handleChange}
+          placeholder={placeholder}
+          style={getDropdownStyle()}
+          placeholderStyle={styles.placeholderStyle}
+          selectedTextStyle={styles.selectedTextStyle}
+          itemTextStyle={styles.itemTextStyle}
+          itemContainerStyle={styles.itemContainerStyle}
+        />
+      )}
     </View>
   );
 };
