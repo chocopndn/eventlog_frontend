@@ -145,27 +145,32 @@ const SignUp = () => {
           title="ID Number"
           placeholder="12345"
           onChangeText={(value) => handleInputChange("id_number", value)}
+          titleColor="secondary"
         />
         <FormField
           title="First Name"
           placeholder="Juan Miguel"
           onChangeText={(value) => handleInputChange("first_name", value)}
+          titleColor="secondary"
         />
         <FormField
           title="Middle Name"
           placeholder="Reyes"
           onChangeText={(value) => handleInputChange("middle_name", value)}
+          titleColor="secondary"
         />
         <FormField
           title="Last Name"
           placeholder="Santos"
           onChangeText={(value) => handleInputChange("last_name", value)}
+          titleColor="secondary"
         />
         <FormField
           title="Suffix Name"
           placeholder="Jr"
           optional
           onChangeText={(value) => handleInputChange("suffix", value)}
+          titleColor="secondary"
         />
         <FormField
           type="email"
@@ -173,6 +178,7 @@ const SignUp = () => {
           title="Email"
           placeholder="example@email.com"
           onChangeText={(value) => handleInputChange("email", value)}
+          titleColor="secondary"
         />
 
         {loading ? (
@@ -194,6 +200,7 @@ const SignUp = () => {
           placeholder="Enter your password"
           secureTextEntry
           onChangeText={(value) => handleInputChange("password", value)}
+          titleColor="secondary"
         />
         <FormField
           type="password"
@@ -202,6 +209,7 @@ const SignUp = () => {
           placeholder="Confirm your password"
           secureTextEntry
           onChangeText={(value) => handleInputChange("confirm_password", value)}
+          titleColor="secondary"
         />
         <View style={styles.agreementContainer}>
           <Text style={styles.agreement}>
@@ -220,6 +228,7 @@ const SignUp = () => {
           title="REGISTER"
           onPress={handleRegister}
           disabled={loading}
+          otherStyles={styles.button}
         />
 
         <View style={styles.accountPromptContainer}>
@@ -289,5 +298,8 @@ const styles = StyleSheet.create({
     fontFamily: "ArialBold",
     color: theme.colors.secondary,
     fontSize: theme.fontSizes.small,
+  },
+  button: {
+    width: "80%",
   },
 });
