@@ -100,7 +100,7 @@ const CustomDrawerContent = (props) => {
       <View>
         <DrawerItem
           label="Account"
-          onPress={() => router.push("/(drawer)/account")}
+          onPress={() => router.push("/(drawer)/sAdminAcc")}
           labelStyle={styles.navItemLabel}
           icon={() => <Image source={images.user} style={styles.icon} />}
         />
@@ -222,7 +222,7 @@ export default function DrawerLayout() {
         }}
       />
       <Drawer.Screen
-        name="account"
+        name="sAdminAcc"
         options={{
           headerTitle: "Account",
         }}
