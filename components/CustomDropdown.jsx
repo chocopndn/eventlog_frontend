@@ -9,6 +9,8 @@ const CustomDropdown = ({
   onSelect,
   value,
   title,
+  display,
+  titleColor = "primary",
 }) => {
   const [selectedValue, setSelectedValue] = useState(value || null);
 
@@ -16,7 +18,7 @@ const CustomDropdown = ({
     if (value !== undefined && value !== selectedValue) {
       setSelectedValue(value);
     }
-  }, [value]);
+  }, [value, selectedValue]);
 
   const handleChange = (item) => {
     if (selectedValue !== item.value) {
@@ -25,9 +27,31 @@ const CustomDropdown = ({
     }
   };
 
+  const getDropdownStyle = () => {
+    const baseStyle = {
+      height: 50,
+      borderWidth: 2,
+      borderColor: theme.colors.primary,
+      backgroundColor: theme.colors.secondary,
+      padding: theme.spacing.medium,
+    };
+
+    if (display === "sharp") {
+      return { ...baseStyle, borderRadius: 0 };
+    } else {
+      return { ...baseStyle, borderRadius: theme.borderRadius.medium };
+    }
+  };
+
+  const getTitleStyle = () => {
+    const color =
+      titleColor === "primary" ? theme.colors.primary : theme.colors.secondary;
+    return { ...styles.title, color };
+  };
+
   return (
     <View style={styles.container}>
-      {title ? <Text style={styles.title}>{title}</Text> : null}
+      {title ? <Text style={getTitleStyle()}>{title}</Text> : null}
       <Dropdown
         data={data.length > 0 ? data : []}
         labelField="label"
@@ -35,7 +59,7 @@ const CustomDropdown = ({
         value={selectedValue}
         onChange={handleChange}
         placeholder={placeholder}
-        style={styles.dropdown}
+        style={getDropdownStyle()}
         placeholderStyle={styles.placeholderStyle}
         selectedTextStyle={styles.selectedTextStyle}
         itemTextStyle={styles.itemTextStyle}
@@ -51,17 +75,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: theme.fontSizes.medium,
-    color: theme.colors.secondary,
     marginBottom: theme.spacing.small,
     fontFamily: "Arial",
-  },
-  dropdown: {
-    height: 50,
-    borderRadius: theme.borderRadius.medium,
-    borderWidth: 1,
-    borderColor: theme.colors.primary,
-    backgroundColor: theme.colors.secondary,
-    padding: theme.spacing.medium,
   },
   placeholderStyle: {
     fontSize: theme.fontSizes.medium,
