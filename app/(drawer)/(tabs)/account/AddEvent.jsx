@@ -157,7 +157,12 @@ const AddEvent = () => {
               />
             )}
 
-            <FormField type="text" borderColor="primary" title="Venue" />
+            <FormField
+              type="text"
+              borderColor="primary"
+              title="Venue"
+              design="sharp"
+            />
           </View>
         </ScrollView>
       </View>
