@@ -85,13 +85,13 @@ export default function App() {
         <View style={styles.loginContainer}>
           <CustomButton
             type="primary"
-            title="Log In"
+            title="LOG IN"
             onPress={handleLoginPress}
           />
         </View>
         <CustomButton
           type="secondary"
-          title="Register"
+          title="REGISTER"
           onPress={handleRegisterPress}
         />
       </View>
@@ -133,6 +133,7 @@ const styles = StyleSheet.create({
   buttons: {
     paddingTop: 20,
     paddingHorizontal: 20,
+    width: "80%",
   },
   loginContainer: {
     marginBottom: theme.spacing.medium,
