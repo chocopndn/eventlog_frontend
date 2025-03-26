@@ -8,6 +8,7 @@ import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 
 import CustomDropdown from "../../../../components/CustomDropdown";
+import FormField from "../../../../components/FormField";
 
 const AddEvent = () => {
   const [departments, setDepartments] = useState([]);
@@ -155,6 +156,8 @@ const AddEvent = () => {
                 multiSelect={true}
               />
             )}
+
+            <FormField type="text" borderColor="primary" title="Venue" />
           </View>
         </ScrollView>
       </View>
