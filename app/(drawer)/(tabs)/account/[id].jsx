@@ -138,6 +138,11 @@ const EditEvent = () => {
     }
   }, [eventData, hasLoadedEventData]);
 
+  const handleDepartmentChange = (departments) => {
+    setSelectedDepartments(departments);
+    setSelectedBlocks([]);
+  };
+
   const showModal = (title, message, type = "error") => {
     setModalTitle(title);
     setModalMessage(message);
@@ -256,7 +261,7 @@ const EditEvent = () => {
                   value: dept.value,
                 }))}
                 display="sharp"
-                onSelect={setSelectedDepartments}
+                onSelect={handleDepartmentChange}
                 value={selectedDepartments}
                 multiSelect={true}
               />
@@ -267,6 +272,7 @@ const EditEvent = () => {
               <Text style={{ color: "red" }}>Error loading blocks</Text>
             ) : (
               <CustomDropdown
+                key={blocksData ? JSON.stringify(blocksData) : "no_blocks"}
                 title="Block/s Included"
                 data={blocksData?.map((block) => ({
                   label: block.label,
