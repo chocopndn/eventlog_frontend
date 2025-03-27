@@ -13,11 +13,11 @@ const CustomDropdown = ({
   titleColor = "primary",
   multiSelect = false,
 }) => {
-  const [value, setValue] = useState(initialValue || []);
+  const [value, setValue] = useState(initialValue || (multiSelect ? [] : null));
 
   useEffect(() => {
-    setValue(initialValue || []);
-  }, [initialValue]);
+    setValue(initialValue || (multiSelect ? [] : null));
+  }, [initialValue, multiSelect]);
 
   const handleChange = (selectedItems) => {
     if (multiSelect) {
@@ -65,6 +65,17 @@ const CustomDropdown = ({
     return placeholder;
   };
 
+  const getPlaceholderStyle = () => {
+    return {
+      ...styles.placeholderStyle,
+      color: (
+        multiSelect ? Array.isArray(value) && value.length > 0 : value !== null
+      )
+        ? theme.colors.primary
+        : "#888",
+    };
+  };
+
   const getMultiSelectData = () => {
     if (data.length > 0) {
       return [{ label: "Select All", value: "select_all" }, ...data];
@@ -84,7 +95,7 @@ const CustomDropdown = ({
           onChange={handleChange}
           placeholder={customPlaceholder()}
           style={getDropdownStyle()}
-          placeholderStyle={styles.placeholderStyle}
+          placeholderStyle={getPlaceholderStyle()}
           selectedTextStyle={styles.selectedTextStyle}
           itemTextStyle={styles.itemTextStyle}
           itemContainerStyle={styles.itemContainerStyle}
@@ -103,8 +114,11 @@ const CustomDropdown = ({
           onChange={handleChange}
           placeholder={placeholder}
           style={getDropdownStyle()}
-          placeholderStyle={styles.placeholderStyle}
-          selectedTextStyle={styles.selectedTextStyle}
+          placeholderStyle={getPlaceholderStyle()}
+          selectedTextStyle={{
+            ...styles.selectedTextStyle,
+            color: theme.colors.primary,
+          }}
           itemTextStyle={styles.itemTextStyle}
           itemContainerStyle={styles.itemContainerStyle}
         />
@@ -124,7 +138,6 @@ const styles = StyleSheet.create({
   },
   placeholderStyle: {
     fontSize: theme.fontSizes.medium,
-    color: "#888",
   },
   selectedTextStyle: {
     fontSize: 16,
