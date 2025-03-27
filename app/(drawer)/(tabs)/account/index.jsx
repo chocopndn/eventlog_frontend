@@ -47,11 +47,12 @@ const Account = () => {
           paddingLeft: 0,
           paddingRight: 0,
           paddingBottom: 0,
-          marginTop: theme.spacing.large,
         },
       ]}
     >
-      <Header type="secondary" />
+      <View style={{ width: "100%", marginTop: theme.spacing.xlarge }}>
+        <Header type="secondary" />
+      </View>
       <Text style={styles.title}>ACCOUNT</Text>
       <ScrollView
         contentContainerStyle={{
