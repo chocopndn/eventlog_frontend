@@ -7,40 +7,35 @@ const CustomDropdown = ({
   data = [],
   placeholder = "Select an option",
   onSelect,
-  value,
+  value: initialValue,
   title,
   display,
   titleColor = "primary",
   multiSelect = false,
 }) => {
-  const [selectedValue, setSelectedValue] = useState(
-    multiSelect ? value || [] : value || null
-  );
+  const [value, setValue] = useState(initialValue || []);
 
   useEffect(() => {
-    if (value !== undefined && value !== selectedValue) {
-      setSelectedValue(value);
-    }
-  }, [value, selectedValue]);
+    setValue(initialValue || []);
+  }, [initialValue]);
 
-  const handleChange = (items) => {
+  const handleChange = (selectedItems) => {
     if (multiSelect) {
-      if (items.includes("select_all")) {
-        if (selectedValue.length === data.length) {
-          setSelectedValue([]);
-          onSelect?.([]);
-        } else {
-          const allValues = data.map((item) => item.value);
-          setSelectedValue(allValues);
-          onSelect?.(allValues);
-        }
+      const selectAllValue = "select_all";
+      const allValuesExceptSelectAll = data
+        .filter((item) => item.value !== selectAllValue)
+        .map((item) => item.value);
+
+      if (selectedItems.includes(selectAllValue) && data.length > 0) {
+        setValue(allValuesExceptSelectAll);
+        onSelect?.(allValuesExceptSelectAll);
       } else {
-        setSelectedValue(items);
-        onSelect?.(items);
+        setValue(selectedItems);
+        onSelect?.(selectedItems);
       }
     } else {
-      setSelectedValue(items);
-      onSelect?.(items);
+      setValue(selectedItems);
+      onSelect?.(selectedItems);
     }
   };
 
@@ -63,17 +58,31 @@ const CustomDropdown = ({
     return { ...styles.title, color };
   };
 
+  const customPlaceholder = () => {
+    if (multiSelect && Array.isArray(value) && value.length > 0) {
+      return `${value.length} selected`;
+    }
+    return placeholder;
+  };
+
+  const getMultiSelectData = () => {
+    if (data.length > 0) {
+      return [{ label: "Select All", value: "select_all" }, ...data];
+    }
+    return data;
+  };
+
   return (
     <View style={styles.container}>
       {title ? <Text style={getTitleStyle()}>{title}</Text> : null}
       {multiSelect ? (
         <MultiSelect
-          data={[{ label: "Select All", value: "select_all" }, ...data]}
+          data={getMultiSelectData()}
           labelField="label"
           valueField="value"
-          value={selectedValue}
+          value={value}
           onChange={handleChange}
-          placeholder={placeholder}
+          placeholder={customPlaceholder()}
           style={getDropdownStyle()}
           placeholderStyle={styles.placeholderStyle}
           selectedTextStyle={styles.selectedTextStyle}
@@ -90,7 +99,7 @@ const CustomDropdown = ({
           data={data.length > 0 ? data : []}
           labelField="label"
           valueField="value"
-          value={selectedValue}
+          value={value}
           onChange={handleChange}
           placeholder={placeholder}
           style={getDropdownStyle()}
