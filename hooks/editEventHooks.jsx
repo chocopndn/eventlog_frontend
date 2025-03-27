@@ -86,7 +86,6 @@ export const useBlocksByDepartments = (departmentIds) => {
   const [blocksData, setBlocksData] = useState([]);
   const [loadingBlocks, setLoadingBlocks] = useState(false);
   const [errorBlocks, setErrorBlocks] = useState(null);
-  const previousData = useRef(null);
 
   useEffect(() => {
     const fetchBlocks = async () => {
@@ -95,13 +94,7 @@ export const useBlocksByDepartments = (departmentIds) => {
         setErrorBlocks(null);
         try {
           const result = await fetchBlocksByDepartment(departmentIds);
-          const newDataString = JSON.stringify(result);
-          const previousDataString = JSON.stringify(previousData.current);
-
-          if (newDataString !== previousDataString) {
-            setBlocksData(result);
-            previousData.current = result;
-          }
+          setBlocksData(result);
         } catch (error) {
           setErrorBlocks(error);
         } finally {
