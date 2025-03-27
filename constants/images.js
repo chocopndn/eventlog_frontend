@@ -29,6 +29,9 @@ import event from "../assets/icons/event.png";
 import role from "../assets/icons/role.png";
 import student from "../assets/icons/student.png";
 import logout from "../assets/icons/logout.png";
+import search from "../assets/icons/search.png";
+import close from "../assets/icons/close.png";
+import arrowRight from "../assets/icons/right-arrow.png";
 
 export default {
   logo,
@@ -40,9 +43,10 @@ export default {
   scanner,
   calendar,
   user,
-  arrowDown,
   arrowUp,
+  arrowDown,
   arrowLeft,
+  arrowRight,
   email,
   facebook,
   location,
@@ -60,4 +64,6 @@ export default {
   role,
   student,
   logout,
+  search,
+  close,
 };
