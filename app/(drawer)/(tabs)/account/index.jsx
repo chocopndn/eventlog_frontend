@@ -1,43 +1,17 @@
 import { StyleSheet, Text, View, Image, ScrollView } from "react-native";
-import React, { useState, useEffect } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
+import React from "react";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CustomButton from "../../../../components/CustomButton";
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
-import {
-  clearAllTablesData,
-  getStoredUser,
-} from "../../../../database/queries";
 import Header from "../../../../components/Header";
 import images from "../../../../constants/images";
+import useUserAccount from "../../../../hooks/useUserAccount";
+import { router } from "expo-router";
 
 const Account = () => {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const userData = await getStoredUser();
-        setUser(userData);
-      } catch (error) {
-        console.error("Error fetching user data:", error);
-      }
-    };
-    fetchUserData();
-  });
-
-  const handleLogout = async () => {
-    try {
-      await clearAllTablesData();
-      await AsyncStorage.multiRemove(["userToken", "id_number"]);
-      router.replace("/login");
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
-  };
+  const { user, handleLogout } = useUserAccount();
 
   return (
     <SafeAreaView
