@@ -7,7 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import globalStyles from "../../../../constants/globalStyles";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -156,6 +156,16 @@ const EditEvent = () => {
     }
     return "";
   };
+
+  const fetchEventDetailsForDatePicker = useCallback(async () => {
+    return new Promise((resolve) => {
+      if (eventData?.all_dates) {
+        resolve({ success: true, event: { all_dates: eventData.all_dates } });
+      } else {
+        resolve({ success: false, event: {} });
+      }
+    });
+  }, [eventData]);
 
   const handleUpdateEvent = async () => {
     if (!selectedEvent?.value) {
@@ -327,13 +337,22 @@ const EditEvent = () => {
                   value={description}
                   onChangeText={setDescription}
                 />
-                <DatePickerComponent
-                  type="date"
-                  title="Date of Event"
-                  onDateChange={setSelectedDates}
-                  selectedValue={selectedDates}
-                  mode="multiple"
-                />
+                {isLoadingEventDetails ? (
+                  <ActivityIndicator size="small" />
+                ) : errorFetchingEventDetails ? (
+                  <Text style={{ color: "red" }}>
+                    Error loading event details
+                  </Text>
+                ) : (
+                  <DatePickerComponent
+                    type="date"
+                    title="Date of Event"
+                    onDateChange={setSelectedDates}
+                    selectedValue={selectedDates}
+                    mode="multiple"
+                    fetchData={fetchEventDetailsForDatePicker}
+                  />
+                )}
                 <View style={styles.dateTimeWrapper}>
                   <Text style={styles.timeOfDay}>Morning</Text>
                   <View style={styles.timePickerContainer}>
