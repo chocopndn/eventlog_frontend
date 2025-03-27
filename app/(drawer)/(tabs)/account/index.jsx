@@ -17,11 +17,7 @@ const Account = () => {
     <SafeAreaView
       style={[
         globalStyles.secondaryContainer,
-        {
-          paddingLeft: 0,
-          paddingRight: 0,
-          paddingBottom: 0,
-        },
+        { paddingLeft: 0, paddingRight: 0, paddingBottom: 0 },
       ]}
     >
       <View style={{ width: "100%", marginTop: theme.spacing.xlarge }}>
@@ -29,8 +25,8 @@ const Account = () => {
       </View>
       <Text style={styles.title}>ACCOUNT</Text>
       <ScrollView
+        style={{ width: "80%" }}
         contentContainerStyle={{
-          width: "80%",
           paddingBottom: theme.spacing.xlarge,
         }}
         showsVerticalScrollIndicator={false}
@@ -62,21 +58,27 @@ const Account = () => {
             <Text style={styles.details}>{user?.email || "N/A"}</Text>
           </View>
         </View>
+
         <View style={styles.contactUsContainer}>
-          <View style={styles.buttonContainer}>
-            <CustomButton
-              type="primary"
-              title="ADD EVENT"
-              onPress={() => router.push("/account/AddEvent")}
-              otherStyles={styles.button}
-            />
-            <CustomButton
-              type="secondary"
-              title="EDIT EVENT"
-              onPress={() => router.push("/account/EventsList")}
-              otherStyles={styles.button}
-            />
-          </View>
+          {user?.role_id === 3 || user?.role_id === 4 ? (
+            <View style={styles.buttonContainer}>
+              <CustomButton
+                type="primary"
+                title="ADD EVENT"
+                onPress={() => router.push("/account/AddEvent")}
+                otherStyles={styles.button}
+              />
+              <CustomButton
+                type="secondary"
+                title="EDIT EVENT"
+                onPress={() => router.push("/account/EventsList")}
+                otherStyles={styles.button}
+              />
+            </View>
+          ) : (
+            <View style={{ height: theme.spacing.medium }} />
+          )}
+
           <Text style={styles.contactUs}>Contact Us</Text>
           <View style={styles.line} />
           <Text style={styles.school}>UNIVERSITY OF CAGAYAN VALLEY</Text>
@@ -87,6 +89,7 @@ const Account = () => {
             VHNP Building 4th Floor - New Site Campus, Balzain, Tuguegarao City,
             Cagayan
           </Text>
+
           <View>
             <View style={styles.socialsContainer}>
               <Image source={images.email} style={styles.icon} />
@@ -99,6 +102,7 @@ const Account = () => {
               <Text style={styles.socialText}>CITofficial.UCV</Text>
             </View>
           </View>
+
           <View style={[styles.buttonContainer, styles.logout]}>
             <CustomButton
               type="primary"
@@ -120,11 +124,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: theme.fontSizes.display,
     fontFamily: theme.fontFamily.SquadaOne,
-    color: theme.colors.primary,
-  },
-  name: {
-    fontSize: theme.fontSizes.extraLarge,
-    fontFamily: theme.fontFamily.Arial,
     color: theme.colors.primary,
   },
   detailsContainer: {
@@ -200,6 +199,8 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: "80%",
+    alignSelf: "center",
+    minHeight: 100,
   },
   logout: {
     marginTop: theme.spacing.medium,
