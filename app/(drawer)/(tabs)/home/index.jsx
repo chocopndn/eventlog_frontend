@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -6,18 +7,74 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import React from "react";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
-
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import CollapsibleDropdown from "../../../../components/CollapsibleDropdown";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { getStoredUser } from "../../../../database/queries";
+import { fetchApprovedOngoing } from "../../../../services/api";
 
 const screenWidth = Dimensions.get("window").width;
 
 const Home = () => {
+  const [roleId, setRoleId] = useState(null);
+  const [events, setEvents] = useState([]);
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const user = await getStoredUser();
+      setRoleId(user.role_id);
+    };
+
+    fetchUserRole();
+  }, []);
+
+  useEffect(() => {
+    const loadApprovedOngoingEvents = async () => {
+      if (roleId === 3 || roleId === 4) {
+        try {
+          const response = await fetchApprovedOngoing();
+          if (response.success) {
+            setEvents(response.events || []);
+          }
+        } catch (error) {
+          console.error("Error fetching approved ongoing events:", error);
+        }
+      }
+    };
+
+    if (roleId) {
+      loadApprovedOngoingEvents();
+    }
+  }, [roleId]);
+
+  const formatTime = (timeString) => {
+    const date = new Date(`1970-01-01T${timeString}Z`);
+    let hours = date.getHours();
+    const minutes = date.getMinutes();
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12;
+    hours = hours ? hours : 12;
+    const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+    return `${hours}:${formattedMinutes} ${ampm}`;
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const options = { year: "numeric", month: "long", day: "numeric" };
+    return date.toLocaleDateString("en-US", options);
+  };
+
+  const formatEventDates = (datesArray) => {
+    return datesArray
+      .map((date, index) => {
+        return formatDate(date);
+      })
+      .join(", ");
+  };
+
   return (
     <SafeAreaView style={globalStyles.secondaryContainer}>
       <View>
@@ -36,16 +93,23 @@ const Home = () => {
           contentContainerStyle={styles.scrollview}
           showsVerticalScrollIndicator={false}
         >
-          <CollapsibleDropdown
-            title="Foundation Day"
-            date="October 22, 2025"
-            venue="VHNPB Building"
-            am_in="6:30-7:30"
-            am_out="11:00-12:00"
-            pm_in="12:00-1:00"
-            pm_out="5:00-6:00"
-            personnel="Year Level Representatives, Governor, or Year Level Adviser"
-          />
+          {events.length > 0 ? (
+            events.map((event, index) => (
+              <CollapsibleDropdown
+                key={index}
+                title={event.event_name}
+                date={formatEventDates(event.event_dates)}
+                venue={event.venue}
+                am_in={formatTime(event.am_in)}
+                am_out={formatTime(event.am_out)}
+                pm_in={formatTime(event.pm_in)}
+                pm_out={formatTime(event.pm_out)}
+                personnel={event.scan_personnel}
+              />
+            ))
+          ) : (
+            <Text>No approved ongoing events found</Text>
+          )}
         </ScrollView>
       </View>
 
