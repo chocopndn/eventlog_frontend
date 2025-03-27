@@ -81,3 +81,22 @@ export const updateEvent = async (eventId, eventData) => {
     throw error;
   }
 };
+
+export const fetchApprovedOngoing = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/api/events/approved-ongoing`);
+
+    if (response.data.success) {
+      console.log(response.data);
+      return response.data;
+    } else {
+      throw new Error("Failed to fetch approved ongoing events");
+    }
+  } catch (error) {
+    console.error(
+      "Error fetching approved ongoing events:",
+      error.message || error
+    );
+    throw error;
+  }
+};
