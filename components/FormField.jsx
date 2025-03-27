@@ -113,7 +113,11 @@ const FormField = ({
             ref={(ref) => (inputs.current[index] = ref)}
             style={[
               styles.codeInput,
-              { borderColor: resolvedBorderColor, borderRadius },
+              {
+                borderColor: resolvedBorderColor,
+                borderRadius,
+                color: theme.colors.primary,
+              },
             ]}
             keyboardType="number-pad"
             maxLength={1}
@@ -146,7 +150,11 @@ const FormField = ({
           <Image source={getIcon()} style={globalStyles.icons} />
         )}
         <TextInput
-          style={[styles.textInput, multiline && styles.multilineInput]}
+          style={[
+            styles.textInput,
+            multiline && styles.multilineInput,
+            { color: theme.colors.primary },
+          ]}
           placeholder={placeholder}
           value={value}
           onChangeText={handleInputChange}
@@ -228,7 +236,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: theme.fontSizes.huge,
     fontFamily: "SquadaOne",
-    color: theme.colors.primary,
     backgroundColor: theme.colors.secondary,
     borderWidth: 2,
   },
