@@ -70,7 +70,7 @@ export const fetchEventNames = async () => {
 export const updateEvent = async (eventId, eventData) => {
   try {
     const response = await axios.put(
-      `${API_URL}/api/events/${eventId}`,
+      `${API_URL}/api/events/admin/edit/${eventId}`,
       eventData
     );
     if (response.data.success) {
