@@ -3,7 +3,7 @@ import { API_URL } from "../config/config";
 
 export const fetchEventById = async (eventId) => {
   try {
-    const response = await axios.get(`${API_URL}/api/events/${eventId}`);
+    const response = await axios.get(`${API_URL}/api/events/events/${eventId}`);
     if (response.data.success) {
       return response.data.event;
     }
