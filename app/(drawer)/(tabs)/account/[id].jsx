@@ -8,12 +8,18 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { API_URL } from "../../../../config/config";
 import globalStyles from "../../../../constants/globalStyles";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import theme from "../../../../constants/theme";
+import {
+  fetchEventById,
+  fetchDepartments,
+  fetchBlocksByDepartment,
+  fetchEventNames,
+  updateEvent,
+} from "../../../../services/api";
 
 import CustomDropdown from "../../../../components/CustomDropdown";
 import FormField from "../../../../components/FormField";
@@ -58,80 +64,47 @@ const EditEvent = () => {
   const [adminId, setAdminId] = useState(null);
 
   useEffect(() => {
-    const fetchDepartments = async () => {
+    const fetchDepartmentsData = async () => {
+      setLoadingDepartments(true);
       try {
-        const response = await axios.get(`${API_URL}/api/departments`);
-        if (response.data.success) {
-          setDepartments(
-            response.data.departments.map((dept) => ({
-              label: dept.department_code,
-              value: dept.department_id,
-            }))
-          );
-        }
+        const depts = await fetchDepartments();
+        setDepartments(depts);
       } catch (error) {
         setErrorDepartments(error);
       } finally {
         setLoadingDepartments(false);
       }
     };
-    fetchDepartments();
+    fetchDepartmentsData();
   }, []);
 
   useEffect(() => {
-    const fetchBlocks = async () => {
-      if (selectedDepartments.length === 0) return;
-
+    const fetchBlocksData = async () => {
+      if (selectedDepartments.length === 0) {
+        setBlocks([]);
+        return;
+      }
+      setLoadingBlocks(true);
       try {
-        setLoadingBlocks(true);
-        const responses = await Promise.all(
-          selectedDepartments.map((deptId) =>
-            axios.get(`${API_URL}/api/blocks/${deptId}`)
-          )
+        const fetchedBlocks = await fetchBlocksByDepartment(
+          selectedDepartments
         );
-
-        const allBlocks = responses.flatMap((res) =>
-          res.data.success ? res.data.data : []
-        );
-
-        setBlocks(
-          allBlocks.map((block) => ({
-            label: block.name,
-            value: block.id,
-          }))
-        );
+        setBlocks(fetchedBlocks);
       } catch (error) {
         setErrorBlocks(error);
       } finally {
         setLoadingBlocks(false);
       }
     };
-    fetchBlocks();
+    fetchBlocksData();
   }, [selectedDepartments]);
 
   useEffect(() => {
-    const fetchEventNames = async () => {
+    const fetchEventNamesData = async () => {
+      setLoadingEventNames(true);
       try {
-        setLoadingEventNames(true);
-        const response = await axios.get(`${API_URL}/api/events/names`);
-
-        if (response.data && response.data.success) {
-          const eventsData = response.data.eventNames || response.data.data;
-          if (Array.isArray(eventsData)) {
-            setEventNames(
-              eventsData.map((event) => ({
-                label: event.name || event.event_name,
-                value: event.id || event.event_name_id,
-              }))
-            );
-          } else {
-            throw new Error("Invalid event names data format");
-          }
-        } else {
-          throw new Error(
-            response.data?.message || "Failed to fetch event names"
-          );
-        }
+        const names = await fetchEventNames();
+        setEventNames(names);
       } catch (error) {
         console.error("Error fetching event names:", error);
         setErrorEventNames(error);
@@ -140,8 +113,7 @@ const EditEvent = () => {
         setLoadingEventNames(false);
       }
     };
-
-    fetchEventNames();
+    fetchEventNamesData();
   }, []);
 
   useEffect(() => {
@@ -155,40 +127,50 @@ const EditEvent = () => {
   }, []);
 
   useEffect(() => {
-    const fetchEventDetails = async () => {
+    const fetchEventDetailsData = async () => {
+      setLoading(true);
       try {
-        setLoading(true);
-        const response = await axios.get(`${API_URL}/api/events/${id}`);
+        const event = await fetchEventById(id);
 
-        if (response.data.success) {
-          const event = response.data.event;
+        setSelectedEvent({
+          label: event.event_name,
+          value: event.event_name_id,
+        });
+        setVenue(event.venue);
+        setDescription(event.description);
+        setSelectedDepartments(
+          event.departments?.map((d) => d.department_id) || []
+        );
+        setSelectedBlocks(event.blocks?.map((b) => b.id) || []);
 
-          setSelectedEvent({
-            label: event.event_name,
-            value: event.event_name_id,
-          });
-          setVenue(event.venue);
-          setDescription(event.description);
-          setSelectedDepartments(
-            event.departments?.map((d) => d.department_id) || []
-          );
-          setSelectedBlocks(event.blocks?.map((b) => b.id) || []);
-          setSelectedDates([new Date(event.date)]);
-          setSelectedDuration(event.duration);
-
-          const createTimeDate = (timeStr) => {
-            if (!timeStr) return null;
-            const [hours, minutes, seconds] = timeStr.split(":");
-            const date = new Date();
-            date.setHours(hours, minutes, seconds);
-            return date;
-          };
-
-          setAmIn(createTimeDate(event.am_in));
-          setAmOut(createTimeDate(event.am_out));
-          setPmIn(createTimeDate(event.pm_in));
-          setPmOut(createTimeDate(event.pm_out));
+        if (event.all_dates) {
+          try {
+            const eventDate = new Date(event.all_dates);
+            if (!isNaN(eventDate.getTime())) {
+              setSelectedDates([eventDate]);
+            }
+          } catch (e) {
+            console.error("Invalid date format:", event.all_dates);
+          }
         }
+
+        setSelectedDuration(event.duration);
+
+        const createTimeDate = (timeStr) => {
+          if (!timeStr || typeof timeStr !== "string" || !timeStr.includes(":"))
+            return null;
+          const [hours, minutes, seconds] = timeStr.split(":").map(Number);
+          if (isNaN(hours) || isNaN(minutes) || (seconds && isNaN(seconds)))
+            return null;
+          const date = new Date();
+          date.setHours(hours, minutes, seconds || 0, 0);
+          return date;
+        };
+
+        setAmIn(createTimeDate(event.am_in));
+        setAmOut(createTimeDate(event.am_out));
+        setPmIn(createTimeDate(event.pm_in));
+        setPmOut(createTimeDate(event.pm_out));
       } catch (error) {
         console.error("Error fetching event:", error);
         showModal("Error", "Failed to load event data");
@@ -197,7 +179,7 @@ const EditEvent = () => {
       }
     };
 
-    fetchEventDetails();
+    fetchEventDetailsData();
   }, [id]);
 
   const showModal = (title, message, type = "error") => {
@@ -230,9 +212,14 @@ const EditEvent = () => {
       return time.toTimeString().substring(0, 8);
     };
 
+    if (selectedDuration <= 0) {
+      showModal("Error", "Please select a valid duration.");
+      return;
+    }
+
     try {
       setLoading(true);
-      const response = await axios.put(`${API_URL}/api/events/${id}`, {
+      const updateData = {
         event_name_id: selectedEvent.value,
         venue,
         description,
@@ -245,12 +232,13 @@ const EditEvent = () => {
         pm_out: formatTime(pmOut),
         duration: selectedDuration,
         admin_id_number: adminId,
-      });
+      };
+      const response = await updateEvent(id, updateData);
 
-      if (response.data.success) {
+      if (response.success) {
         showModal("Success", "Event updated successfully!", "success");
       } else {
-        throw new Error(response.data.message || "Update failed");
+        throw new Error(response.message || "Update failed");
       }
     } catch (error) {
       showModal(
