@@ -21,7 +21,7 @@ const Home = () => {
   return (
     <SafeAreaView style={globalStyles.secondaryContainer}>
       <View>
-        <View style={{ alignItems: "center" }}>
+        <View style={styles.headerContainer}>
           <Text style={styles.textHeader}>EVENTLOG</Text>
           <Text style={styles.title}>LIST OF EVENTS</Text>
           <View style={styles.line}></View>
@@ -49,7 +49,7 @@ const Home = () => {
         </ScrollView>
       </View>
 
-      <StatusBar style="light" />
+      <StatusBar style="auto" />
     </SafeAreaView>
   );
 };
@@ -61,18 +61,17 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.display,
     fontFamily: "SquadaOne",
     color: theme.colors.primary,
-    paddingBottom: theme.spacing.large,
   },
   title: {
     fontSize: theme.fontSizes.huge,
     fontFamily: "SquadaOne",
     color: theme.colors.primary,
+    textAlign: "center",
   },
   line: {
     borderColor: theme.colors.primary,
     borderWidth: 1,
     width: "100%",
-    height: 2,
   },
   welcomeContainer: {
     height: 50,
@@ -89,7 +88,10 @@ const styles = StyleSheet.create({
   },
   scrollview: {
     marginTop: 20,
-    width: "100%",
     paddingBottom: 20,
+  },
+  headerContainer: {
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
