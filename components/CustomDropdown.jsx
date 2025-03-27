@@ -14,10 +14,21 @@ const CustomDropdown = ({
   multiSelect = false,
 }) => {
   const [value, setValue] = useState(initialValue || (multiSelect ? [] : null));
+  const [selectAllLabel, setSelectAllLabel] = useState("Select All");
 
   useEffect(() => {
     setValue(initialValue || (multiSelect ? [] : null));
   }, [initialValue, multiSelect]);
+
+  useEffect(() => {
+    if (multiSelect && data.length > 0) {
+      if (value.length === data.length) {
+        setSelectAllLabel("Deselect All");
+      } else {
+        setSelectAllLabel("Select All");
+      }
+    }
+  }, [value, data, multiSelect]);
 
   const handleChange = (selectedItems) => {
     if (multiSelect) {
@@ -27,11 +38,16 @@ const CustomDropdown = ({
         .map((item) => item.value);
 
       if (selectedItems.includes(selectAllValue) && data.length > 0) {
-        setValue(allValuesExceptSelectAll);
-        onSelect?.(allValuesExceptSelectAll);
+        if (value.length === data.length) {
+          setValue([]);
+          onSelect?.([]);
+        } else {
+          setValue(allValuesExceptSelectAll);
+          onSelect?.(allValuesExceptSelectAll);
+        }
       } else {
-        setValue(selectedItems);
-        onSelect?.(selectedItems);
+        setValue(selectedItems.filter((item) => item !== selectAllValue));
+        onSelect?.(selectedItems.filter((item) => item !== selectAllValue));
       }
     } else {
       setValue(selectedItems);
@@ -78,7 +94,7 @@ const CustomDropdown = ({
 
   const getMultiSelectData = () => {
     if (data.length > 0) {
-      return [{ label: "Select All", value: "select_all" }, ...data];
+      return [{ label: selectAllLabel, value: "select_all" }, ...data];
     }
     return data;
   };
