@@ -11,6 +11,7 @@ const AccountLayout = () => {
         options={{
           headerStyle: { backgroundColor: theme.colors.primary },
           headerTintColor: theme.colors.secondary,
+          headerTitle: "Add Event",
         }}
       />
       <Stack.Screen
@@ -18,6 +19,7 @@ const AccountLayout = () => {
         options={{
           headerStyle: { backgroundColor: theme.colors.primary },
           headerTintColor: theme.colors.secondary,
+          headerTitle: "Edit Event",
         }}
       />
       <Stack.Screen
@@ -25,6 +27,7 @@ const AccountLayout = () => {
         options={{
           headerStyle: { backgroundColor: theme.colors.primary },
           headerTintColor: theme.colors.secondary,
+          headerTitle: "Events List",
         }}
       />
     </Stack>
