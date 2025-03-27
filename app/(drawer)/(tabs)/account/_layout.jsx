@@ -15,7 +15,7 @@ const AccountLayout = () => {
         }}
       />
       <Stack.Screen
-        name="EditEvent"
+        name="[id]"
         options={{
           headerStyle: { backgroundColor: theme.colors.primary },
           headerTintColor: theme.colors.secondary,
