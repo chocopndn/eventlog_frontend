@@ -100,7 +100,6 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.small,
     fontFamily: "SquadaOne",
     color: theme.colors.primary,
-    paddingTop: theme.spacing.xsmall,
   },
   contentTitle: {
     fontFamily: "ArialBold",
