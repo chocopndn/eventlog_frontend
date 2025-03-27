@@ -13,6 +13,7 @@ import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import axios from "axios";
+import { router } from "expo-router";
 
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
@@ -97,6 +98,10 @@ const EventsList = () => {
     return formattedDates.join(", ");
   };
 
+  const handleEventPress = (eventId) => {
+    router.push(`/(tabs)/account/${eventId}`);
+  };
+
   const filteredEvents = events.filter((event) =>
     event.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -125,7 +130,11 @@ const EventsList = () => {
             <ActivityIndicator size="large" color={theme.colors.primary} />
           ) : filteredEvents.length > 0 ? (
             filteredEvents.map((event) => (
-              <TouchableOpacity key={event.id} style={styles.eventContainer}>
+              <TouchableOpacity
+                key={event.id}
+                style={styles.eventContainer}
+                onPress={() => handleEventPress(event.id)}
+              >
                 <View>
                   <Text style={styles.eventTitle}>{event.name}</Text>
                   <Text style={styles.eventDate}>
