@@ -8,19 +8,11 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useEffect, useState } from "react";
-import { API_URL } from "../../../../config/config";
 import globalStyles from "../../../../constants/globalStyles";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import theme from "../../../../constants/theme";
-import {
-  fetchEventById,
-  fetchDepartments,
-  fetchBlocksByDepartment,
-  fetchEventNames,
-  updateEvent,
-} from "../../../../services/api";
-
+import { updateEvent } from "../../../../services/api";
 import CustomDropdown from "../../../../components/CustomDropdown";
 import FormField from "../../../../components/FormField";
 import DatePickerComponent from "../../../../components/DateTimePicker";
@@ -28,30 +20,30 @@ import CustomButton from "../../../../components/CustomButton";
 import DurationPicker from "../../../../components/DurationPicker";
 import CustomModal from "../../../../components/CustomModal";
 import { getStoredUser } from "../../../../database/queries";
+import {
+  useDepartments,
+  useBlocksByDepartments,
+  useEventNames,
+  useEventDetailsById,
+} from "../../../../hooks/editEventHooks";
 
 const EditEvent = () => {
   const { id } = useLocalSearchParams();
-
-  const [loading, setLoading] = useState(true);
-  const [loadingDepartments, setLoadingDepartments] = useState(true);
-  const [loadingBlocks, setLoadingBlocks] = useState(false);
-  const [loadingEventNames, setLoadingEventNames] = useState(true);
-
-  const [errorDepartments, setErrorDepartments] = useState(null);
-  const [errorBlocks, setErrorBlocks] = useState(null);
-  const [errorEventNames, setErrorEventNames] = useState(null);
-
+  const { departmentsData, loadingDepartments, errorDepartments } =
+    useDepartments();
+  const [selectedDepartments, setSelectedDepartments] = useState([]);
+  const { blocksData, loadingBlocks, errorBlocks } =
+    useBlocksByDepartments(selectedDepartments);
+  const [selectedBlocks, setSelectedBlocks] = useState([]);
+  const { eventNamesData, loadingEventNames, errorEventNames } =
+    useEventNames();
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const { eventData, isLoadingEventDetails, errorFetchingEventDetails } =
+    useEventDetailsById(id);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [modalMessage, setModalMessage] = useState("");
   const [modalType, setModalType] = useState("");
-
-  const [departments, setDepartments] = useState([]);
-  const [selectedDepartments, setSelectedDepartments] = useState([]);
-  const [blocks, setBlocks] = useState([]);
-  const [selectedBlocks, setSelectedBlocks] = useState([]);
-  const [eventNames, setEventNames] = useState([]);
-  const [selectedEvent, setSelectedEvent] = useState(null);
   const [venue, setVenue] = useState("");
   const [description, setDescription] = useState("");
   const [selectedDates, setSelectedDates] = useState([]);
@@ -62,131 +54,102 @@ const EditEvent = () => {
   const [selectedDuration, setSelectedDuration] = useState(0);
   const [isDurationPickerVisible, setDurationPickerVisible] = useState(false);
   const [adminId, setAdminId] = useState(null);
-
-  useEffect(() => {
-    const fetchDepartmentsData = async () => {
-      setLoadingDepartments(true);
-      try {
-        const depts = await fetchDepartments();
-        setDepartments(depts);
-      } catch (error) {
-        setErrorDepartments(error);
-      } finally {
-        setLoadingDepartments(false);
-      }
-    };
-    fetchDepartmentsData();
-  }, []);
-
-  useEffect(() => {
-    const fetchBlocksData = async () => {
-      if (selectedDepartments.length === 0) {
-        setBlocks([]);
-        return;
-      }
-      setLoadingBlocks(true);
-      try {
-        const fetchedBlocks = await fetchBlocksByDepartment(
-          selectedDepartments
-        );
-        setBlocks(fetchedBlocks);
-      } catch (error) {
-        setErrorBlocks(error);
-      } finally {
-        setLoadingBlocks(false);
-      }
-    };
-    fetchBlocksData();
-  }, [selectedDepartments]);
-
-  useEffect(() => {
-    const fetchEventNamesData = async () => {
-      setLoadingEventNames(true);
-      try {
-        const names = await fetchEventNames();
-        setEventNames(names);
-      } catch (error) {
-        console.error("Error fetching event names:", error);
-        setErrorEventNames(error);
-        showModal("Error", "Failed to load event names");
-      } finally {
-        setLoadingEventNames(false);
-      }
-    };
-    fetchEventNamesData();
-  }, []);
+  const [updatingEvent, setUpdatingEvent] = useState(false);
+  const [hasLoadedEventData, setHasLoadedEventData] = useState(false);
 
   useEffect(() => {
     const loadAdminId = async () => {
-      const user = await getStoredUser();
-      if (user?.id_number) {
-        setAdminId(user.id_number);
+      try {
+        const user = await getStoredUser();
+        if (user?.id_number) {
+          setAdminId(user.id_number);
+        }
+      } catch (error) {
+        console.error("EditEvent: Error loading admin ID:", error);
       }
     };
     loadAdminId();
   }, []);
 
   useEffect(() => {
-    const fetchEventDetailsData = async () => {
-      setLoading(true);
-      try {
-        const event = await fetchEventById(id);
+    if (eventData && !hasLoadedEventData) {
+      setSelectedEvent({
+        label: eventData.event_name,
+        value: eventData.event_name_id,
+      });
+      setVenue(eventData.venue);
+      setDescription(eventData.description);
 
-        setSelectedEvent({
-          label: event.event_name,
-          value: event.event_name_id,
-        });
-        setVenue(event.venue);
-        setDescription(event.description);
-        setSelectedDepartments(
-          event.departments?.map((d) => d.department_id) || []
-        );
-        setSelectedBlocks(event.blocks?.map((b) => b.id) || []);
-
-        if (event.all_dates) {
-          try {
-            const eventDate = new Date(event.all_dates);
-            if (!isNaN(eventDate.getTime())) {
-              setSelectedDates([eventDate]);
-            }
-          } catch (e) {
-            console.error("Invalid date format:", event.all_dates);
-          }
+      let initialDepartments = [];
+      if (eventData.department_ids) {
+        if (typeof eventData.department_ids === "string") {
+          initialDepartments = eventData.department_ids.split(",").map(Number);
+        } else if (Array.isArray(eventData.department_ids)) {
+          initialDepartments = eventData.department_ids.map(Number);
         }
-
-        setSelectedDuration(event.duration);
-
-        const createTimeDate = (timeStr) => {
-          if (!timeStr || typeof timeStr !== "string" || !timeStr.includes(":"))
-            return null;
-          const [hours, minutes, seconds] = timeStr.split(":").map(Number);
-          if (isNaN(hours) || isNaN(minutes) || (seconds && isNaN(seconds)))
-            return null;
-          const date = new Date();
-          date.setHours(hours, minutes, seconds || 0, 0);
-          return date;
-        };
-
-        setAmIn(createTimeDate(event.am_in));
-        setAmOut(createTimeDate(event.am_out));
-        setPmIn(createTimeDate(event.pm_in));
-        setPmOut(createTimeDate(event.pm_out));
-      } catch (error) {
-        console.error("Error fetching event:", error);
-        showModal("Error", "Failed to load event data");
-      } finally {
-        setLoading(false);
       }
-    };
+      setSelectedDepartments(initialDepartments);
 
-    fetchEventDetailsData();
-  }, [id]);
+      let initialBlocks = [];
+      if (eventData.block_ids) {
+        try {
+          const parsedBlocks = JSON.parse(eventData.block_ids);
+          if (Array.isArray(parsedBlocks)) {
+            initialBlocks = parsedBlocks.map(Number);
+          } else if (
+            typeof eventData.block_ids === "string" &&
+            eventData.block_ids.startsWith("[") &&
+            eventData.block_ids.endsWith("]")
+          ) {
+            const idsString = eventData.block_ids.slice(1, -1);
+            initialBlocks = idsString.split(",").map(Number).filter(Boolean);
+          }
+        } catch (error) {
+          console.error(
+            "EditEvent: Error parsing block_ids:",
+            error,
+            eventData.block_ids
+          );
+        }
+      }
+      setSelectedBlocks(initialBlocks);
+
+      if (eventData.dates && eventData.all_dates) {
+        setSelectedDates([new Date(eventData.all_dates)]);
+      }
+      setSelectedDuration(eventData.duration);
+      const createTimeDate = (timeStr) => {
+        if (!timeStr || typeof timeStr !== "string" || !timeStr.includes(":"))
+          return null;
+        const [hours, minutes, seconds] = timeStr.split(":").map(Number);
+        if (isNaN(hours) || isNaN(minutes) || (seconds && isNaN(seconds)))
+          return null;
+        const date = new Date();
+        date.setHours(hours, minutes, seconds || 0, 0);
+        return date;
+      };
+      setAmIn(createTimeDate(eventData.am_in));
+      setAmOut(createTimeDate(eventData.am_out));
+      setPmIn(createTimeDate(eventData.pm_in));
+      setPmOut(createTimeDate(eventData.pm_out));
+      setHasLoadedEventData(true);
+    } else if (!eventData && hasLoadedEventData) {
+      setHasLoadedEventData(false);
+    }
+  }, [eventData, hasLoadedEventData]);
 
   const showModal = (title, message, type = "error") => {
     setModalTitle(title);
     setModalMessage(message);
     setModalType(type);
     setModalVisible(true);
+  };
+
+  const formatTime = (time) => {
+    if (time instanceof Date) {
+      return time.toTimeString().substring(0, 8);
+    }
+    return "";
   };
 
   const handleUpdateEvent = async () => {
@@ -206,26 +169,19 @@ const EditEvent = () => {
       showModal("Error", "Admin ID not found");
       return;
     }
-
-    const formatTime = (time) => {
-      if (!time) return "";
-      return time.toTimeString().substring(0, 8);
-    };
-
     if (selectedDuration <= 0) {
       showModal("Error", "Please select a valid duration.");
       return;
     }
-
+    setUpdatingEvent(true);
     try {
-      setLoading(true);
       const updateData = {
         event_name_id: selectedEvent.value,
         venue,
         description,
         department_id: selectedDepartments,
         block_ids: selectedBlocks,
-        date: selectedDates[0].toISOString().split("T")[0],
+        date: selectedDates.map((date) => date.toISOString().split("T")[0]),
         am_in: formatTime(amIn),
         am_out: formatTime(amOut),
         pm_in: formatTime(pmIn),
@@ -234,23 +190,39 @@ const EditEvent = () => {
         admin_id_number: adminId,
       };
       const response = await updateEvent(id, updateData);
-
-      if (response.success) {
+      if (response?.success) {
         showModal("Success", "Event updated successfully!", "success");
       } else {
-        throw new Error(response.message || "Update failed");
+        showModal("Error", response?.message || "Update failed", "error");
       }
     } catch (error) {
+      console.error("EditEvent: Update error:", error);
       showModal(
         "Error",
         error.response?.data?.message || error.message || "Update failed"
       );
     } finally {
-      setLoading(false);
+      setUpdatingEvent(false);
     }
   };
 
-  if (loading) {
+  const handleAmInChange = (newTime) => {
+    setAmIn(newTime);
+  };
+
+  const handleAmOutChange = (newTime) => {
+    setAmOut(newTime);
+  };
+
+  const handlePmInChange = (newTime) => {
+    setPmIn(newTime);
+  };
+
+  const handlePmOutChange = (newTime) => {
+    setPmOut(newTime);
+  };
+
+  if (isLoadingEventDetails || loadingDepartments || loadingEventNames) {
     return (
       <View style={globalStyles.secondaryContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -273,34 +245,42 @@ const EditEvent = () => {
           <View style={{ width: "100%" }}>
             {loadingDepartments ? (
               <ActivityIndicator size="small" />
+            ) : errorDepartments ? (
+              <Text style={{ color: "red" }}>Error loading departments</Text>
             ) : (
               <CustomDropdown
                 placeholder="Select Department"
                 title="Department"
-                data={departments}
+                data={departmentsData?.map((dept) => ({
+                  label: dept.label,
+                  value: dept.value,
+                }))}
                 display="sharp"
                 onSelect={setSelectedDepartments}
                 value={selectedDepartments}
                 multiSelect={true}
               />
             )}
-
             {loadingBlocks ? (
               <ActivityIndicator size="small" />
+            ) : errorBlocks ? (
+              <Text style={{ color: "red" }}>Error loading blocks</Text>
             ) : (
               <CustomDropdown
                 title="Block/s Included"
-                data={blocks}
+                data={blocksData?.map((block) => ({
+                  label: block.label,
+                  value: block.value,
+                }))}
                 display="sharp"
                 onSelect={setSelectedBlocks}
                 value={selectedBlocks}
                 placeholder={
-                  blocks.length ? "Select Block/s" : "No Blocks Available"
+                  blocksData?.length ? "Select Block/s" : "No Blocks Available"
                 }
                 multiSelect={true}
               />
             )}
-
             {loadingEventNames ? (
               <ActivityIndicator size="small" />
             ) : errorEventNames ? (
@@ -308,110 +288,113 @@ const EditEvent = () => {
             ) : (
               <CustomDropdown
                 title="Name of Event"
-                data={eventNames}
+                data={eventNamesData?.map((event) => ({
+                  label: event.label,
+                  value: event.value,
+                }))}
                 display="sharp"
                 onSelect={setSelectedEvent}
                 value={selectedEvent}
                 placeholder="Select Event"
               />
             )}
-
-            <FormField
-              type="text"
-              borderColor="primary"
-              title="Venue"
-              design="sharp"
-              value={venue}
-              onChangeText={setVenue}
-            />
-
-            <FormField
-              type="text"
-              borderColor="primary"
-              title="Description"
-              design="sharp"
-              multiline={true}
-              value={description}
-              onChangeText={setDescription}
-            />
-
-            <DatePickerComponent
-              type="date"
-              title="Date of Event"
-              onDateChange={setSelectedDates}
-              selectedValue={selectedDates}
-            />
-
-            <View style={styles.dateTimeWrapper}>
-              <Text style={styles.timeOfDay}>Morning</Text>
-              <View style={styles.timePickerContainer}>
-                <View style={{ width: "48%" }}>
-                  <DatePickerComponent
-                    type="time"
-                    label="TIME IN"
-                    onDateChange={setAmIn}
-                    selectedValue={amIn}
-                  />
+            {isLoadingEventDetails ? (
+              <ActivityIndicator size="small" />
+            ) : errorFetchingEventDetails ? (
+              <Text style={{ color: "red" }}>Error loading event details</Text>
+            ) : (
+              <>
+                <FormField
+                  type="text"
+                  borderColor="primary"
+                  title="Venue"
+                  design="sharp"
+                  value={venue}
+                  onChangeText={setVenue}
+                />
+                <FormField
+                  type="text"
+                  borderColor="primary"
+                  title="Description"
+                  design="sharp"
+                  multiline={true}
+                  value={description}
+                  onChangeText={setDescription}
+                />
+                <DatePickerComponent
+                  type="date"
+                  title="Date of Event"
+                  onDateChange={setSelectedDates}
+                  selectedValue={selectedDates}
+                  mode="multiple"
+                />
+                <View style={styles.dateTimeWrapper}>
+                  <Text style={styles.timeOfDay}>Morning</Text>
+                  <View style={styles.timePickerContainer}>
+                    <View style={{ width: "48%" }}>
+                      <DatePickerComponent
+                        type="time"
+                        label="TIME IN"
+                        onDateChange={handleAmInChange}
+                        selectedValue={amIn}
+                      />
+                    </View>
+                    <View style={{ width: "48%" }}>
+                      <DatePickerComponent
+                        type="time"
+                        label="TIME OUT"
+                        onDateChange={handleAmOutChange}
+                        selectedValue={amOut}
+                      />
+                    </View>
+                  </View>
                 </View>
-                <View style={{ width: "48%" }}>
-                  <DatePickerComponent
-                    type="time"
-                    label="TIME OUT"
-                    onDateChange={setAmOut}
-                    selectedValue={amOut}
-                  />
+                <View style={styles.dateTimeWrapper}>
+                  <Text style={styles.timeOfDay}>Afternoon</Text>
+                  <View style={styles.timePickerContainer}>
+                    <View style={{ width: "48%" }}>
+                      <DatePickerComponent
+                        type="time"
+                        label="TIME IN"
+                        onDateChange={handlePmInChange}
+                        selectedValue={pmIn}
+                      />
+                    </View>
+                    <View style={{ width: "48%" }}>
+                      <DatePickerComponent
+                        type="time"
+                        label="TIME OUT"
+                        onDateChange={handlePmOutChange}
+                        selectedValue={pmOut}
+                      />
+                    </View>
+                  </View>
                 </View>
-              </View>
-            </View>
-
-            <View style={styles.dateTimeWrapper}>
-              <Text style={styles.timeOfDay}>Afternoon</Text>
-              <View style={styles.timePickerContainer}>
-                <View style={{ width: "48%" }}>
-                  <DatePickerComponent
-                    type="time"
-                    label="TIME IN"
-                    onDateChange={setPmIn}
-                    selectedValue={pmIn}
-                  />
-                </View>
-                <View style={{ width: "48%" }}>
-                  <DatePickerComponent
-                    type="time"
-                    label="TIME OUT"
-                    onDateChange={setPmOut}
-                    selectedValue={pmOut}
-                  />
-                </View>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={styles.duration}
-              onPress={() => setDurationPickerVisible(true)}
-            >
-              <Text style={styles.durationText}>
-                Select Duration: {selectedDuration} minutes
-              </Text>
-            </TouchableOpacity>
-
-            <DurationPicker
-              visible={isDurationPickerVisible}
-              onClose={() => setDurationPickerVisible(false)}
-              onDurationSelect={setSelectedDuration}
-            />
-
+                <TouchableOpacity
+                  style={styles.duration}
+                  onPress={() => setDurationPickerVisible(true)}
+                >
+                  <Text style={styles.durationText}>
+                    Select Duration: {selectedDuration} minutes
+                  </Text>
+                </TouchableOpacity>
+                <DurationPicker
+                  visible={isDurationPickerVisible}
+                  onClose={() => setDurationPickerVisible(false)}
+                  onDurationSelect={setSelectedDuration}
+                />
+              </>
+            )}
             <View style={styles.buttonContainer}>
               <CustomButton
                 title="UPDATE"
                 onPress={handleUpdateEvent}
-                loading={loading}
+                loading={updatingEvent}
               />
             </View>
           </View>
         </ScrollView>
       </View>
-
       <CustomModal
         visible={modalVisible}
         title={modalTitle}
