@@ -162,8 +162,6 @@ export const storeEvent = async (event, allApiEventIds = []) => {
     );
 
     if (existingEvent) {
-      console.log("[STORE EVENT] Updating existing event:", event.event_id);
-
       await db.runAsync(
         `UPDATE events SET 
           event_name = ?, venue = ?, description = ?, created_by_id = ?, created_by = ?, 
@@ -189,8 +187,6 @@ export const storeEvent = async (event, allApiEventIds = []) => {
         ]
       );
     } else {
-      console.log("[STORE EVENT] Inserting new event:", event.event_id);
-
       await db.runAsync(
         `INSERT INTO events 
           (id, event_name, venue, description, created_by_id, created_by, status, 
