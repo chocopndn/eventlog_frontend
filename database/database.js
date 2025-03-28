@@ -37,6 +37,36 @@ const initDB = async () => {
           );
         `);
 
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS events (
+            id INTEGER PRIMARY KEY,
+            event_name_id INTEGER,
+            event_name TEXT NOT NULL,
+            venue TEXT NOT NULL,
+            description TEXT,
+            scan_personnel TEXT,
+            status TEXT NOT NULL,
+            created_by_id INTEGER NOT NULL,  
+            created_by TEXT NOT NULL,  
+            approved_by_id INTEGER,
+            approved_by TEXT,  
+            am_in TIME,
+            am_out TIME,
+            pm_in TIME,
+            pm_out TIME,
+            duration INTEGER
+          );
+        `);
+
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS event_dates (
+            id INTEGER PRIMARY KEY,
+            event_id INTEGER NOT NULL,  
+            event_date DATE NOT NULL,
+            FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE
+          );
+        `);
+
         return db;
       } catch (error) {
         console.error("Error initializing database:", error);
