@@ -11,10 +11,12 @@ import TabsComponent from "../../../components/TabsComponent";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { fetchAdmins, deleteAdmin } from "../../../services/api";
+import { router } from "expo-router";
 
 import images from "../../../constants/images";
 import SearchBar from "../../../components/CustomSearch";
 import CustomModal from "../../../components/CustomModal";
+import CustomButton from "../../../components/CustomButton";
 
 import globalStyles from "../../../constants/globalStyles";
 import theme from "../../../constants/theme";
@@ -79,7 +81,7 @@ export default function AdminsScreen() {
         <SearchBar placeholder="Search admins..." onSearch={setSearchQuery} />
       </View>
       <ScrollView
-        style={{ width: "100%" }}
+        style={{ flex: 1, width: "100%" }}
         contentContainerStyle={styles.scrollview}
       >
         {filteredAdmins.length > 0 ? (
@@ -108,6 +110,13 @@ export default function AdminsScreen() {
           <Text style={styles.noResults}>No admins found</Text>
         )}
       </ScrollView>
+
+      <View style={styles.buttonContainer}>
+        <CustomButton
+          title="ADD ADMIN"
+          onPress={() => router.push("/admins/AddAdmin")}
+        />
+      </View>
 
       <CustomModal
         visible={isModalVisible}
@@ -144,6 +153,7 @@ const styles = StyleSheet.create({
   },
   scrollview: {
     padding: theme.spacing.medium,
+    flexGrow: 1,
   },
   icon: {
     width: 20,
@@ -172,5 +182,11 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontSize: theme.fontSizes.medium,
     marginTop: theme.spacing.medium,
+  },
+  buttonContainer: {
+    position: "absolute",
+    bottom: "15%",
+    width: "80%",
+    padding: theme.spacing.medium,
   },
 });
