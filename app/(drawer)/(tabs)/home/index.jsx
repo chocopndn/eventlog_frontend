@@ -72,14 +72,8 @@ const Home = () => {
     return `${hours}:${formattedMinutes} ${ampm}`;
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const options = { year: "numeric", month: "long", day: "numeric" };
-    return date.toLocaleDateString("en-US", options);
-  };
-
   const formatEventDates = (datesArray) => {
-    if (!datesArray.length) return "";
+    if (!Array.isArray(datesArray) || datesArray.length === 0) return "N/A";
 
     if (datesArray.length === 1) {
       return new Date(datesArray[0]).toLocaleDateString("en-US", {
