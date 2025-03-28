@@ -131,17 +131,27 @@ export const getStoredUser = async () => {
   }
 };
 
-export const storeEvent = async (event) => {
+export const storeEvent = async (event, allApiEventIds = []) => {
   if (!event || !event.event_id) {
-    console.error("Invalid event data:", event);
     return;
   }
 
   try {
     const db = await initDB();
     if (!db) {
-      console.error("Database failed to open.");
       return;
+    }
+
+    const storedEvents = await db.getAllAsync("SELECT id FROM events");
+    const storedEventIds = storedEvents.map((e) => e.id);
+
+    for (const storedId of storedEventIds) {
+      if (!allApiEventIds.includes(storedId)) {
+        await db.runAsync("DELETE FROM events WHERE id = ?", [storedId]);
+        await db.runAsync("DELETE FROM event_dates WHERE event_id = ?", [
+          storedId,
+        ]);
+      }
     }
 
     const existingEvent = await db.getFirstAsync(
@@ -151,9 +161,9 @@ export const storeEvent = async (event) => {
 
     if (!existingEvent) {
       await db.runAsync(
-        `INSERT INTO events (
-          id, event_name, venue, description, created_by_id, created_by, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO events (id, event_name, venue, description, created_by_id, created_by, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+
         [
           event.event_id,
           event.event_name,
@@ -164,7 +174,6 @@ export const storeEvent = async (event) => {
           event.status,
         ]
       );
-    } else {
     }
 
     if (Array.isArray(event.event_dates)) {
