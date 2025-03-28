@@ -23,6 +23,7 @@ import {
   fetchApprovedOngoing,
   fetchUserUpcomingEvents,
 } from "../../../../services/api";
+import CustomModal from "../../../../components/CustomModal";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -31,6 +32,9 @@ const Home = () => {
   const [events, setEvents] = useState([]);
   const [blockId, setBlockId] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -45,15 +49,25 @@ const Home = () => {
   const fetchEvent = async () => {
     if (roleId === null) return;
 
+    setRefreshing(true);
+    let timeoutTriggered = false;
+
+    const timeout = setTimeout(() => {
+      timeoutTriggered = true;
+      setModalTitle("Connection Issue");
+      setModalMessage(
+        "Fetching events is taking too long. Please check your internet connection."
+      );
+      setModalVisible(true);
+    }, 7000);
+
     try {
-      setRefreshing(true);
       let response;
       if (roleId === 3 || roleId === 4) {
         response = await fetchApprovedOngoing();
       } else if (blockId !== null) {
         response = await fetchUserUpcomingEvents(blockId);
       } else {
-        setRefreshing(false);
         return;
       }
 
@@ -63,8 +77,14 @@ const Home = () => {
         setEvents(storedEvents || []);
       }
     } catch (error) {
-      console.error("Error fetching events:", error);
+      setModalTitle("No Internet Connection");
+      setModalMessage("You're currently offline. Showing saved events.");
+      setModalVisible(true);
+
+      const storedEvents = await getStoredEvents();
+      setEvents(storedEvents || []);
     } finally {
+      clearTimeout(timeout);
       setRefreshing(false);
     }
   };
@@ -166,6 +186,14 @@ const Home = () => {
           )}
         </ScrollView>
       </View>
+
+      <CustomModal
+        visible={modalVisible}
+        title="Offline Mode"
+        message={modalMessage}
+        type="warning"
+        onClose={() => setModalVisible(false)}
+      />
 
       <StatusBar style="auto" />
     </SafeAreaView>
