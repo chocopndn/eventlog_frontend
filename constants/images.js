@@ -32,6 +32,8 @@ import logout from "../assets/icons/logout.png";
 import search from "../assets/icons/search.png";
 import close from "../assets/icons/close.png";
 import arrowRight from "../assets/icons/right-arrow.png";
+import trash from "../assets/icons/trash.png";
+import edit from "../assets/icons/edit.png";
 
 export default {
   logo,
@@ -66,4 +68,6 @@ export default {
   logout,
   search,
   close,
+  trash,
+  edit,
 };
