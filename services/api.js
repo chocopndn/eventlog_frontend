@@ -114,3 +114,15 @@ export const fetchUserUpcomingEvents = async (blockId) => {
     throw error;
   }
 };
+
+export const fetchAdmins = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/api/admins`);
+    if (response.data.success) {
+      return response.data.admins;
+    }
+    throw new Error("Failed to fetch admins");
+  } catch (error) {
+    throw error;
+  }
+};
