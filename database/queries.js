@@ -133,12 +133,14 @@ export const getStoredUser = async () => {
 
 export const storeEvent = async (event, allApiEventIds = []) => {
   if (!event || !event.event_id) {
+    console.warn("[STORE EVENT] Invalid event data:", event);
     return;
   }
 
   try {
     const db = await initDB();
     if (!db) {
+      console.error("[STORE EVENT] Database connection failed.");
       return;
     }
 
@@ -159,11 +161,41 @@ export const storeEvent = async (event, allApiEventIds = []) => {
       [event.event_id]
     );
 
-    if (!existingEvent) {
-      await db.runAsync(
-        `INSERT INTO events (id, event_name, venue, description, created_by_id, created_by, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    if (existingEvent) {
+      console.log("[STORE EVENT] Updating existing event:", event.event_id);
 
+      await db.runAsync(
+        `UPDATE events SET 
+          event_name = ?, venue = ?, description = ?, created_by_id = ?, created_by = ?, 
+          status = ?, am_in = ?, am_out = ?, pm_in = ?, pm_out = ?, scan_personnel = ?, 
+          approved_by = ?, approved_by_id = ?, duration = ?
+        WHERE id = ?`,
+        [
+          event.event_name,
+          event.venue,
+          event.description,
+          event.created_by_id,
+          event.created_by,
+          event.status,
+          event.am_in,
+          event.am_out,
+          event.pm_in,
+          event.pm_out,
+          event.scan_personnel,
+          event.approved_by,
+          event.approved_by_id,
+          event.duration,
+          event.event_id,
+        ]
+      );
+    } else {
+      console.log("[STORE EVENT] Inserting new event:", event.event_id);
+
+      await db.runAsync(
+        `INSERT INTO events 
+          (id, event_name, venue, description, created_by_id, created_by, status, 
+          am_in, am_out, pm_in, pm_out, scan_personnel, approved_by, approved_by_id, duration) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           event.event_id,
           event.event_name,
@@ -172,6 +204,14 @@ export const storeEvent = async (event, allApiEventIds = []) => {
           event.created_by_id,
           event.created_by,
           event.status,
+          event.am_in,
+          event.am_out,
+          event.pm_in,
+          event.pm_out,
+          event.scan_personnel,
+          event.approved_by,
+          event.approved_by_id,
+          event.duration,
         ]
       );
     }
@@ -192,7 +232,7 @@ export const storeEvent = async (event, allApiEventIds = []) => {
       }
     }
   } catch (error) {
-    console.error("Error storing event:", error);
+    console.error("[STORE EVENT] Error storing event:", error);
   }
 };
 
