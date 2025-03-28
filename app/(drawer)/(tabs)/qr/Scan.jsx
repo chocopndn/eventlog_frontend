@@ -1,11 +1,18 @@
 import { StyleSheet, Text, View } from "react-native";
 import React from "react";
+import { SafeAreaView } from "react-native";
+import { StatusBar } from "expo-status-bar";
+
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
 
 const Scan = () => {
   return (
-    <View>
+    <SafeAreaView style={globalStyles.secondaryContainer}>
       <Text>Scan</Text>
-    </View>
+
+      <StatusBar style="light" />
+    </SafeAreaView>
   );
 };
 

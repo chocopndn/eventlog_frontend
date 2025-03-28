@@ -1,11 +1,17 @@
 import { StyleSheet, Text, View } from "react-native";
 import React from "react";
+import { SafeAreaView } from "react-native";
+import { StatusBar } from "expo-status-bar";
+
+import globalStyles from "../../../../constants/globalStyles";
 
 const Generate = () => {
   return (
-    <View>
+    <SafeAreaView style={globalStyles.secondaryContainer}>
       <Text>Generate</Text>
-    </View>
+
+      <StatusBar style="light" />
+    </SafeAreaView>
   );
 };
 
