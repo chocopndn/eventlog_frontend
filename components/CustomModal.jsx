@@ -10,7 +10,17 @@ import {
 import theme from "../constants/theme";
 import images from "../constants/images";
 
-const CustomModal = ({ visible, title, message, type, onClose }) => {
+const CustomModal = ({
+  visible,
+  title,
+  message,
+  type,
+  onClose,
+  onCancel,
+  onConfirm,
+  cancelTitle = "Cancel",
+  confirmTitle = "Confirm",
+}) => {
   let iconSource;
   if (type === "success") {
     iconSource = images.success;
@@ -25,17 +35,35 @@ const CustomModal = ({ visible, title, message, type, onClose }) => {
       visible={visible}
       animationType="fade"
       transparent={true}
-      onRequestClose={onClose}
+      onRequestClose={onClose || onCancel}
     >
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
           {iconSource && <Image source={iconSource} style={styles.icon} />}
-
           {title && <Text style={styles.title}>{title}</Text>}
           <Text style={styles.message}>{message}</Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Text style={styles.buttonText}>Close</Text>
-          </TouchableOpacity>
+          <View
+            style={[
+              styles.buttonContainer,
+              { justifyContent: onConfirm ? "space-between" : "center" },
+            ]}
+          >
+            <TouchableOpacity
+              onPress={onCancel || onClose}
+              style={styles.cancelButton}
+            >
+              <Text style={styles.cancelButtonText}>{cancelTitle}</Text>
+            </TouchableOpacity>
+
+            {onConfirm && (
+              <TouchableOpacity
+                onPress={onConfirm}
+                style={styles.confirmButton}
+              >
+                <Text style={styles.confirmButtonText}>{confirmTitle}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </View>
     </Modal>
@@ -77,13 +105,36 @@ const styles = StyleSheet.create({
     fontFamily: "Arial",
     textAlign: "center",
   },
-  closeButton: {
+  buttonContainer: {
+    flexDirection: "row",
+    width: "100%",
+  },
+  cancelButton: {
+    backgroundColor: theme.colors.secondary,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: theme.borderRadius.medium,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    width: "40%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    color: theme.colors.primary,
+    fontSize: theme.fontSizes.large,
+    fontFamily: "SquadaOne",
+  },
+  confirmButton: {
     backgroundColor: theme.colors.primary,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: theme.borderRadius.medium,
+    width: "40%",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  buttonText: {
+  confirmButtonText: {
     color: theme.colors.secondary,
     fontSize: theme.fontSizes.large,
     fontFamily: "SquadaOne",
