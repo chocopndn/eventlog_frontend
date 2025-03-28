@@ -40,7 +40,7 @@ const TabsLayout = () => {
           </View>
         </TabTrigger>
 
-        <TabTrigger name="QRCode" href="/(tabs)/QRCode">
+        <TabTrigger name="index" href="/(tabs)/qr">
           <View style={styles.tabItem}>
             <Image source={images.scanner} style={styles.tabIcon} />
             <Text style={styles.tabText}>QR Code</Text>
@@ -86,7 +86,7 @@ const TabsLayout = () => {
           <Image source={images.logo} style={styles.logoImage} />
         </View>
 
-        <TabTrigger name="QRCode" href="/(tabs)/QRCode">
+        <TabTrigger name="qr" href="/(tabs)/qr">
           <View style={styles.tabItem}>
             <Image source={images.scanner} style={styles.tabIcon} />
             <Text style={styles.tabText}>QR Code</Text>

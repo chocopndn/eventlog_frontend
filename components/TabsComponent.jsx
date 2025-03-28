@@ -33,7 +33,7 @@ export default function TabsComponent() {
 
       <TouchableOpacity
         style={styles.tabItem}
-        onPress={() => router.push("/(drawer)/(tabs)/QRCode")}
+        onPress={() => router.push("/(drawer)/(tabs)/qr")}
       >
         <Image source={images.scanner} style={styles.tabIcon} />
         <Text style={styles.tabText}>QR Code</Text>
@@ -75,7 +75,7 @@ export default function TabsComponent() {
 
       <TouchableOpacity
         style={styles.tabItem}
-        onPress={() => router.push("/(drawer)/(tabs)/QRCode")}
+        onPress={() => router.push("/(drawer)/(tabs)/qr")}
       >
         <Image source={images.scanner} style={styles.tabIcon} />
         <Text style={styles.tabText}>QR Code</Text>

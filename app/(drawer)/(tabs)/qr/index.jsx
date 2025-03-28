@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import React from "react";
 
-import globalStyles from "../../../constants/globalStyles";
+import globalStyles from "../../../../constants/globalStyles";
 
 const QRCode = () => {
   return (
