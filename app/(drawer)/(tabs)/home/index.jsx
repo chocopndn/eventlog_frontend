@@ -6,6 +6,7 @@ import {
   Dimensions,
   ScrollView,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
@@ -28,45 +29,53 @@ const screenWidth = Dimensions.get("window").width;
 const Home = () => {
   const [roleId, setRoleId] = useState(null);
   const [events, setEvents] = useState([]);
-  const [blockId, setblockId] = useState(null);
+  const [blockId, setBlockId] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
       const user = await getStoredUser();
       setRoleId(user.role_id);
-      setblockId(user.block_id);
+      setBlockId(user.block_id);
     };
 
     fetchUserData();
   }, []);
 
-  useEffect(() => {
-    const fetchEvent = async () => {
-      if (roleId === null) return;
+  const fetchEvent = async () => {
+    if (roleId === null) return;
 
-      try {
-        let response;
-        if (roleId === 3 || roleId === 4) {
-          response = await fetchApprovedOngoing();
-        } else if (blockId !== null) {
-          response = await fetchUserUpcomingEvents(blockId);
-        } else {
-          return;
-        }
-
-        if (response?.success) {
-          await Promise.all(response.events.map((event) => storeEvent(event)));
-
-          const storedEvents = await getStoredEvents();
-          setEvents(storedEvents || []);
-        }
-      } catch (error) {
-        console.error("Error fetching events:", error);
+    try {
+      setRefreshing(true);
+      let response;
+      if (roleId === 3 || roleId === 4) {
+        response = await fetchApprovedOngoing();
+      } else if (blockId !== null) {
+        response = await fetchUserUpcomingEvents(blockId);
+      } else {
+        setRefreshing(false);
+        return;
       }
-    };
 
+      if (response?.success) {
+        await Promise.all(response.events.map((event) => storeEvent(event)));
+        const storedEvents = await getStoredEvents();
+        setEvents(storedEvents || []);
+      }
+    } catch (error) {
+      console.error("Error fetching events:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     fetchEvent();
   }, [roleId, blockId]);
+
+  const onRefresh = async () => {
+    await fetchEvent();
+  };
 
   const formatTime = (timeString) => {
     const date = new Date(`1970-01-01T${timeString}Z`);
@@ -134,6 +143,9 @@ const Home = () => {
           style={{ marginBottom: 20 }}
           contentContainerStyle={styles.scrollview}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
           {events.length > 0 ? (
             events.map((event, index) => (
