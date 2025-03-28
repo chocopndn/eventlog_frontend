@@ -27,6 +27,7 @@ const CustomSearch = ({ placeholder = "Search...", onSearch }) => {
 
   return (
     <View style={styles.container}>
+      <Image source={images.search} style={styles.icon} />
       <TextInput
         style={styles.input}
         placeholder={placeholder}
