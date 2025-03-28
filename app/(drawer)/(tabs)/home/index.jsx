@@ -143,12 +143,12 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
     marginTop: theme.spacing.large,
     justifyContent: "center",
-    alignItems: "center",
   },
   welcomeText: {
     fontFamily: "SquadaOne",
     fontSize: theme.fontSizes.large,
     color: theme.colors.primary,
+    textAlign: "center",
   },
   scrollview: {
     marginTop: 20,
