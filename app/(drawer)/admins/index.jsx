@@ -10,10 +10,11 @@ import {
 import TabsComponent from "../../../components/TabsComponent";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { fetchAdmins } from "../../../services/api";
+import { fetchAdmins, deleteAdmin } from "../../../services/api";
 
 import images from "../../../constants/images";
 import SearchBar from "../../../components/CustomSearch";
+import CustomModal from "../../../components/CustomModal";
 
 import globalStyles from "../../../constants/globalStyles";
 import theme from "../../../constants/theme";
@@ -21,6 +22,8 @@ import theme from "../../../constants/theme";
 export default function AdminsScreen() {
   const [admins, setAdmins] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [adminToDelete, setAdminToDelete] = useState(null);
 
   useEffect(() => {
     const loadAdmins = async () => {
@@ -40,6 +43,34 @@ export default function AdminsScreen() {
       admin.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       admin.last_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleDeletePress = (admin) => {
+    setAdminToDelete(admin);
+    setIsModalVisible(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+    setAdminToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!adminToDelete) return;
+
+    try {
+      await deleteAdmin(adminToDelete.id_number);
+
+      setAdmins((prevAdmins) =>
+        prevAdmins.filter(
+          (admin) => admin.id_number !== adminToDelete.id_number
+        )
+      );
+
+      handleModalClose();
+    } catch (error) {
+      console.error("Error deleting admin:", error);
+    }
+  };
 
   return (
     <SafeAreaView style={globalStyles.secondaryContainer}>
@@ -67,7 +98,7 @@ export default function AdminsScreen() {
                 <TouchableOpacity>
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
-                <TouchableOpacity>
+                <TouchableOpacity onPress={() => handleDeletePress(admin)}>
                   <Image source={images.trash} style={styles.icon} />
                 </TouchableOpacity>
               </View>
@@ -77,6 +108,17 @@ export default function AdminsScreen() {
           <Text style={styles.noResults}>No admins found</Text>
         )}
       </ScrollView>
+
+      <CustomModal
+        visible={isModalVisible}
+        title="Confirm Deletion"
+        message={`Are you sure you want to delete ${adminToDelete?.first_name} ${adminToDelete?.last_name}?`}
+        type="warning"
+        onClose={handleModalClose}
+        onConfirm={handleConfirmDelete}
+        cancelTitle="Cancel"
+        confirmTitle="Delete"
+      />
 
       <TabsComponent />
       <StatusBar style="auto" />
