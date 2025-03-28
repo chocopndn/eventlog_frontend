@@ -79,11 +79,37 @@ const Home = () => {
   };
 
   const formatEventDates = (datesArray) => {
-    return datesArray
-      .map((date, index) => {
-        return formatDate(date);
-      })
-      .join(", ");
+    if (!datesArray.length) return "";
+
+    if (datesArray.length === 1) {
+      return new Date(datesArray[0]).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    }
+
+    let groups = {};
+
+    datesArray.forEach((date) => {
+      let d = new Date(date);
+      let month = d.toLocaleString("en-US", { month: "long" });
+      let day = d.getDate();
+      let year = d.getFullYear();
+      let key = `${month} ${year}`;
+
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(day);
+    });
+
+    return Object.entries(groups)
+      .map(
+        ([monthYear, days]) =>
+          `${monthYear.split(" ")[0]} ${days.join(", ")} ${
+            monthYear.split(" ")[1]
+          }`
+      )
+      .join(" & ");
   };
 
   return (
