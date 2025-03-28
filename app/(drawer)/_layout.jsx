@@ -183,48 +183,64 @@ export default function DrawerLayout() {
         name="admins"
         options={{
           headerTitle: "Admins",
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: theme.colors.secondary,
         }}
       />
       <Drawer.Screen
         name="courses"
         options={{
           headerTitle: "Courses",
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: theme.colors.secondary,
         }}
       />
       <Drawer.Screen
         name="departments"
         options={{
           headerTitle: "Departments",
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: theme.colors.secondary,
         }}
       />
       <Drawer.Screen
         name="events"
         options={{
           headerTitle: "Events",
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: theme.colors.secondary,
         }}
       />
       <Drawer.Screen
         name="records"
         options={{
           headerTitle: "Records",
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: theme.colors.secondary,
         }}
       />
       <Drawer.Screen
         name="roles"
         options={{
           headerTitle: "Roles",
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: theme.colors.secondary,
         }}
       />
       <Drawer.Screen
         name="students"
         options={{
           headerTitle: "Students",
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: theme.colors.secondary,
         }}
       />
       <Drawer.Screen
         name="sAdminAcc"
         options={{
           headerTitle: "Account",
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: theme.colors.secondary,
         }}
       />
     </Drawer>
