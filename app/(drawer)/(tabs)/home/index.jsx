@@ -13,7 +13,11 @@ import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import CollapsibleDropdown from "../../../../components/CollapsibleDropdown";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { getStoredUser } from "../../../../database/queries";
+import {
+  getStoredUser,
+  storeEvent,
+  getStoredEvents,
+} from "../../../../database/queries";
 import {
   fetchApprovedOngoing,
   fetchUserUpcomingEvents,
@@ -51,7 +55,10 @@ const Home = () => {
         }
 
         if (response?.success) {
-          setEvents(response.events || []);
+          await Promise.all(response.events.map((event) => storeEvent(event)));
+
+          const storedEvents = await getStoredEvents();
+          setEvents(storedEvents || []);
         }
       } catch (error) {
         console.error("Error fetching events:", error);
@@ -87,6 +94,9 @@ const Home = () => {
 
     datesArray.forEach((date) => {
       let d = new Date(date);
+      if (isNaN(d.getTime())) {
+        return;
+      }
       let month = d.toLocaleString("en-US", { month: "long" });
       let day = d.getDate();
       let year = d.getFullYear();
