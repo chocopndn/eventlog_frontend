@@ -67,6 +67,8 @@ export const clearAllTablesData = async () => {
 
       await dbInstance.execAsync(`
         DELETE FROM users;
+        DELETE FROM events;
+        DELETE FROM event_dates;
       `);
     } catch (error) {
       console.error("Error clearing all tables data:", error);
@@ -122,6 +124,115 @@ export const getStoredUser = async () => {
       return result;
     } catch (error) {
       console.error("Error getting stored user:", error);
+      return null;
+    }
+  } else {
+    return null;
+  }
+};
+
+export const storeEvent = async (event) => {
+  if (!event || !event.event_id) {
+    console.error("Invalid event data:", event);
+    return;
+  }
+
+  try {
+    const db = await initDB();
+    if (!db) {
+      console.error("Database failed to open.");
+      return;
+    }
+
+    const existingEvent = await db.getFirstAsync(
+      "SELECT id FROM events WHERE id = ?",
+      [event.event_id]
+    );
+
+    if (!existingEvent) {
+      await db.runAsync(
+        `INSERT INTO events (
+          id, event_name, venue, description, created_by_id, created_by, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          event.event_id,
+          event.event_name,
+          event.venue,
+          event.description,
+          event.created_by_id,
+          event.created_by,
+          event.status,
+        ]
+      );
+    } else {
+    }
+
+    if (Array.isArray(event.event_dates)) {
+      for (const eventDate of event.event_dates) {
+        const existingDate = await db.getFirstAsync(
+          "SELECT id FROM event_dates WHERE event_id = ? AND event_date = ?",
+          [event.event_id, eventDate]
+        );
+
+        if (!existingDate) {
+          await db.runAsync(
+            "INSERT INTO event_dates (event_id, event_date) VALUES (?, ?)",
+            [event.event_id, eventDate]
+          );
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error storing event:", error);
+  }
+};
+
+export const getStoredEvents = async () => {
+  if (Platform.OS !== "web") {
+    try {
+      const dbInstance = await initDB();
+      if (!dbInstance) {
+        return null;
+      }
+
+      const eventsQuery = `
+        SELECT
+          event.id AS event_id,
+          event.event_name_id,
+          event.event_name,
+          event.venue,
+          event.description,
+          event.scan_personnel,
+          event.status,
+          event.created_by_id,
+          event.created_by,
+          event.approved_by_id,
+          event.approved_by,
+          event.am_in,
+          event.am_out,
+          event.pm_in,
+          event.pm_out,
+          event.duration
+        FROM events event
+      `;
+      const events = await dbInstance.getAllAsync(eventsQuery);
+
+      for (let event of events) {
+        const eventDatesQuery = `
+          SELECT ed.event_date
+          FROM event_dates ed
+          WHERE ed.event_id = ?
+        `;
+        const eventDates = await dbInstance.getAllAsync(eventDatesQuery, [
+          event.event_id,
+        ]);
+
+        event.event_dates = eventDates.map((date) => date.event_date);
+      }
+
+      return events;
+    } catch (error) {
+      console.error("Error getting stored events:", error);
       return null;
     }
   } else {
