@@ -14,41 +14,52 @@ import theme from "../../../../constants/theme";
 import CollapsibleDropdown from "../../../../components/CollapsibleDropdown";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getStoredUser } from "../../../../database/queries";
-import { fetchApprovedOngoing } from "../../../../services/api";
+import {
+  fetchApprovedOngoing,
+  fetchUserUpcomingEvents,
+} from "../../../../services/api";
 
 const screenWidth = Dimensions.get("window").width;
 
 const Home = () => {
   const [roleId, setRoleId] = useState(null);
   const [events, setEvents] = useState([]);
+  const [blockId, setblockId] = useState(null);
 
   useEffect(() => {
-    const fetchUserRole = async () => {
+    const fetchUserData = async () => {
       const user = await getStoredUser();
       setRoleId(user.role_id);
+      setblockId(user.block_id);
     };
 
-    fetchUserRole();
+    fetchUserData();
   }, []);
 
   useEffect(() => {
-    const loadApprovedOngoingEvents = async () => {
-      if (roleId === 3 || roleId === 4) {
-        try {
-          const response = await fetchApprovedOngoing();
-          if (response.success) {
-            setEvents(response.events || []);
-          }
-        } catch (error) {
-          console.error("Error fetching approved ongoing events:", error);
+    const fetchEvent = async () => {
+      if (roleId === null) return;
+
+      try {
+        let response;
+        if (roleId === 3 || roleId === 4) {
+          response = await fetchApprovedOngoing();
+        } else if (blockId !== null) {
+          response = await fetchUserUpcomingEvents(blockId);
+        } else {
+          return;
         }
+
+        if (response?.success) {
+          setEvents(response.events || []);
+        }
+      } catch (error) {
+        console.error("Error fetching events:", error);
       }
     };
 
-    if (roleId) {
-      loadApprovedOngoingEvents();
-    }
-  }, [roleId]);
+    fetchEvent();
+  }, [roleId, blockId]);
 
   const formatTime = (timeString) => {
     const date = new Date(`1970-01-01T${timeString}Z`);
@@ -155,9 +166,5 @@ const styles = StyleSheet.create({
   scrollview: {
     marginTop: 20,
     paddingBottom: 20,
-  },
-  headerContainer: {
-    // alignItems: "center",
-    // justifyContent: "center",
   },
 });
