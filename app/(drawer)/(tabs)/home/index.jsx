@@ -83,10 +83,11 @@ const Home = () => {
           <Text style={styles.title}>LIST OF EVENTS</Text>
           <View style={styles.line}></View>
         </View>
-        <TouchableOpacity onPress={() => router.push("/home/Welcome")}>
-          <View style={styles.welcomeContainer}>
-            <Text style={styles.welcomeText}>WELCOME EVENTLOG USERS!</Text>
-          </View>
+        <TouchableOpacity
+          onPress={() => router.push("/home/Welcome")}
+          style={styles.welcomeContainer}
+        >
+          <Text style={styles.welcomeText}>WELCOME EVENTLOG USERS!</Text>
         </TouchableOpacity>
         <ScrollView
           style={{ marginBottom: 20 }}
@@ -125,6 +126,7 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.display,
     fontFamily: "SquadaOne",
     color: theme.colors.primary,
+    textAlign: "center",
   },
   title: {
     fontSize: theme.fontSizes.huge,
@@ -155,7 +157,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   headerContainer: {
-    alignItems: "center",
-    justifyContent: "center",
+    // alignItems: "center",
+    // justifyContent: "center",
   },
 });
