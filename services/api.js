@@ -15,7 +15,7 @@ export const fetchEventById = async (eventId) => {
 
 export const fetchDepartments = async () => {
   try {
-    const response = await axios.get(`${API_URL}/api/departments`);
+    const response = await axios.get(`${API_URL}/api/departments/departments`);
     if (response.data.success) {
       return response.data.departments.map((dept) => ({
         label: dept.department_code,
