@@ -74,6 +74,7 @@ const AddAdmin = () => {
         !formData.id_number ||
         !formData.first_name ||
         !formData.last_name ||
+        !formData.email.trim() ||
         formData.department_id === null ||
         formData.role_id === null
       ) {
@@ -155,6 +156,8 @@ const AddAdmin = () => {
         showsVerticalScrollIndicator={false}
       >
         <FormField
+          type="id"
+          iconShow={false}
           title="ID Number"
           placeholder="12345678"
           value={formData.id_number}
@@ -185,6 +188,8 @@ const AddAdmin = () => {
           onChangeText={(text) => handleChange("suffix", text)}
         />
         <FormField
+          type="email"
+          iconShow={false}
           title="Email"
           placeholder="example@gmail.com"
           value={formData.email}
