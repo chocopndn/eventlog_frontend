@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  RefreshControl,
 } from "react-native";
 import TabsComponent from "../../../components/TabsComponent";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -24,19 +25,32 @@ import theme from "../../../constants/theme";
 export default function AdminsScreen() {
   const [admins, setAdmins] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
   const [adminToDelete, setAdminToDelete] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadAdmins = async () => {
+    try {
+      const fetchedAdmins = await fetchAdmins();
+      setAdmins(fetchedAdmins);
+    } catch (err) {
+      console.error("Error fetching admins:", err);
+    }
+  };
+
+  const refreshData = async () => {
+    setRefreshing(true);
+    try {
+      await loadAdmins();
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    const loadAdmins = async () => {
-      try {
-        const fetchedAdmins = await fetchAdmins();
-        setAdmins(fetchedAdmins);
-      } catch (err) {
-        console.error("Error fetching admins:", err);
-      }
-    };
-
     loadAdmins();
   }, []);
 
@@ -48,11 +62,11 @@ export default function AdminsScreen() {
 
   const handleDeletePress = (admin) => {
     setAdminToDelete(admin);
-    setIsModalVisible(true);
+    setIsDeleteModalVisible(true);
   };
 
-  const handleModalClose = () => {
-    setIsModalVisible(false);
+  const handleDeleteModalClose = () => {
+    setIsDeleteModalVisible(false);
     setAdminToDelete(null);
   };
 
@@ -68,7 +82,8 @@ export default function AdminsScreen() {
         )
       );
 
-      handleModalClose();
+      handleDeleteModalClose();
+      setIsSuccessModalVisible(true);
     } catch (error) {
       console.error("Error deleting admin:", error);
     }
@@ -83,6 +98,9 @@ export default function AdminsScreen() {
       <ScrollView
         style={{ flex: 1, width: "100%" }}
         contentContainerStyle={styles.scrollview}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={refreshData} />
+        }
       >
         {filteredAdmins.length > 0 ? (
           filteredAdmins.map((admin) => (
@@ -97,7 +115,6 @@ export default function AdminsScreen() {
                 <Text style={styles.idNumber}>{admin.id_number}</Text>
               </View>
               <View style={styles.iconContainer}>
-                {/* Edit Button */}
                 <TouchableOpacity
                   onPress={() =>
                     router.push(
@@ -107,8 +124,6 @@ export default function AdminsScreen() {
                 >
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
-
-                {/* Delete Button */}
                 <TouchableOpacity onPress={() => handleDeletePress(admin)}>
                   <Image source={images.trash} style={styles.icon} />
                 </TouchableOpacity>
@@ -128,14 +143,23 @@ export default function AdminsScreen() {
       </View>
 
       <CustomModal
-        visible={isModalVisible}
+        visible={isDeleteModalVisible}
         title="Confirm Deletion"
         message={`Are you sure you want to delete ${adminToDelete?.first_name} ${adminToDelete?.last_name}?`}
         type="warning"
-        onClose={handleModalClose}
+        onClose={handleDeleteModalClose}
         onConfirm={handleConfirmDelete}
         cancelTitle="Cancel"
         confirmTitle="Delete"
+      />
+
+      <CustomModal
+        visible={isSuccessModalVisible}
+        title="Success"
+        message="Admin deleted successfully!"
+        type="success"
+        onClose={() => setIsSuccessModalVisible(false)}
+        cancelTitle="CLOSE"
       />
 
       <TabsComponent />
