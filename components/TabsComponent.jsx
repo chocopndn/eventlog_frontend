@@ -99,6 +99,7 @@ const styles = StyleSheet.create({
   },
   tabItem: {
     alignItems: "center",
+    width: 50,
   },
   tabIcon: {
     width: 24,
