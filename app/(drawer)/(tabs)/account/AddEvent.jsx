@@ -58,7 +58,9 @@ const AddEvent = () => {
       setLoadingDepartments(true);
       setErrorDepartments(null);
       try {
-        const response = await axios.get(API_URL + "/api/departments");
+        const response = await axios.get(
+          API_URL + "/api/departments/departments"
+        );
         if (response.status !== 200) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
