@@ -15,6 +15,7 @@ import FormField from "../../../components/FormField";
 import CustomDropdown from "../../../components/CustomDropdown";
 import CustomButton from "../../../components/CustomButton";
 import { fetchDepartments, addAdmin } from "../../../services/api";
+import CustomModal from "../../../components/CustomModal";
 
 const AddAdmin = () => {
   const [formData, setFormData] = useState({
@@ -30,6 +31,12 @@ const AddAdmin = () => {
 
   const [departmentOptions, setDepartmentOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [modal, setModal] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    type: "success",
+  });
 
   const roleOptions = [
     { label: "Admin", value: 3 },
@@ -43,7 +50,12 @@ const AddAdmin = () => {
         const departments = await fetchDepartments();
         setDepartmentOptions(departments);
       } catch (error) {
-        alert("Failed to load departments. Please try again.");
+        setModal({
+          visible: true,
+          title: "Error",
+          message: "Failed to load departments. Please try again.",
+          type: "error",
+        });
       } finally {
         setIsLoading(false);
       }
@@ -57,31 +69,41 @@ const AddAdmin = () => {
   };
 
   const handleSubmit = async () => {
-    if (
-      !formData.id_number ||
-      !formData.first_name ||
-      !formData.last_name ||
-      formData.department_id === null ||
-      formData.role_id === null
-    ) {
-      alert("Please fill in all required fields.");
-      return;
-    }
-
-    const submitData = {
-      id_number: formData.id_number,
-      first_name: formData.first_name,
-      middle_name: formData.middle_name,
-      last_name: formData.last_name,
-      suffix: formData.suffix,
-      email: formData.email,
-      department_id: formData.department_id,
-      role_id: formData.role_id,
-    };
-
     try {
+      if (
+        !formData.id_number ||
+        !formData.first_name ||
+        !formData.last_name ||
+        formData.department_id === null ||
+        formData.role_id === null
+      ) {
+        setModal({
+          visible: true,
+          title: "Warning",
+          message: "Please fill in all required fields.",
+          type: "warning",
+        });
+        return;
+      }
+
+      const submitData = {
+        id_number: formData.id_number,
+        first_name: formData.first_name,
+        middle_name: formData.middle_name,
+        last_name: formData.last_name,
+        suffix: formData.suffix,
+        email: formData.email,
+        department_id: formData.department_id,
+        role_id: formData.role_id,
+      };
+
       await addAdmin(submitData);
-      alert("Admin added successfully!");
+      setModal({
+        visible: true,
+        title: "Success",
+        message: "Admin added successfully!",
+        type: "success",
+      });
       setFormData({
         id_number: "",
         first_name: "",
@@ -93,7 +115,14 @@ const AddAdmin = () => {
         role_id: null,
       });
     } catch (error) {
-      alert("Failed to add admin. Please try again.");
+      setModal({
+        visible: true,
+        title: "Error",
+        message:
+          error.response?.data?.message ||
+          "Failed to add admin. Please try again.",
+        type: "error",
+      });
     }
   };
 
@@ -107,6 +136,15 @@ const AddAdmin = () => {
 
   return (
     <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
+      <CustomModal
+        visible={modal.visible}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        onClose={() => setModal({ ...modal, visible: false })}
+        cancelTitle="CLOSE"
+      />
+
       <Text style={styles.textHeader}>EVENTLOG</Text>
       <View style={styles.titleContainer}>
         <Text style={styles.textTitle}>ADD ADMIN</Text>
@@ -118,8 +156,6 @@ const AddAdmin = () => {
       >
         <FormField
           title="ID Number"
-          type="id"
-          iconShow={false}
           placeholder="12345678"
           value={formData.id_number}
           onChangeText={(text) => handleChange("id_number", text)}
@@ -149,13 +185,12 @@ const AddAdmin = () => {
           onChangeText={(text) => handleChange("suffix", text)}
         />
         <FormField
-          type="email"
-          iconShow={false}
           title="Email"
           placeholder="example@gmail.com"
           value={formData.email}
           onChangeText={(text) => handleChange("email", text)}
         />
+
         <CustomDropdown
           title="Department"
           data={departmentOptions}
@@ -170,8 +205,10 @@ const AddAdmin = () => {
           value={formData.role_id}
           onSelect={(item) => handleChange("role_id", item.value)}
         />
+
         <CustomButton title="ADD" onPress={handleSubmit} />
       </ScrollView>
+
       <TabsComponent />
       <StatusBar style="auto" />
     </SafeAreaView>
