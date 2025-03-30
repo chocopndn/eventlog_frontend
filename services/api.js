@@ -126,3 +126,20 @@ export const fetchAdmins = async () => {
     throw error;
   }
 };
+
+export const addAdmin = async (adminData) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/api/admins/add-admin`,
+      adminData
+    );
+    if (response.data.success) {
+      return response.data;
+    }
+    console.log(response.data);
+
+    throw new Error(response.data.message || "Failed to add admin");
+  } catch (error) {
+    throw error;
+  }
+};
