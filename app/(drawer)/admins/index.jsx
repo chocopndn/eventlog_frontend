@@ -97,9 +97,18 @@ export default function AdminsScreen() {
                 <Text style={styles.idNumber}>{admin.id_number}</Text>
               </View>
               <View style={styles.iconContainer}>
-                <TouchableOpacity>
+                {/* Edit Button */}
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push(
+                      `/admins/EditAdmin?id_number=${admin.id_number}`
+                    )
+                  }
+                >
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
+
+                {/* Delete Button */}
                 <TouchableOpacity onPress={() => handleDeletePress(admin)}>
                   <Image source={images.trash} style={styles.icon} />
                 </TouchableOpacity>

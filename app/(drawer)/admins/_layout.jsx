@@ -14,6 +14,14 @@ const AdminsLayout = () => {
           headerStyle: { backgroundColor: theme.colors.primary },
         }}
       />
+      <Stack.Screen
+        name="EditAdmin"
+        options={{
+          headerTitle: "",
+          headerTintColor: theme.colors.secondary,
+          headerStyle: { backgroundColor: theme.colors.primary },
+        }}
+      />
     </Stack>
   );
 };

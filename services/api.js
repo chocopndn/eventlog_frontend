@@ -143,3 +143,30 @@ export const addAdmin = async (adminData) => {
     throw error;
   }
 };
+
+export const editAdmin = async (id_number, adminData) => {
+  try {
+    const response = await axios.put(
+      `${API_URL}/api/admins/edit/${id_number}`,
+      adminData
+    );
+    if (response.data.success) {
+      return response.data;
+    }
+    throw new Error(response.data.message || "Failed to update admin");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchAdminById = async (id_number) => {
+  try {
+    const response = await axios.get(`${API_URL}/api/admins/${id_number}`);
+    if (response.data.success) {
+      return response.data.admin;
+    }
+    throw new Error(response.data.message || "Failed to fetch admin details");
+  } catch (error) {
+    throw error;
+  }
+};
