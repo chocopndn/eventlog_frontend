@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import TabsComponent from "../../../components/TabsComponent";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { fetchAdmins, deleteAdmin } from "../../../services/api";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 
 import images from "../../../constants/images";
 import SearchBar from "../../../components/CustomSearch";
@@ -50,9 +50,11 @@ export default function AdminsScreen() {
     }
   };
 
-  useEffect(() => {
-    loadAdmins();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadAdmins();
+    }, [])
+  );
 
   const filteredAdmins = admins.filter(
     (admin) =>
@@ -107,6 +109,9 @@ export default function AdminsScreen() {
             <TouchableOpacity
               key={admin.id_number}
               style={styles.adminContainer}
+              onPress={() =>
+                router.push(`/admins/AdminDetails?id_number=${admin.id_number}`)
+              }
             >
               <View>
                 <Text style={styles.name}>
