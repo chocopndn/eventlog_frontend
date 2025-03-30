@@ -86,7 +86,7 @@ const TabsLayout = () => {
           <Image source={images.logo} style={styles.logoImage} />
         </View>
 
-        <TabTrigger name="qr" href="/(tabs)/qr">
+        <TabTrigger name="index" href="/(tabs)/qr">
           <View style={styles.tabItem}>
             <Image source={images.scanner} style={styles.tabIcon} />
             <Text style={styles.tabText}>QR Code</Text>
@@ -108,6 +108,7 @@ const styles = StyleSheet.create({
   },
   tabItem: {
     alignItems: "center",
+    width: 50,
   },
   tabIcon: {
     width: 24,
