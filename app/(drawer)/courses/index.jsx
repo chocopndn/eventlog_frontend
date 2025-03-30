@@ -105,6 +105,7 @@ export default function CoursesScreen() {
       <ScrollView
         style={{ flex: 1, width: "100%", marginBottom: 70 }}
         contentContainerStyle={[styles.scrollview, { paddingBottom: 80 }]}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={refreshData} />
         }
