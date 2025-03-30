@@ -182,3 +182,71 @@ export const deleteAdmin = async (id_number) => {
     throw error;
   }
 };
+
+export const fetchCourses = async (searchQuery = "") => {
+  try {
+    const response = await axios.get(`${API_URL}/api/courses`, {
+      params: { search: searchQuery },
+    });
+    if (response.data.success) {
+      return response.data.courses;
+    }
+    throw new Error("Failed to fetch courses");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchCourseById = async (courseId) => {
+  try {
+    const response = await axios.get(`${API_URL}/api/courses/${courseId}`);
+    if (response.data.success) {
+      return response.data.course;
+    }
+    throw new Error("Failed to fetch course details");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const addCourse = async (courseData) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/api/courses/add-course`,
+      courseData
+    );
+    if (response.data.success) {
+      return response.data;
+    }
+    throw new Error(response.data.message || "Failed to add course");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const editCourse = async (courseId, courseData) => {
+  try {
+    const response = await axios.put(
+      `${API_URL}/api/courses/edit/${courseId}`,
+      courseData
+    );
+    if (response.data.success) {
+      return response.data;
+    }
+    throw new Error(response.data.message || "Failed to update course");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteCourse = async (courseId) => {
+  try {
+    const response = await axios.delete(`${API_URL}/api/courses/${courseId}`);
+    if (response.data.success) {
+      return response.data;
+    }
+    throw new Error(response.data.message || "Failed to delete course");
+  } catch (error) {
+    throw error;
+  }
+};
