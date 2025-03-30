@@ -170,3 +170,15 @@ export const fetchAdminById = async (id_number) => {
     throw error;
   }
 };
+
+export const deleteAdmin = async (id_number) => {
+  try {
+    const response = await axios.delete(`${API_URL}/api/admins/${id_number}`);
+    if (response.data.success) {
+      return response.data;
+    }
+    throw new Error(response.data.message || "Failed to delete admin");
+  } catch (error) {
+    throw error;
+  }
+};
