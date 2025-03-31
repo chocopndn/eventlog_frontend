@@ -20,9 +20,68 @@ export const fetchDepartments = async () => {
       return response.data.departments.map((dept) => ({
         label: dept.department_code,
         value: dept.department_id,
+        department_name: dept.department_name,
       }));
     }
     throw new Error("Failed to fetch departments");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchDepartmentById = async (departmentId) => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/api/departments/departments/${departmentId}`
+    );
+    if (response.data.success) {
+      return response.data.department;
+    }
+    throw new Error("Failed to fetch department");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const addDepartment = async (departmentData) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/api/departments/departments`,
+      departmentData
+    );
+    if (response.data.success) {
+      return response.data.department;
+    }
+    throw new Error("Failed to add department");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const editDepartment = async (departmentId, departmentData) => {
+  try {
+    const response = await axios.put(
+      `${API_URL}/api/departments/departments/${departmentId}`,
+      departmentData
+    );
+    if (response.data.success) {
+      return response.data.department;
+    }
+    throw new Error("Failed to update department");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteDepartment = async (departmentId) => {
+  try {
+    const response = await axios.delete(
+      `${API_URL}/api/departments/departments/${departmentId}`
+    );
+    if (response.data.success) {
+      return true;
+    }
+    throw new Error("Failed to delete department");
   } catch (error) {
     throw error;
   }
