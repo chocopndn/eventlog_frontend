@@ -9,14 +9,16 @@ import CustomModal from "../../../components/CustomModal";
 
 import globalStyles from "../../../constants/globalStyles";
 import theme from "../../../constants/theme";
-import { fetchAdminById, deleteAdmin } from "../../../services/api";
+import { fetchAdminById, disableAdmin } from "../../../services/api";
 import { useLocalSearchParams } from "expo-router";
 
 const AdminDetails = () => {
   const { id_number } = useLocalSearchParams();
   const [adminDetails, setAdminDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isDisableConfirmationVisible, setIsDisableConfirmationVisible] =
+    useState(false);
+  const [isDisableSuccessVisible, setIsDisableSuccessVisible] = useState(false);
 
   const fetchAdminDetails = async () => {
     try {
@@ -56,19 +58,23 @@ const AdminDetails = () => {
     );
   }
 
-  const handleDeletePress = () => {
-    setIsDeleteModalVisible(true);
+  const handleDisablePress = () => {
+    setIsDisableConfirmationVisible(true);
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDisable = async () => {
     try {
-      await deleteAdmin(adminDetails.id_number);
-      router.back();
+      await disableAdmin(adminDetails.id_number);
+      setIsDisableConfirmationVisible(false);
+      setIsDisableSuccessVisible(true);
     } catch (error) {
-      console.error("Error deleting admin:", error);
-    } finally {
-      setIsDeleteModalVisible(false);
+      console.error("Error disabling admin:", error);
     }
+  };
+
+  const handleDisableSuccessClose = () => {
+    setIsDisableSuccessVisible(false);
+    router.back();
   };
 
   return (
@@ -136,22 +142,31 @@ const AdminDetails = () => {
         </View>
         <View style={styles.button}>
           <CustomButton
-            title="DELETE"
+            title="Disable"
             type="secondary"
-            onPress={handleDeletePress}
+            onPress={handleDisablePress}
           />
         </View>
       </View>
 
       <CustomModal
-        visible={isDeleteModalVisible}
-        title="Confirm Deletion"
-        message={`Are you sure you want to delete ${adminDetails.first_name} ${adminDetails.last_name}?`}
+        visible={isDisableConfirmationVisible}
+        title="Confirm Disable"
+        message={`Are you sure you want to disable ${adminDetails.first_name} ${adminDetails.last_name}?`}
         type="warning"
-        onClose={() => setIsDeleteModalVisible(false)}
-        onConfirm={handleConfirmDelete}
+        onClose={() => setIsDisableConfirmationVisible(false)}
+        onConfirm={handleConfirmDisable}
         cancelTitle="Cancel"
-        confirmTitle="Delete"
+        confirmTitle="Disable"
+      />
+
+      <CustomModal
+        visible={isDisableSuccessVisible}
+        type="success"
+        title="Admin Disabled"
+        message={`${adminDetails.first_name} ${adminDetails.last_name} has been disabled successfully.`}
+        cancelTitle="CLOSE"
+        onClose={handleDisableSuccessClose}
       />
 
       <TabsComponent />

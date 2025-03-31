@@ -245,13 +245,15 @@ export const fetchAdminById = async (id_number) => {
   }
 };
 
-export const deleteAdmin = async (id_number) => {
+export const disableAdmin = async (id_number) => {
   try {
-    const response = await axios.delete(`${API_URL}/api/admins/${id_number}`);
+    const response = await axios.put(`${API_URL}/api/admins/${id_number}`);
+
     if (response.data.success) {
       return response.data;
     }
-    throw new Error(response.data.message || "Failed to delete admin");
+
+    throw new Error(response.data.message || "Failed to disable admin");
   } catch (error) {
     throw error;
   }

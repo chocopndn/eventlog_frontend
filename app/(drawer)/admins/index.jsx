@@ -11,23 +11,21 @@ import {
 import TabsComponent from "../../../components/TabsComponent";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { fetchAdmins, deleteAdmin } from "../../../services/api";
+import { fetchAdmins, disableAdmin } from "../../../services/api";
 import { router, useFocusEffect } from "expo-router";
-
 import images from "../../../constants/images";
 import SearchBar from "../../../components/CustomSearch";
 import CustomModal from "../../../components/CustomModal";
 import CustomButton from "../../../components/CustomButton";
-
 import globalStyles from "../../../constants/globalStyles";
 import theme from "../../../constants/theme";
 
 export default function AdminsScreen() {
   const [admins, setAdmins] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isDisableModalVisible, setIsDisableModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
-  const [adminToDelete, setAdminToDelete] = useState(null);
+  const [adminToDisable, setAdminToDisable] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadAdmins = async () => {
@@ -39,50 +37,45 @@ export default function AdminsScreen() {
     }
   };
 
-  const refreshData = async () => {
-    setRefreshing(true);
-    try {
-      await loadAdmins();
-    } catch (error) {
-      console.error("Error refreshing data:", error);
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
   useFocusEffect(
     React.useCallback(() => {
       loadAdmins();
     }, [])
   );
 
+  const refreshData = async () => {
+    setRefreshing(true);
+    await loadAdmins();
+    setRefreshing(false);
+  };
+
+  const lowerCaseQuery = searchQuery.toLowerCase();
   const filteredAdmins = admins.filter(
     (admin) =>
-      admin.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      admin.last_name.toLowerCase().includes(searchQuery.toLowerCase())
+      admin.first_name.toLowerCase().includes(lowerCaseQuery) ||
+      admin.last_name.toLowerCase().includes(lowerCaseQuery)
   );
 
-  const handleDeletePress = (admin) => {
-    setAdminToDelete(admin);
-    setIsDeleteModalVisible(true);
+  const handleDisablePress = (admin) => {
+    setAdminToDisable(admin);
+    setIsDisableModalVisible(true);
   };
 
-  const handleDeleteModalClose = () => {
-    setIsDeleteModalVisible(false);
-    setAdminToDelete(null);
+  const handleDisableModalClose = () => {
+    setIsDisableModalVisible(false);
+    setAdminToDisable(null);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!adminToDelete) return;
+  const handleConfirmDisable = async () => {
+    if (!adminToDisable) return;
 
     try {
-      await deleteAdmin(adminToDelete.id_number);
+      await disableAdmin(adminToDisable.id_number);
       await loadAdmins();
-
-      handleDeleteModalClose();
-      setIsSuccessModalVisible(true);
+      setIsDisableModalVisible(false);
+      setTimeout(() => setIsSuccessModalVisible(true), 300);
     } catch (error) {
-      console.error("Error deleting admin:", error);
+      console.error("Error disabling admin:", error);
     }
   };
 
@@ -124,13 +117,13 @@ export default function AdminsScreen() {
                 >
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
-                {admin.status !== "deleted" ? (
-                  <TouchableOpacity onPress={() => handleDeletePress(admin)}>
-                    <Image source={images.trash} style={styles.icon} />
-                  </TouchableOpacity>
-                ) : (
-                  <View style={[styles.icon, { opacity: 0 }]} />
-                )}
+                <TouchableOpacity
+                  onPress={() => handleDisablePress(admin)}
+                  disabled={admin.status === "disabled"}
+                  style={{ opacity: admin.status === "disabled" ? 0.5 : 1 }}
+                >
+                  <Image source={images.disabled} style={styles.icon} />
+                </TouchableOpacity>
               </View>
             </TouchableOpacity>
           ))
@@ -138,34 +131,30 @@ export default function AdminsScreen() {
           <Text style={styles.noResults}>No admins found</Text>
         )}
       </ScrollView>
-
       <View style={styles.buttonContainer}>
         <CustomButton
           title="ADD ADMIN"
           onPress={() => router.push("/admins/AddAdmin")}
         />
       </View>
-
       <CustomModal
-        visible={isDeleteModalVisible}
-        title="Confirm Deletion"
-        message={`Are you sure you want to delete ${adminToDelete?.first_name} ${adminToDelete?.last_name}?`}
+        visible={isDisableModalVisible}
+        title="Confirm Disable"
+        message={`Are you sure you want to disable ${adminToDisable?.first_name} ${adminToDisable?.last_name}?`}
         type="warning"
-        onClose={handleDeleteModalClose}
-        onConfirm={handleConfirmDelete}
+        onClose={handleDisableModalClose}
+        onConfirm={handleConfirmDisable}
         cancelTitle="Cancel"
-        confirmTitle="Delete"
+        confirmTitle="Disable"
       />
-
       <CustomModal
         visible={isSuccessModalVisible}
         title="Success"
-        message="Admin deleted successfully!"
+        message="Admin disabled successfully!"
         type="success"
         onClose={() => setIsSuccessModalVisible(false)}
         cancelTitle="CLOSE"
       />
-
       <TabsComponent />
       <StatusBar style="auto" />
     </SafeAreaView>

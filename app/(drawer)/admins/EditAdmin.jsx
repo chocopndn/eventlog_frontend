@@ -52,7 +52,7 @@ const EditAdmin = () => {
 
   const statusOptions = [
     { label: "Active", value: "active" },
-    { label: "Deleted", value: "deleted" },
+    { label: "Disabled", value: "disabled" },
   ];
 
   useEffect(() => {
@@ -179,64 +179,52 @@ const EditAdmin = () => {
       >
         <FormField
           title="ID Number"
-          placeholder="12345678"
           value={formData.id_number}
           editable={false}
         />
         <FormField
           title="First Name"
-          placeholder="Juan Miguel"
           value={formData.first_name}
           onChangeText={(text) => handleChange("first_name", text)}
         />
         <FormField
           title="Middle Name"
-          placeholder="Reyes"
           value={formData.middle_name}
           onChangeText={(text) => handleChange("middle_name", text)}
         />
         <FormField
           title="Last Name"
-          placeholder="Santos"
           value={formData.last_name}
           onChangeText={(text) => handleChange("last_name", text)}
         />
         <FormField
           title="Suffix"
-          placeholder="Jr"
           value={formData.suffix}
           onChangeText={(text) => handleChange("suffix", text)}
         />
         <FormField
           title="Email"
-          placeholder="example@gmail.com"
           value={formData.email}
           onChangeText={(text) => handleChange("email", text)}
         />
-
         <CustomDropdown
           title="Department"
           data={departmentOptions}
-          placeholder="Select a department"
           value={formData.department_id}
           onSelect={(item) => handleChange("department_id", item.value)}
         />
         <CustomDropdown
           title="Role"
           data={roleOptions}
-          placeholder="Select a role"
           value={formData.role_id}
           onSelect={(item) => handleChange("role_id", item.value)}
         />
-
         <CustomDropdown
           title="Status"
           data={statusOptions}
-          placeholder="Select status"
           value={formData.status}
           onSelect={(item) => handleChange("status", item.value)}
         />
-
         <CustomButton title="UPDATE" onPress={handleSubmit} />
       </ScrollView>
 

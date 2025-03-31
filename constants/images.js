@@ -34,6 +34,7 @@ import close from "../assets/icons/close.png";
 import arrowRight from "../assets/icons/right-arrow.png";
 import trash from "../assets/icons/trash.png";
 import edit from "../assets/icons/edit.png";
+import disabled from "../assets/icons/disabled.png";
 
 export default {
   logo,
@@ -70,4 +71,5 @@ export default {
   close,
   trash,
   edit,
+  disabled,
 };
