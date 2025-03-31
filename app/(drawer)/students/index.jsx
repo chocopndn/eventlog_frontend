@@ -11,11 +11,12 @@ import {
 import TabsComponent from "../../../components/TabsComponent";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { fetchUsers } from "../../../services/api";
+import { fetchUsers, deleteUser } from "../../../services/api";
 import { router, useFocusEffect } from "expo-router";
 import images from "../../../constants/images";
 import SearchBar from "../../../components/CustomSearch";
 import CustomButton from "../../../components/CustomButton";
+import CustomModal from "../../../components/CustomModal";
 import globalStyles from "../../../constants/globalStyles";
 import theme from "../../../constants/theme";
 
@@ -25,6 +26,9 @@ export default function StudentsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState(null);
+  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 
   const loadStudents = async (query = "", page = 1) => {
     try {
@@ -67,6 +71,28 @@ export default function StudentsScreen() {
       setCurrentPage(newPage);
       loadStudents(searchQuery, newPage);
     }
+  };
+
+  const handleDeletePress = (student) => {
+    setStudentToDelete(student);
+    setIsDeleteModalVisible(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    try {
+      if (studentToDelete) {
+        await deleteUser(studentToDelete.id_number);
+        setIsDeleteModalVisible(false);
+        setIsSuccessModalVisible(true);
+        loadStudents(searchQuery, currentPage);
+      }
+    } catch (error) {
+      console.error("Error deleting student:", error);
+    }
+  };
+
+  const handleSuccessModalClose = () => {
+    setIsSuccessModalVisible(false);
   };
 
   return (
@@ -122,7 +148,7 @@ export default function StudentsScreen() {
                 >
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => console.log("Delete pressed")}>
+                <TouchableOpacity onPress={() => handleDeletePress(student)}>
                   <Image source={images.trash} style={styles.icon} />
                 </TouchableOpacity>
               </View>
@@ -185,6 +211,26 @@ export default function StudentsScreen() {
           }}
         />
       </View>
+
+      <CustomModal
+        visible={isDeleteModalVisible}
+        title="Confirm Deletion"
+        message={`Are you sure you want to delete ${studentToDelete?.first_name} ${studentToDelete?.last_name}?`}
+        type="warning"
+        onClose={() => setIsDeleteModalVisible(false)}
+        onConfirm={handleConfirmDelete}
+        cancelTitle="Cancel"
+        confirmTitle="Delete"
+      />
+
+      <CustomModal
+        visible={isSuccessModalVisible}
+        title="Success"
+        message="Student deleted successfully!"
+        type="success"
+        onClose={handleSuccessModalClose}
+        cancelTitle="CLOSE"
+      />
 
       <TabsComponent />
       <StatusBar style="auto" />
