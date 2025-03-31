@@ -145,22 +145,26 @@ const EditCourse = () => {
         contentContainerStyle={styles.scrollview}
         showsVerticalScrollIndicator={false}
       >
-        <FormField
-          title="Course Name"
-          placeholder="Enter course name"
-          value={formData.course_name}
-          onChangeText={(text) => handleChange("course_name", text)}
-        />
+        <View>
+          <FormField
+            title="Course Name"
+            placeholder="Enter course name"
+            value={formData.course_name}
+            onChangeText={(text) => handleChange("course_name", text)}
+          />
 
-        <CustomDropdown
-          title="Department"
-          data={departmentOptions}
-          placeholder="Select a department"
-          value={formData.department_id}
-          onSelect={(item) => handleChange("department_id", item.value)}
-        />
+          <CustomDropdown
+            title="Department"
+            data={departmentOptions}
+            placeholder="Select a department"
+            value={formData.department_id}
+            onSelect={(item) => handleChange("department_id", item.value)}
+          />
+        </View>
 
-        <CustomButton title="UPDATE" onPress={handleSubmit} />
+        <View>
+          <CustomButton title="UPDATE" onPress={handleSubmit} />
+        </View>
       </ScrollView>
 
       <TabsComponent />
@@ -187,6 +191,7 @@ const styles = StyleSheet.create({
   scrollview: {
     flexGrow: 1,
     padding: theme.spacing.medium,
+    justifyContent: "space-between",
   },
   titleContainer: {
     borderWidth: 2,
