@@ -58,11 +58,11 @@ export default function CoursesScreen() {
 
   const filteredCourses = Array.isArray(courses)
     ? courses.filter((course) => {
-        const courseName = course.course_name || "";
-        const departmentName = course.department_name || "";
+        const courseName = course.course_name?.toLowerCase() || "";
+        const departmentName = course.department_name?.toLowerCase() || "";
         return (
-          courseName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          departmentName.toLowerCase().includes(searchQuery.toLowerCase())
+          courseName.includes(searchQuery.toLowerCase()) ||
+          departmentName.includes(searchQuery.toLowerCase())
         );
       })
     : [];
@@ -127,9 +127,11 @@ export default function CoursesScreen() {
               </View>
               <View style={styles.iconContainer}>
                 <TouchableOpacity
-                  onPress={() =>
-                    router.push(`/courses/EditCourse?id=${course.course_id}`)
-                  }
+                  onPress={() => {
+                    if (course.course_id) {
+                      router.push(`/courses/EditCourse?id=${course.course_id}`);
+                    }
+                  }}
                 >
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
