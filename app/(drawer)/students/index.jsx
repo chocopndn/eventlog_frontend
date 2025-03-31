@@ -13,12 +13,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { fetchUsers } from "../../../services/api";
 import { router, useFocusEffect } from "expo-router";
-
 import images from "../../../constants/images";
 import SearchBar from "../../../components/CustomSearch";
-import CustomModal from "../../../components/CustomModal";
 import CustomButton from "../../../components/CustomButton";
-
 import globalStyles from "../../../constants/globalStyles";
 import theme from "../../../constants/theme";
 
@@ -26,24 +23,33 @@ export default function StudentsScreen() {
   const [students, setStudents] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const loadStudents = async (query = "") => {
+  const loadStudents = async (query = "", page = 1) => {
     try {
-      const response = await fetchUsers(query);
+      const response = await fetchUsers(query, page);
       if (response && response.success && Array.isArray(response.data)) {
         setStudents(response.data);
+        setTotalPages(
+          Math.ceil(
+            response.pagination.totalItems / response.pagination.itemsPerPage
+          )
+        );
       } else {
         setStudents([]);
+        setTotalPages(1);
       }
     } catch (err) {
       setStudents([]);
+      setTotalPages(1);
     }
   };
 
   const refreshData = async () => {
     setRefreshing(true);
     try {
-      await loadStudents(searchQuery);
+      await loadStudents(searchQuery, currentPage);
     } catch (error) {
     } finally {
       setRefreshing(false);
@@ -52,9 +58,16 @@ export default function StudentsScreen() {
 
   useFocusEffect(
     React.useCallback(() => {
-      loadStudents(searchQuery);
+      loadStudents(searchQuery, currentPage);
     }, [])
   );
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      loadStudents(searchQuery, newPage);
+    }
+  };
 
   return (
     <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
@@ -64,13 +77,15 @@ export default function StudentsScreen() {
           placeholder="Search students..."
           onSearch={(query) => {
             setSearchQuery(query);
-            loadStudents(query);
+            setCurrentPage(1);
+            loadStudents(query, 1);
           }}
         />
       </View>
+
       <ScrollView
-        style={{ flex: 1, width: "100%", marginBottom: 70 }}
-        contentContainerStyle={[styles.scrollview, { paddingBottom: 80 }]}
+        style={{ flex: 1, width: "100%" }}
+        contentContainerStyle={[styles.scrollview]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={refreshData} />
@@ -118,6 +133,50 @@ export default function StudentsScreen() {
         )}
       </ScrollView>
 
+      <View style={styles.pageNav}>
+        <TouchableOpacity
+          onPress={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          style={{ opacity: currentPage === 1 ? 0.5 : 1 }}
+        >
+          <Image
+            source={images.arrowLeft}
+            style={[
+              styles.pageIconNav,
+              {
+                tintColor:
+                  currentPage === 1
+                    ? theme.colors.secondary
+                    : theme.colors.primary,
+              },
+            ]}
+          />
+        </TouchableOpacity>
+
+        <View style={styles.textPage}>
+          <Text style={styles.page}>{currentPage.toString()}</Text>
+        </View>
+
+        <TouchableOpacity
+          onPress={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          style={{ opacity: currentPage === totalPages ? 0.5 : 1 }}
+        >
+          <Image
+            source={images.arrowRight}
+            style={[
+              styles.pageIconNav,
+              {
+                tintColor:
+                  currentPage === totalPages
+                    ? theme.colors.secondary
+                    : theme.colors.primary,
+              },
+            ]}
+          />
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.buttonContainer}>
         <CustomButton
           title="ADD STUDENT"
@@ -158,6 +217,7 @@ const styles = StyleSheet.create({
   },
   scrollview: {
     padding: theme.spacing.medium,
+    paddingBottom: 0,
     flexGrow: 1,
   },
   icon: {
@@ -196,5 +256,30 @@ const styles = StyleSheet.create({
     width: "80%",
     padding: theme.spacing.medium,
     marginBottom: 80,
+  },
+  pageNav: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: theme.spacing.medium,
+    marginBottom: 170,
+  },
+  pageIconNav: {
+    width: 30,
+    height: 30,
+    marginHorizontal: theme.spacing.small,
+  },
+  textPage: {
+    height: 30,
+    width: 50,
+    borderWidth: 1,
+    borderColor: theme.colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  page: {
+    fontFamily: theme.fontFamily.Arial,
+    color: theme.colors.primary,
+    fontSize: theme.fontSizes.medium,
   },
 });
