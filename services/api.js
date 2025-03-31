@@ -109,6 +109,25 @@ export const fetchBlocksByDepartment = async (departmentIds) => {
     throw error;
   }
 };
+export const fetchBlocks = async () => {
+  try {
+    console.log("Fetching blocks...");
+    const response = await axios.get(`${API_URL}/api/blocks`);
+    console.log("API RESPONSE:", response.data);
+
+    if (response.data.success && Array.isArray(response.data.data)) {
+      return response.data.data.map((block) => ({
+        label: block.block_name || `Block ${block.block_id}`,
+        value: block.block_id,
+      }));
+    }
+
+    throw new Error("Invalid blocks data received");
+  } catch (error) {
+    console.error("Error fetching blocks:", error);
+    throw error;
+  }
+};
 
 export const fetchEventNames = async () => {
   try {
@@ -305,6 +324,93 @@ export const deleteCourse = async (courseId) => {
       return response.data;
     }
     throw new Error(response.data.message || "Failed to delete course");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchUsers = async (searchQuery = "", page = 1, limit = 10) => {
+  try {
+    const response = await axios.get(`${API_URL}/api/users`, {
+      params: { search: searchQuery, page, limit },
+    });
+    if (response.data.success) {
+      return response.data;
+    }
+    throw new Error("Failed to fetch users");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchUserById = async (idNumber) => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/api/users/id-number/${idNumber}`
+    );
+    if (response.data.success) {
+      return response.data.user;
+    }
+    throw new Error("Failed to fetch user details");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateUser = async (idNumber, userData) => {
+  try {
+    const response = await axios.put(
+      `${API_URL}/api/users/edit/${idNumber}`,
+      userData
+    );
+    if (response.data.success) {
+      return response.data;
+    }
+    throw new Error(response.data.message || "Failed to update user");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteUser = async (idNumber) => {
+  try {
+    const response = await axios.delete(
+      `${API_URL}/api/users/delete/${idNumber}`
+    );
+    if (response.data.success) {
+      return response.data;
+    }
+    throw new Error(response.data.message || "Failed to delete user");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const changeUserPassword = async (email, newPassword) => {
+  try {
+    const response = await axios.post(`${API_URL}/api/users/change-password`, {
+      email,
+      newPassword,
+    });
+    if (response.data.success) {
+      return response.data;
+    }
+    throw new Error(response.data.message || "Failed to change password");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const addUser = async (userData) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/api/users/add-user`,
+      userData
+    );
+    if (response.data.success) {
+      return response.data;
+    }
+    throw new Error(response.data.message || "Failed to add user");
   } catch (error) {
     throw error;
   }
