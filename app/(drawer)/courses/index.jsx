@@ -119,12 +119,15 @@ export default function CoursesScreen() {
                 router.push(`/courses/CourseDetails?id=${course.course_id}`)
               }
             >
-              <View>
-                <Text style={styles.name}>{course.course_name}</Text>
-                <Text style={styles.departmentName}>
+              <View style={styles.textContainer}>
+                <Text style={styles.name} numberOfLines={1}>
+                  {course.course_name}
+                </Text>
+                <Text style={styles.departmentName} numberOfLines={1}>
                   {course.department_name}
                 </Text>
               </View>
+
               <View style={styles.iconContainer}>
                 <TouchableOpacity
                   onPress={() => {
@@ -197,6 +200,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.small,
     marginBottom: theme.spacing.small,
   },
+  textContainer: {
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "center",
+  },
   scrollview: {
     padding: theme.spacing.medium,
     flexGrow: 1,
@@ -208,19 +216,20 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.small,
   },
   iconContainer: {
-    justifyContent: "center",
-    alignItems: "center",
     flexDirection: "row",
+    alignItems: "center",
   },
   name: {
     fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
     fontSize: theme.fontSizes.large,
+    flexShrink: 1,
   },
   departmentName: {
     fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
     fontSize: theme.fontSizes.small,
+    flexShrink: 1,
   },
   noResults: {
     textAlign: "center",
