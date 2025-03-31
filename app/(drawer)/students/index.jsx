@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   headerText: {
     color: theme.colors.primary,
     fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: 60,
+    fontSize: theme.fontSizes.display,
     textAlign: "center",
     marginBottom: theme.spacing.medium,
   },
