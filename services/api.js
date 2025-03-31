@@ -111,9 +111,7 @@ export const fetchBlocksByDepartment = async (departmentIds) => {
 };
 export const fetchBlocks = async () => {
   try {
-    console.log("Fetching blocks...");
     const response = await axios.get(`${API_URL}/api/blocks`);
-    console.log("API RESPONSE:", response.data);
 
     if (response.data.success && Array.isArray(response.data.data)) {
       return response.data.data.map((block) => ({
@@ -214,8 +212,6 @@ export const addAdmin = async (adminData) => {
     if (response.data.success) {
       return response.data;
     }
-    console.log(response.data);
-
     throw new Error(response.data.message || "Failed to add admin");
   } catch (error) {
     throw error;
