@@ -77,12 +77,7 @@ export default function AdminsScreen() {
 
     try {
       await deleteAdmin(adminToDelete.id_number);
-
-      setAdmins((prevAdmins) =>
-        prevAdmins.filter(
-          (admin) => admin.id_number !== adminToDelete.id_number
-        )
-      );
+      await loadAdmins();
 
       handleDeleteModalClose();
       setIsSuccessModalVisible(true);
@@ -117,7 +112,7 @@ export default function AdminsScreen() {
                 <Text style={styles.name}>
                   {admin.first_name} {admin.last_name}
                 </Text>
-                <Text style={styles.idNumber}>{admin.id_number}</Text>
+                <Text style={styles.status}>{admin.status}</Text>
               </View>
               <View style={styles.iconContainer}>
                 <TouchableOpacity
@@ -129,9 +124,13 @@ export default function AdminsScreen() {
                 >
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDeletePress(admin)}>
-                  <Image source={images.trash} style={styles.icon} />
-                </TouchableOpacity>
+                {admin.status !== "deleted" ? (
+                  <TouchableOpacity onPress={() => handleDeletePress(admin)}>
+                    <Image source={images.trash} style={styles.icon} />
+                  </TouchableOpacity>
+                ) : (
+                  <View style={[styles.icon, { opacity: 0 }]} />
+                )}
               </View>
             </TouchableOpacity>
           ))
@@ -209,7 +208,7 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontSize: theme.fontSizes.large,
   },
-  idNumber: {
+  status: {
     fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
     fontSize: theme.fontSizes.small,

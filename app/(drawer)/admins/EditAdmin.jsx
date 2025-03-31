@@ -33,6 +33,7 @@ const EditAdmin = () => {
     email: "",
     department_id: null,
     role_id: null,
+    status: "active",
   });
 
   const [departmentOptions, setDepartmentOptions] = useState([]);
@@ -47,6 +48,11 @@ const EditAdmin = () => {
   const roleOptions = [
     { label: "Admin", value: 3 },
     { label: "Super Admin", value: 4 },
+  ];
+
+  const statusOptions = [
+    { label: "Active", value: "active" },
+    { label: "Deleted", value: "deleted" },
   ];
 
   useEffect(() => {
@@ -74,6 +80,7 @@ const EditAdmin = () => {
           email: adminDetails.email || "",
           department_id: adminDetails.department_id || null,
           role_id: adminDetails.role_id || null,
+          status: adminDetails.status || "active",
         });
       } catch (error) {
         setModal({
@@ -120,6 +127,7 @@ const EditAdmin = () => {
         suffix: formData.suffix,
         email: formData.email,
         role_id: formData.role_id,
+        status: formData.status,
       };
 
       await editAdmin(formData.id_number, submitData);
@@ -219,6 +227,14 @@ const EditAdmin = () => {
           placeholder="Select a role"
           value={formData.role_id}
           onSelect={(item) => handleChange("role_id", item.value)}
+        />
+
+        <CustomDropdown
+          title="Status"
+          data={statusOptions}
+          placeholder="Select status"
+          value={formData.status}
+          onSelect={(item) => handleChange("status", item.value)}
         />
 
         <CustomButton title="UPDATE" onPress={handleSubmit} />

@@ -117,6 +117,10 @@ const AdminDetails = () => {
           <Text style={styles.detailTitle}>Role:</Text>
           <Text style={styles.detail}>{adminDetails.role_name || "-"}</Text>
         </View>
+        <View style={styles.detailsContainer}>
+          <Text style={styles.detailTitle}>Status:</Text>
+          <Text style={styles.detail}>{adminDetails.status}</Text>
+        </View>
       </ScrollView>
 
       <View style={styles.buttonContainer}>
