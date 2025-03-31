@@ -370,15 +370,19 @@ export const updateUser = async (idNumber, userData) => {
   }
 };
 
-export const deleteUser = async (idNumber) => {
+export const disableUser = async (idNumber) => {
   try {
-    const response = await axios.delete(
-      `${API_URL}/api/users/delete/${idNumber}`
+    const response = await axios.put(
+      `${API_URL}/api/users/disable/${idNumber}`,
+      {
+        status: "disabled",
+      }
     );
+
     if (response.data.success) {
       return response.data;
     }
-    throw new Error(response.data.message || "Failed to delete user");
+    throw new Error(response.data.message || "Failed to disable user");
   } catch (error) {
     throw error;
   }

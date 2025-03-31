@@ -122,6 +122,10 @@ const StudentDetails = () => {
           <Text style={styles.detailTitle}>Email:</Text>
           <Text style={styles.detail}>{studentDetails.email}</Text>
         </View>
+        <View style={styles.detailsContainer}>
+          <Text style={styles.detailTitle}>Status:</Text>
+          <Text style={styles.detail}>{studentDetails.status}</Text>
+        </View>
       </ScrollView>
 
       <View style={styles.buttonContainer}>

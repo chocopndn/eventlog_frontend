@@ -45,6 +45,20 @@ const EditStudent = () => {
     { label: "Officer", value: "2" },
   ];
 
+  const [statusOptions, setStatusOptions] = useState([
+    { label: "Active", value: "active" },
+    { label: "Disabled", value: "disabled" },
+  ]);
+
+  useEffect(() => {
+    if (formData.status === "unregistered") {
+      setStatusOptions((prev) => [
+        ...prev,
+        { label: "Unregistered", value: "unregistered" },
+      ]);
+    }
+  }, [formData.status]);
+
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -62,6 +76,7 @@ const EditStudent = () => {
         );
 
         const studentDetails = await fetchUserById(id_number);
+
         if (!studentDetails) {
           throw new Error("Student details not found");
         }
@@ -75,6 +90,7 @@ const EditStudent = () => {
           last_name: studentDetails.last_name || "",
           suffix: studentDetails.suffix || "",
           email: studentDetails.email || "",
+          status: studentDetails.status || "",
         });
       } catch (error) {
         setModal({
@@ -121,7 +137,8 @@ const EditStudent = () => {
         middle_name: formData.middle_name || null,
         last_name: formData.last_name,
         suffix: formData.suffix || null,
-        email: formData.email,
+        email: formData.status === "unregistered" ? null : formData.email,
+        status: formData.status,
       };
 
       await updateUser(id_number, submitData);
@@ -228,6 +245,12 @@ const EditStudent = () => {
             placeholder="example@gmail.com"
             value={formData.email}
             onChangeText={(text) => handleChange("email", text)}
+          />
+          <CustomDropdown
+            title="Status"
+            data={statusOptions}
+            value={formData.status || formData.status}
+            onSelect={(item) => handleChange("status", item.value)}
           />
         </View>
 

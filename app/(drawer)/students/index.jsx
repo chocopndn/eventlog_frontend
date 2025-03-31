@@ -11,7 +11,7 @@ import {
 import TabsComponent from "../../../components/TabsComponent";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { fetchUsers, deleteUser } from "../../../services/api";
+import { fetchUsers, disableUser } from "../../../services/api";
 import { router, useFocusEffect } from "expo-router";
 import images from "../../../constants/images";
 import SearchBar from "../../../components/CustomSearch";
@@ -26,8 +26,8 @@ export default function StudentsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-  const [studentToDelete, setStudentToDelete] = useState(null);
+  const [isDisableModalVisible, setIsDisableModalVisible] = useState(false);
+  const [studentToDisable, setStudentToDisable] = useState(null);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 
   const loadStudents = async (query = "", page = 1) => {
@@ -54,7 +54,6 @@ export default function StudentsScreen() {
     setRefreshing(true);
     try {
       await loadStudents(searchQuery, currentPage);
-    } catch (error) {
     } finally {
       setRefreshing(false);
     }
@@ -73,21 +72,21 @@ export default function StudentsScreen() {
     }
   };
 
-  const handleDeletePress = (student) => {
-    setStudentToDelete(student);
-    setIsDeleteModalVisible(true);
+  const handleDisablePress = (student) => {
+    setStudentToDisable(student);
+    setIsDisableModalVisible(true);
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDisable = async () => {
     try {
-      if (studentToDelete) {
-        await deleteUser(studentToDelete.id_number);
-        setIsDeleteModalVisible(false);
+      if (studentToDisable) {
+        await disableUser(studentToDisable.id_number);
+        setIsDisableModalVisible(false);
         setIsSuccessModalVisible(true);
         loadStudents(searchQuery, currentPage);
       }
     } catch (error) {
-      console.error("Error deleting student:", error);
+      console.error("Error disabling student:", error);
     }
   };
 
@@ -138,18 +137,18 @@ export default function StudentsScreen() {
               </View>
               <View style={styles.iconContainer}>
                 <TouchableOpacity
-                  onPress={() => {
-                    if (student.id_number) {
-                      router.push(
-                        `/students/EditStudent?id=${student.id_number}`
-                      );
-                    }
-                  }}
+                  onPress={() =>
+                    router.push(`/students/EditStudent?id=${student.id_number}`)
+                  }
                 >
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDeletePress(student)}>
-                  <Image source={images.trash} style={styles.icon} />
+                <TouchableOpacity
+                  onPress={() => handleDisablePress(student)}
+                  disabled={student.status === "disabled"}
+                  style={{ opacity: student.status === "disabled" ? 0.5 : 1 }}
+                >
+                  <Image source={images.disabled} style={styles.icon} />
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -213,20 +212,20 @@ export default function StudentsScreen() {
       </View>
 
       <CustomModal
-        visible={isDeleteModalVisible}
-        title="Confirm Deletion"
-        message={`Are you sure you want to delete ${studentToDelete?.first_name} ${studentToDelete?.last_name}?`}
+        visible={isDisableModalVisible}
+        title="Confirm Disable"
+        message={`Are you sure you want to disable ${studentToDisable?.first_name} ${studentToDisable?.last_name}?`}
         type="warning"
-        onClose={() => setIsDeleteModalVisible(false)}
-        onConfirm={handleConfirmDelete}
+        onClose={() => setIsDisableModalVisible(false)}
+        onConfirm={handleConfirmDisable}
         cancelTitle="Cancel"
-        confirmTitle="Delete"
+        confirmTitle="Disable"
       />
 
       <CustomModal
         visible={isSuccessModalVisible}
         title="Success"
-        message="Student deleted successfully!"
+        message="Student disabled successfully!"
         type="success"
         onClose={handleSuccessModalClose}
         cancelTitle="CLOSE"
