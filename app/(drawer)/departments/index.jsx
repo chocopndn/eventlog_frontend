@@ -117,9 +117,13 @@ export default function DepartmentsScreen() {
                 )
               }
             >
-              <View>
-                <Text style={styles.name}>{department.department_name}</Text>
-                <Text style={styles.departmentCode}>{department.label}</Text>
+              <View style={styles.textContainer}>
+                <Text style={styles.name} numberOfLines={1}>
+                  {department.department_name}
+                </Text>
+                <Text style={styles.departmentCode} numberOfLines={1}>
+                  {department.label}
+                </Text>
               </View>
               <View style={styles.iconContainer}>
                 <TouchableOpacity
@@ -195,6 +199,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.small,
     marginBottom: theme.spacing.small,
   },
+  textContainer: {
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "center",
+  },
   scrollview: {
     padding: theme.spacing.medium,
     flexGrow: 1,
@@ -206,19 +215,20 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.small,
   },
   iconContainer: {
-    justifyContent: "center",
-    alignItems: "center",
     flexDirection: "row",
+    alignItems: "center",
   },
   name: {
     fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
     fontSize: theme.fontSizes.large,
+    flexShrink: 1,
   },
   departmentCode: {
     fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
     fontSize: theme.fontSizes.small,
+    flexShrink: 1,
   },
   noResults: {
     textAlign: "center",
