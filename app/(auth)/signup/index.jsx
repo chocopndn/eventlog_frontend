@@ -49,7 +49,10 @@ const SignUp = () => {
   const fetchDepartments = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${API_URL}/api/departments`);
+      const response = await axios.get(
+        `${API_URL}/api/departments/departments`
+      );
+
       if (response.data?.departments) {
         setDepartments(
           response.data.departments.map((dept) => ({
@@ -189,7 +192,9 @@ const SignUp = () => {
             title="Department"
             titleColor="secondary"
             data={departments}
-            onSelect={(value) => handleInputChange("department_id", value)}
+            onSelect={(selected) =>
+              handleInputChange("department_id", selected.value)
+            }
           />
         )}
 
@@ -247,6 +252,7 @@ const SignUp = () => {
         visible={modalVisible}
         message={modalMessage}
         type={modalType}
+        cancelTitle="CLOSE"
         onClose={() => setModalVisible(false)}
       />
 
