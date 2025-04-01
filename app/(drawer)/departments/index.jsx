@@ -80,8 +80,10 @@ export default function DepartmentsScreen() {
     try {
       await deleteDepartment(departmentToDelete.value);
       setDepartments((prevDepartments) =>
-        prevDepartments.filter(
-          (dept) => dept.value !== departmentToDelete.value
+        prevDepartments.map((dept) =>
+          dept.value === departmentToDelete.value
+            ? { ...dept, status: "deleted" }
+            : dept
         )
       );
       handleDeleteModalClose();
@@ -122,7 +124,7 @@ export default function DepartmentsScreen() {
                   {department.department_name}
                 </Text>
                 <Text style={styles.departmentCode} numberOfLines={1}>
-                  {department.label}
+                  {department.status}
                 </Text>
               </View>
               <View style={styles.iconContainer}>
@@ -137,7 +139,11 @@ export default function DepartmentsScreen() {
                 >
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDeletePress(department)}>
+                <TouchableOpacity
+                  onPress={() => handleDeletePress(department)}
+                  disabled={department.status === "deleted"}
+                  style={{ opacity: department.status === "deleted" ? 0.5 : 1 }}
+                >
                   <Image source={images.trash} style={styles.icon} />
                 </TouchableOpacity>
               </View>
