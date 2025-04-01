@@ -21,6 +21,22 @@ const AdminDetails = () => {
   const [isOwnAccountDisableVisible, setIsOwnAccountDisableVisible] =
     useState(false);
 
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setIsLoading(true);
+
+      const fetchUserData = async () => {
+        const user = await getStoredUser();
+        setCurrentUser(user);
+        await fetchAdminDetails();
+      };
+
+      fetchUserData();
+    }, [id_number])
+  );
+
   const fetchAdminDetails = async () => {
     try {
       if (!id_number) throw new Error("Invalid admin ID");
@@ -64,13 +80,12 @@ const AdminDetails = () => {
     );
   }
 
-  const handleDisablePress = async () => {
-    const currentUser = await fetchCurrentUser();
-    if (currentUser.id_number === adminDetails.id_number) {
+  const handleDisablePress = () => {
+    if (currentUser?.id_number === adminDetails.id_number) {
       setIsOwnAccountDisableVisible(true);
-    } else {
-      setIsDisableConfirmationVisible(true);
+      return;
     }
+    setIsDisableConfirmationVisible(true);
   };
 
   const handleConfirmDisable = async () => {
@@ -155,15 +170,16 @@ const AdminDetails = () => {
             }
           />
         </View>
-        {adminDetails.status === "disabled" ? null : (
-          <View style={styles.button}>
-            <CustomButton
-              title="DISABLE"
-              type="secondary"
-              onPress={handleDisablePress}
-            />
-          </View>
-        )}
+        {adminDetails.status !== "disabled" &&
+          currentUser?.id_number !== adminDetails.id_number && (
+            <View style={styles.button}>
+              <CustomButton
+                title="DISABLE"
+                type="secondary"
+                onPress={handleDisablePress}
+              />
+            </View>
+          )}
       </View>
 
       <CustomModal
