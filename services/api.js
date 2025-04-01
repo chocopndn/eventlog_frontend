@@ -21,6 +21,7 @@ export const fetchDepartments = async () => {
         label: dept.department_code,
         value: dept.department_id,
         department_name: dept.department_name,
+        status: dept.status,
       }));
     }
     throw new Error("Failed to fetch departments");
@@ -75,8 +76,8 @@ export const editDepartment = async (departmentId, departmentData) => {
 
 export const deleteDepartment = async (departmentId) => {
   try {
-    const response = await axios.delete(
-      `${API_URL}/api/departments/departments/${departmentId}`
+    const response = await axios.put(
+      `${API_URL}/api/departments/departments/del/${departmentId}`
     );
     if (response.data.success) {
       return true;
@@ -413,6 +414,21 @@ export const addUser = async (userData) => {
       return response.data;
     }
     throw new Error(response.data.message || "Failed to add user");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchRoles = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/api/roles`);
+    if (response.data.success) {
+      return response.data.roles.map((role) => ({
+        role_id: role.role_id,
+        role_name: role.role_name,
+      }));
+    }
+    throw new Error("Failed to fetch roles");
   } catch (error) {
     throw error;
   }
