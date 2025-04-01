@@ -73,7 +73,7 @@ const DepartmentDetails = () => {
 
   const handleSuccessModalClose = () => {
     setIsSuccessModalVisible(false);
-    router.back();
+    fetchDepartmentDetails();
   };
 
   return (
@@ -96,6 +96,10 @@ const DepartmentDetails = () => {
           <Text style={styles.detailTitle}>Department Code:</Text>
           <Text style={styles.detail}>{departmentDetails.department_code}</Text>
         </View>
+        <View style={styles.detailsContainer}>
+          <Text style={styles.detailTitle}>Status:</Text>
+          <Text style={styles.detail}>{departmentDetails.status}</Text>
+        </View>
       </ScrollView>
 
       <View style={styles.buttonContainer}>
@@ -109,13 +113,15 @@ const DepartmentDetails = () => {
             }
           />
         </View>
-        <View style={styles.button}>
-          <CustomButton
-            title="DELETE"
-            type="secondary"
-            onPress={handleDeletePress}
-          />
-        </View>
+        {departmentDetails.status === "deleted" ? null : (
+          <View style={styles.button}>
+            <CustomButton
+              title="DELETE"
+              type="secondary"
+              onPress={handleDeletePress}
+            />
+          </View>
+        )}
       </View>
 
       <CustomModal

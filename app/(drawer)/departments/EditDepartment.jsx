@@ -16,12 +16,14 @@ import CustomButton from "../../../components/CustomButton";
 import { editDepartment, fetchDepartmentById } from "../../../services/api";
 import CustomModal from "../../../components/CustomModal";
 import { useLocalSearchParams } from "expo-router";
+import CustomDropdown from "../../../components/CustomDropdown";
 
 const EditDepartment = () => {
   const { id: department_id } = useLocalSearchParams();
   const [formData, setFormData] = useState({
     department_name: "",
     department_code: "",
+    status: "active",
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -31,6 +33,11 @@ const EditDepartment = () => {
     message: "",
     type: "success",
   });
+
+  const statusOptions = [
+    { label: "Active", value: "active" },
+    { label: "Deleted", value: "deleted" },
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -49,6 +56,7 @@ const EditDepartment = () => {
         setFormData({
           department_name: departmentDetails.department_name || "",
           department_code: departmentDetails.department_code || "",
+          status: departmentDetails.status || "active",
         });
       } catch (error) {
         setModal({
@@ -87,6 +95,7 @@ const EditDepartment = () => {
       const submitData = {
         department_name: formData.department_name,
         department_code: formData.department_code,
+        status: formData.status,
       };
 
       await editDepartment(department_id, submitData);
@@ -150,6 +159,14 @@ const EditDepartment = () => {
             placeholder="Enter department code"
             value={formData.department_code}
             onChangeText={(text) => handleChange("department_code", text)}
+          />
+
+          <CustomDropdown
+            title="Status"
+            data={statusOptions}
+            placeholder="Select Status"
+            value={formData.status}
+            onSelect={(item) => handleChange("status", item.value)}
           />
         </View>
 
