@@ -70,6 +70,7 @@ export default function CoursesScreen() {
   const handleDeletePress = (course) => {
     setCourseToDelete(course);
     setIsDeleteModalVisible(true);
+    fetchCourses();
   };
 
   const handleDeleteModalClose = () => {
@@ -84,8 +85,10 @@ export default function CoursesScreen() {
       await deleteCourse(courseToDelete.course_id);
 
       setCourses((prevCourses) =>
-        prevCourses.filter(
-          (course) => course.course_id !== courseToDelete.course_id
+        prevCourses.map((course) =>
+          course.course_id === courseToDelete.course_id
+            ? { ...course, status: "deleted" }
+            : course
         )
       );
 
@@ -124,7 +127,7 @@ export default function CoursesScreen() {
                   {course.course_name}
                 </Text>
                 <Text style={styles.departmentName} numberOfLines={1}>
-                  {course.department_name}
+                  {course.status}
                 </Text>
               </View>
 
@@ -138,7 +141,11 @@ export default function CoursesScreen() {
                 >
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDeletePress(course)}>
+                <TouchableOpacity
+                  onPress={() => handleDeletePress(course)}
+                  disabled={course.status === "deleted"}
+                  style={{ opacity: course.status === "deleted" ? 0.5 : 1 }}
+                >
                   <Image source={images.trash} style={styles.icon} />
                 </TouchableOpacity>
               </View>
