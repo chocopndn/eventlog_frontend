@@ -78,7 +78,7 @@ const NewPassword = () => {
   };
 
   return (
-    <SafeAreaView style={globalStyles.primaryContainer}>
+    <SafeAreaView style={[globalStyles.primaryContainer, { paddingTop: 0 }]}>
       <View style={styles.headerContainer}>
         <Text style={styles.forgotPassword}>SET NEW PASSWORD</Text>
         <Text style={styles.info}>
@@ -114,6 +114,7 @@ const NewPassword = () => {
         title={modalTitle}
         message={modalMessage}
         type={modalType}
+        cancelTitle="CLOSE"
         onClose={() => setModalVisible(false)}
       />
 
@@ -131,7 +132,7 @@ const styles = StyleSheet.create({
     color: theme.colors.secondary,
   },
   headerContainer: {
-    width: "80%",
+    paddingHorizontal: theme.spacing.medium,
   },
   info: {
     color: theme.colors.secondary,
@@ -139,8 +140,11 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: theme.spacing.medium,
+    paddingHorizontal: theme.spacing.medium,
+    width: "80%",
   },
   inputContainer: {
-    marginTop: theme.spacing.medium,
+    width: "100%",
+    paddingHorizontal: theme.spacing.medium,
   },
 });

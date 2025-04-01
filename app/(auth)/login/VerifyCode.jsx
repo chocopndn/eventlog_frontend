@@ -85,11 +85,13 @@ const VerifyCode = () => {
         error={!isCodeValid ? "Invalid code, please try again." : ""}
       />
 
-      <CustomButton
-        type="secondary"
-        title="VERIFY CODE"
-        onPress={handleVerifyCode}
-      />
+      <View style={styles.buttonContainer}>
+        <CustomButton
+          type="secondary"
+          title="VERIFY CODE"
+          onPress={handleVerifyCode}
+        />
+      </View>
 
       <View style={styles.resendContainer}>
         <Text style={styles.question}>Didn't receive the email?</Text>
@@ -133,6 +135,7 @@ const styles = StyleSheet.create({
   },
   resendContainer: {
     marginTop: theme.spacing.medium,
+    marginBottom: theme.spacing.xlarge,
     alignItems: "center",
   },
   timerText: {
@@ -149,5 +152,9 @@ const styles = StyleSheet.create({
     color: theme.colors.secondary,
     fontFamily: "Arial",
     fontSize: theme.fontSizes.small,
+  },
+  buttonContainer: {
+    width: "80%",
+    paddingHorizontal: theme.spacing.medium,
   },
 });

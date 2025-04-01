@@ -56,7 +56,7 @@ const ForgotPassword = () => {
   };
 
   return (
-    <SafeAreaView style={globalStyles.primaryContainer}>
+    <SafeAreaView style={[globalStyles.primaryContainer, { paddingTop: 0 }]}>
       <View style={styles.headerContainer}>
         <Text style={styles.forgotPassword}>FORGOT PASSWORD</Text>
         <Text style={styles.info}>
@@ -98,18 +98,20 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.huge,
     color: theme.colors.secondary,
   },
-  headerContainer: {
-    width: "80%",
-  },
   info: {
     color: theme.colors.secondary,
     fontFamily: "Arial",
   },
   buttonContainer: {
     marginTop: theme.spacing.medium,
+    marginBottom: theme.spacing.xlarge,
+    width: "80%",
+    paddingHorizontal: theme.spacing.medium,
   },
   inputContainer: {
     marginTop: theme.spacing.medium,
+    width: "100%",
+    paddingHorizontal: theme.spacing.medium,
   },
 });
 
