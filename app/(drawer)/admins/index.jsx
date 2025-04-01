@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import CustomModal from "../../../components/CustomModal";
 import CustomButton from "../../../components/CustomButton";
 import globalStyles from "../../../constants/globalStyles";
 import theme from "../../../constants/theme";
+import { getStoredUser } from "../../../database/queries";
 
 export default function AdminsScreen() {
   const [admins, setAdmins] = useState([]);
@@ -27,6 +28,19 @@ export default function AdminsScreen() {
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
   const [adminToDisable, setAdminToDisable] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [currentAdminId, setCurrentAdminId] = useState(null);
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalType, setModalType] = useState("");
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  useEffect(() => {
+    const fetchCurrentAdmin = async () => {
+      const user = await getStoredUser();
+      setCurrentAdminId(user?.id_number);
+    };
+
+    fetchCurrentAdmin();
+  }, []);
 
   const loadAdmins = async () => {
     try {
@@ -57,6 +71,16 @@ export default function AdminsScreen() {
   );
 
   const handleDisablePress = (admin) => {
+    if (admin.id_number === currentAdminId) {
+      setIsDisableModalVisible(false);
+      setAdminToDisable(null);
+      setIsSuccessModalVisible(false);
+      setModalMessage("You cannot disable your own account.");
+      setModalType("error");
+      setIsModalVisible(true);
+      return;
+    }
+
     setAdminToDisable(admin);
     setIsDisableModalVisible(true);
   };
@@ -68,6 +92,16 @@ export default function AdminsScreen() {
 
   const handleConfirmDisable = async () => {
     if (!adminToDisable) return;
+
+    if (adminToDisable.id_number === currentAdminId) {
+      setIsDisableModalVisible(false);
+      setAdminToDisable(null);
+      setIsSuccessModalVisible(false);
+      setModalMessage("You cannot disable your own account.");
+      setModalType("error");
+      setIsModalVisible(true);
+      return;
+    }
 
     try {
       await disableAdmin(adminToDisable.id_number);
@@ -153,6 +187,15 @@ export default function AdminsScreen() {
         message="Admin disabled successfully!"
         type="success"
         onClose={() => setIsSuccessModalVisible(false)}
+        cancelTitle="CLOSE"
+      />
+
+      <CustomModal
+        visible={isModalVisible}
+        title="Action Not Allowed"
+        message={modalMessage}
+        type={modalType}
+        onClose={() => setIsModalVisible(false)}
         cancelTitle="CLOSE"
       />
       <TabsComponent />
