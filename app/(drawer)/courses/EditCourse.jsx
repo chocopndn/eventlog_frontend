@@ -25,8 +25,10 @@ import { useLocalSearchParams } from "expo-router";
 const EditCourse = () => {
   const { id: course_id } = useLocalSearchParams();
   const [formData, setFormData] = useState({
-    course_name: "",
+    name: "",
+    course_code: "",
     department_id: null,
+    status: "active",
   });
 
   const [departmentOptions, setDepartmentOptions] = useState([]);
@@ -37,6 +39,11 @@ const EditCourse = () => {
     message: "",
     type: "success",
   });
+
+  const statusOptions = [
+    { label: "Active", value: "active" },
+    { label: "Deleted", value: "deleted" },
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,13 +57,16 @@ const EditCourse = () => {
         setDepartmentOptions(departments);
 
         const courseDetails = await fetchCourseById(course_id);
+
         if (!courseDetails) {
           throw new Error("Course details not found");
         }
 
         setFormData({
           course_name: courseDetails.course_name || "",
+          course_code: courseDetails.course_code || "",
           department_id: courseDetails.department_id || null,
+          status: courseDetails.status || "active",
         });
       } catch (error) {
         setModal({
@@ -90,8 +100,10 @@ const EditCourse = () => {
       }
 
       const submitData = {
-        course_name: formData.course_name,
+        name: formData.course_name,
+        course_code: formData.course_code,
         department_id: formData.department_id,
+        status: formData.status,
       };
 
       await editCourse(course_id, submitData);
@@ -101,10 +113,6 @@ const EditCourse = () => {
         title: "Success",
         message: "Course updated successfully!",
         type: "success",
-      });
-      setFormData({
-        course_name: "",
-        department_id: null,
       });
     } catch (error) {
       setModal({
@@ -153,12 +161,27 @@ const EditCourse = () => {
             onChangeText={(text) => handleChange("course_name", text)}
           />
 
+          <FormField
+            title="Course Code"
+            placeholder="Enter course code"
+            value={formData.course_code}
+            onChangeText={(text) => handleChange("course_code", text)}
+          />
+
           <CustomDropdown
             title="Department"
             data={departmentOptions}
             placeholder="Select a department"
             value={formData.department_id}
             onSelect={(item) => handleChange("department_id", item.value)}
+          />
+
+          <CustomDropdown
+            title="Status"
+            data={statusOptions}
+            placeholder="Select Status"
+            value={formData.status}
+            onSelect={(item) => handleChange("status", item.value)}
           />
         </View>
 
