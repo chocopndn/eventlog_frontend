@@ -110,6 +110,7 @@ const styles = StyleSheet.create({
   infoText: {
     fontFamily: "SquadaOne",
     padding: theme.spacing.small,
+    paddingBottom: 0,
     color: theme.colors.primary,
     fontSize: theme.fontSizes.medium,
   },

@@ -155,9 +155,11 @@ const Home = () => {
         </View>
         <TouchableOpacity
           onPress={() => router.push("/home/Welcome")}
-          style={styles.welcomeContainer}
+          style={styles.welcomeWrapper}
         >
-          <Text style={styles.welcomeText}>WELCOME EVENTLOG USERS!</Text>
+          <View style={styles.welcomeContainer}>
+            <Text style={styles.welcomeText}>WELCOME EVENTLOG USERS!</Text>
+          </View>
         </TouchableOpacity>
         <ScrollView
           style={{ marginBottom: 20 }}
@@ -182,7 +184,9 @@ const Home = () => {
               />
             ))
           ) : (
-            <Text>No approved ongoing events found</Text>
+            <Text style={styles.noEventText}>
+              No upcoming or ongoing events found. Please check back later.
+            </Text>
           )}
         </ScrollView>
       </View>
@@ -226,6 +230,8 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.primary,
     marginTop: theme.spacing.large,
     justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
   },
   welcomeText: {
     fontFamily: "SquadaOne",
@@ -236,5 +242,11 @@ const styles = StyleSheet.create({
   scrollview: {
     marginTop: 20,
     paddingBottom: 20,
+  },
+  noEventText: {
+    textAlign: "center",
+    color: theme.colors.primary,
+    fontSize: theme.fontSizes.medium,
+    fontFamily: theme.fontFamily.Arial,
   },
 });

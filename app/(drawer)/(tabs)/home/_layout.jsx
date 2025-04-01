@@ -6,7 +6,14 @@ const HomeLayout = () => {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="Welcome" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="Welcome"
+        options={{
+          title: "",
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: theme.colors.secondary,
+        }}
+      />
     </Stack>
   );
 };
