@@ -7,9 +7,7 @@ import axios from "axios";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { storeUser } from "../../../database/queries";
-
 import CustomModal from "../../../components/CustomModal";
-
 import theme from "../../../constants/theme";
 import globalStyles from "../../../constants/globalStyles";
 import Header from "../../../components/Header";
