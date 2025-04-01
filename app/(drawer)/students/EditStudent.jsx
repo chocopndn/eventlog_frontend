@@ -14,8 +14,8 @@ import theme from "../../../constants/theme";
 import FormField from "../../../components/FormField";
 import CustomDropdown from "../../../components/CustomDropdown";
 import CustomButton from "../../../components/CustomButton";
-import { fetchBlocks, fetchUserById, updateUser } from "../../../services/api";
 import CustomModal from "../../../components/CustomModal";
+import { fetchBlocks, fetchUserById, updateUser } from "../../../services/api";
 import { useLocalSearchParams } from "expo-router";
 
 const EditStudent = () => {
@@ -28,9 +28,9 @@ const EditStudent = () => {
     middle_name: "",
     last_name: "",
     suffix: "",
-    email: "",
+    email: null,
+    status: "active",
   });
-
   const [blocks, setBlocks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [modal, setModal] = useState({
@@ -45,19 +45,31 @@ const EditStudent = () => {
     { label: "Officer", value: "2" },
   ];
 
-  const [statusOptions, setStatusOptions] = useState([
-    { label: "Active", value: "active" },
-    { label: "Disabled", value: "disabled" },
-  ]);
-
-  useEffect(() => {
+  const getStatusOptions = () => {
     if (formData.status === "unregistered") {
-      setStatusOptions((prev) => [
-        ...prev,
+      return [
         { label: "Unregistered", value: "unregistered" },
-      ]);
+        { label: "Disabled", value: "disabled" },
+      ];
     }
-  }, [formData.status]);
+    if (formData.status === "disabled") {
+      if (formData.email) {
+        return [
+          { label: "Disabled", value: "disabled" },
+          { label: "Active", value: "active" },
+        ];
+      } else {
+        return [
+          { label: "Disabled", value: "disabled" },
+          { label: "Unregistered", value: "unregistered" },
+        ];
+      }
+    }
+    return [
+      { label: "Active", value: "active" },
+      { label: "Disabled", value: "disabled" },
+    ];
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -70,7 +82,7 @@ const EditStudent = () => {
         const blocksData = await fetchBlocks();
         setBlocks(
           blocksData.map((block) => ({
-            label: block.name || `Block ${block.id}`,
+            label: block.block_name || `Block ${block.id}`,
             value: block.id,
           }))
         );
@@ -89,8 +101,8 @@ const EditStudent = () => {
           middle_name: studentDetails.middle_name || "",
           last_name: studentDetails.last_name || "",
           suffix: studentDetails.suffix || "",
-          email: studentDetails.email || "",
-          status: studentDetails.status || "",
+          email: studentDetails.email || null,
+          status: studentDetails.status || "active",
         });
       } catch (error) {
         setModal({
@@ -108,6 +120,27 @@ const EditStudent = () => {
   }, [id_number]);
 
   const handleChange = (name, value) => {
+    if (
+      name === "email" &&
+      formData.status === "unregistered" &&
+      value.trim() !== ""
+    ) {
+      setFormData((prevFormData) => ({ ...prevFormData, email: null }));
+      setModal({
+        visible: true,
+        title: "Warning",
+        message:
+          "This student is currently unregistered. Email cannot be added.",
+        type: "warning",
+      });
+      return;
+    }
+
+    if (name === "email" && value.trim() === "") {
+      setFormData((prevFormData) => ({ ...prevFormData, email: null }));
+      return;
+    }
+
     setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
   };
 
@@ -129,6 +162,22 @@ const EditStudent = () => {
         return;
       }
 
+      if (formData.status === "active" && !formData.email) {
+        setModal({
+          visible: true,
+          title: "Warning",
+          message: "Email is required for active students.",
+          type: "warning",
+        });
+        return;
+      }
+
+      let emailValue = formData.email;
+
+      if (formData.status === "unregistered") {
+        emailValue = null;
+      }
+
       const submitData = {
         id_number: formData.id_number,
         role_id: parseInt(formData.role_id, 10),
@@ -137,7 +186,7 @@ const EditStudent = () => {
         middle_name: formData.middle_name || null,
         last_name: formData.last_name,
         suffix: formData.suffix || null,
-        email: formData.status === "unregistered" ? null : formData.email,
+        email: emailValue,
         status: formData.status,
       };
 
@@ -243,13 +292,15 @@ const EditStudent = () => {
           <FormField
             title="Email"
             placeholder="example@gmail.com"
-            value={formData.email}
+            value={formData.email || ""}
             onChangeText={(text) => handleChange("email", text)}
+            editable={formData.status !== "unregistered"}
           />
+
           <CustomDropdown
             title="Status"
-            data={statusOptions}
-            value={formData.status || formData.status}
+            data={getStatusOptions()}
+            value={formData.status}
             onSelect={(item) => handleChange("status", item.value)}
           />
         </View>
