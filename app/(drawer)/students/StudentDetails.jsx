@@ -9,14 +9,14 @@ import CustomModal from "../../../components/CustomModal";
 
 import globalStyles from "../../../constants/globalStyles";
 import theme from "../../../constants/theme";
-import { fetchUserById, deleteUser } from "../../../services/api";
+import { fetchUserById, disableUser } from "../../../services/api";
 import { useLocalSearchParams } from "expo-router";
 
 const StudentDetails = () => {
   const { id: id_number } = useLocalSearchParams();
   const [studentDetails, setStudentDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isDisableModalVisible, setIsDisableModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 
   const fetchStudentDetails = async () => {
@@ -57,14 +57,14 @@ const StudentDetails = () => {
     );
   }
 
-  const handleDeletePress = () => {
-    setIsDeleteModalVisible(true);
+  const handleDisablePress = () => {
+    setIsDisableModalVisible(true);
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDisable = async () => {
     try {
-      await deleteUser(studentDetails.id_number);
-      setIsDeleteModalVisible(false);
+      await disableUser(studentDetails.id_number);
+      setIsDisableModalVisible(false);
       setIsSuccessModalVisible(true);
     } catch (error) {
       console.error("Error deleting student:", error);
@@ -73,7 +73,7 @@ const StudentDetails = () => {
 
   const handleSuccessModalClose = () => {
     setIsSuccessModalVisible(false);
-    router.back();
+    fetchStudentDetails();
   };
 
   return (
@@ -141,28 +141,28 @@ const StudentDetails = () => {
         </View>
         <View style={styles.button}>
           <CustomButton
-            title="DELETE"
+            title="DISABLE"
             type="secondary"
-            onPress={handleDeletePress}
+            onPress={handleDisablePress}
           />
         </View>
       </View>
 
       <CustomModal
-        visible={isDeleteModalVisible}
+        visible={isDisableModalVisible}
         title="Confirm Deletion"
-        message={`Are you sure you want to delete ${studentDetails.first_name} ${studentDetails.last_name}?`}
+        message={`Are you sure you want to disable ${studentDetails.first_name} ${studentDetails.last_name}?`}
         type="warning"
-        onClose={() => setIsDeleteModalVisible(false)}
-        onConfirm={handleConfirmDelete}
+        onClose={() => setIsDisableModalVisible(false)}
+        onConfirm={handleConfirmDisable}
         cancelTitle="Cancel"
-        confirmTitle="Delete"
+        confirmTitle="Disable"
       />
 
       <CustomModal
         visible={isSuccessModalVisible}
         title="Success"
-        message="Student deleted successfully!"
+        message="Student disabled successfully!"
         type="success"
         onClose={handleSuccessModalClose}
         cancelTitle="CLOSE"
