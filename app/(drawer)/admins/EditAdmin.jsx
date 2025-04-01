@@ -21,6 +21,7 @@ import {
 } from "../../../services/api";
 import CustomModal from "../../../components/CustomModal";
 import { useLocalSearchParams } from "expo-router";
+import { getStoredUser } from "../../../database/queries";
 
 const EditAdmin = () => {
   const { id_number } = useLocalSearchParams();
@@ -103,6 +104,24 @@ const EditAdmin = () => {
 
   const handleSubmit = async () => {
     try {
+      const currentUser = await getStoredUser();
+      if (!currentUser) {
+        throw new Error("Failed to verify your account.");
+      }
+
+      if (
+        currentUser.id_number === formData.id_number &&
+        formData.status === "disabled"
+      ) {
+        setModal({
+          visible: true,
+          title: "Action Not Allowed",
+          message: "You cannot disable your own account.",
+          type: "error",
+        });
+        return;
+      }
+
       if (
         !formData.id_number ||
         !formData.first_name ||
