@@ -88,10 +88,18 @@ const CourseDetails = () => {
           <Text style={styles.detail}>{courseDetails.course_name}</Text>
         </View>
         <View style={styles.detailsContainer}>
+          <Text style={styles.detailTitle}>Course Code:</Text>
+          <Text style={styles.detail}>{courseDetails.course_code || "-"}</Text>
+        </View>
+        <View style={styles.detailsContainer}>
           <Text style={styles.detailTitle}>Department:</Text>
           <Text style={styles.detail}>
             {courseDetails.department_name || "-"}
           </Text>
+        </View>
+        <View style={styles.detailsContainer}>
+          <Text style={styles.detailTitle}>Status:</Text>
+          <Text style={styles.detail}>{courseDetails.status || "-"}</Text>
         </View>
       </ScrollView>
 
@@ -104,13 +112,15 @@ const CourseDetails = () => {
             }
           />
         </View>
-        <View style={styles.button}>
-          <CustomButton
-            title="DELETE"
-            type="secondary"
-            onPress={handleDeletePress}
-          />
-        </View>
+        {courseDetails.status === "deleted" ? null : (
+          <View style={styles.button}>
+            <CustomButton
+              title="DELETE"
+              type="secondary"
+              onPress={handleDeletePress}
+            />
+          </View>
+        )}
       </View>
 
       <CustomModal
