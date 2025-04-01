@@ -20,6 +20,7 @@ import CustomModal from "../../../components/CustomModal";
 const AddCourse = () => {
   const [formData, setFormData] = useState({
     course_name: "",
+    course_code: "",
     department_id: null,
   });
 
@@ -59,7 +60,11 @@ const AddCourse = () => {
 
   const handleSubmit = async () => {
     try {
-      if (!formData.course_name.trim() || formData.department_id === null) {
+      if (
+        !formData.course_name.trim() ||
+        !formData.course_code.trim() ||
+        formData.department_id === null
+      ) {
         setModal({
           visible: true,
           title: "Warning",
@@ -71,6 +76,7 @@ const AddCourse = () => {
 
       const submitData = {
         course_name: formData.course_name,
+        course_code: formData.course_code,
         department_id: formData.department_id,
       };
 
@@ -84,6 +90,7 @@ const AddCourse = () => {
       });
       setFormData({
         course_name: "",
+        course_code: "",
         department_id: null,
       });
     } catch (error) {
@@ -132,6 +139,13 @@ const AddCourse = () => {
             placeholder="Enter course name"
             value={formData.course_name}
             onChangeText={(text) => handleChange("course_name", text)}
+          />
+
+          <FormField
+            title="Course Code"
+            placeholder="Enter course code"
+            value={formData.course_code}
+            onChangeText={(text) => handleChange("course_code", text)}
           />
 
           <CustomDropdown
