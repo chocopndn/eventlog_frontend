@@ -131,8 +131,8 @@ export default function StudentsScreen() {
                     student.last_name || ""
                   }`}
                 </Text>
-                <Text style={styles.email} numberOfLines={1}>
-                  {student.email || "No email available"}
+                <Text style={styles.status} numberOfLines={1}>
+                  {student.status}
                 </Text>
               </View>
               <View style={styles.iconContainer}>
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.large,
     flexShrink: 1,
   },
-  email: {
+  status: {
     fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
     fontSize: theme.fontSizes.small,
