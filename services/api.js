@@ -317,7 +317,7 @@ export const editCourse = async (courseId, courseData) => {
 
 export const deleteCourse = async (courseId) => {
   try {
-    const response = await axios.delete(`${API_URL}/api/courses/${courseId}`);
+    const response = await axios.put(`${API_URL}/api/courses/${courseId}`);
     if (response.data.success) {
       return response.data;
     }
