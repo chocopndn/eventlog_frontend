@@ -2,15 +2,14 @@ import { StyleSheet, Text, View, SafeAreaView, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
-
 import TabsComponent from "../../../components/TabsComponent";
 import CustomButton from "../../../components/CustomButton";
 import CustomModal from "../../../components/CustomModal";
-
 import globalStyles from "../../../constants/globalStyles";
 import theme from "../../../constants/theme";
 import { fetchAdminById, disableAdmin } from "../../../services/api";
 import { useLocalSearchParams } from "expo-router";
+import { getStoredUser } from "../../../database/queries";
 
 const AdminDetails = () => {
   const { id_number } = useLocalSearchParams();
@@ -19,6 +18,8 @@ const AdminDetails = () => {
   const [isDisableConfirmationVisible, setIsDisableConfirmationVisible] =
     useState(false);
   const [isDisableSuccessVisible, setIsDisableSuccessVisible] = useState(false);
+  const [isOwnAccountDisableVisible, setIsOwnAccountDisableVisible] =
+    useState(false);
 
   const fetchAdminDetails = async () => {
     try {
@@ -33,6 +34,11 @@ const AdminDetails = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const fetchCurrentUser = async () => {
+    const currentUser = await getStoredUser();
+    return currentUser;
   };
 
   useFocusEffect(
@@ -58,8 +64,13 @@ const AdminDetails = () => {
     );
   }
 
-  const handleDisablePress = () => {
-    setIsDisableConfirmationVisible(true);
+  const handleDisablePress = async () => {
+    const currentUser = await fetchCurrentUser();
+    if (currentUser.id_number === adminDetails.id_number) {
+      setIsOwnAccountDisableVisible(true);
+    } else {
+      setIsDisableConfirmationVisible(true);
+    }
   };
 
   const handleConfirmDisable = async () => {
@@ -74,7 +85,11 @@ const AdminDetails = () => {
 
   const handleDisableSuccessClose = () => {
     setIsDisableSuccessVisible(false);
-    router.back();
+    fetchAdminDetails();
+  };
+
+  const handleOwnAccountDisableClose = () => {
+    setIsOwnAccountDisableVisible(false);
   };
 
   return (
@@ -140,13 +155,15 @@ const AdminDetails = () => {
             }
           />
         </View>
-        <View style={styles.button}>
-          <CustomButton
-            title="Disable"
-            type="secondary"
-            onPress={handleDisablePress}
-          />
-        </View>
+        {adminDetails.status === "disabled" ? null : (
+          <View style={styles.button}>
+            <CustomButton
+              title="DISABLE"
+              type="secondary"
+              onPress={handleDisablePress}
+            />
+          </View>
+        )}
       </View>
 
       <CustomModal
@@ -167,6 +184,15 @@ const AdminDetails = () => {
         message={`${adminDetails.first_name} ${adminDetails.last_name} has been disabled successfully.`}
         cancelTitle="CLOSE"
         onClose={handleDisableSuccessClose}
+      />
+
+      <CustomModal
+        visible={isOwnAccountDisableVisible}
+        title="Action Not Allowed"
+        message="You cannot disable your own account."
+        type="warning"
+        cancelTitle="CLOSE"
+        onClose={handleOwnAccountDisableClose}
       />
 
       <TabsComponent />
@@ -192,13 +218,10 @@ const styles = StyleSheet.create({
   detailsWrapper: {
     flexGrow: 1,
     paddingHorizontal: theme.spacing.medium,
-    paddingVertical: theme.spacing.small,
   },
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: theme.spacing.medium,
-    marginBottom: theme.spacing.medium,
   },
   button: {
     marginHorizontal: theme.spacing.small,
