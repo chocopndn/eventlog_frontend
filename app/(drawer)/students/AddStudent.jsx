@@ -173,6 +173,8 @@ const AddStudent = () => {
       >
         <View>
           <FormField
+            type="id"
+            iconShow={false}
             title="ID Number"
             placeholder="12345678"
             value={formData.id_number}
@@ -224,6 +226,8 @@ const AddStudent = () => {
           />
 
           <FormField
+            type="email"
+            iconShow={false}
             title="Email"
             placeholder="example@gmail.com"
             value={formData.email}

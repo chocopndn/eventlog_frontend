@@ -139,13 +139,15 @@ const StudentDetails = () => {
             }
           />
         </View>
-        <View style={styles.button}>
-          <CustomButton
-            title="DISABLE"
-            type="secondary"
-            onPress={handleDisablePress}
-          />
-        </View>
+        {studentDetails.status === "disabled" ? null : (
+          <View style={styles.button}>
+            <CustomButton
+              title="DISABLE"
+              type="secondary"
+              onPress={handleDisablePress}
+            />
+          </View>
+        )}
       </View>
 
       <CustomModal
@@ -197,7 +199,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     marginTop: theme.spacing.medium,
-    marginBottom: theme.spacing.medium,
   },
   button: {
     marginHorizontal: theme.spacing.small,
