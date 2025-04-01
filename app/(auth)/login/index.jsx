@@ -152,6 +152,7 @@ const Login = () => {
       </View>
       <StatusBar style="auto" />
       <CustomModal
+        cancelTitle="CLOSE"
         visible={modalVisible}
         title={modalTitle}
         message={modalMessage}
