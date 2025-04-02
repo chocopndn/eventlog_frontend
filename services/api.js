@@ -203,6 +203,7 @@ export const fetchEventNames = async () => {
       return response.data.eventNames.map((event) => ({
         label: event.name || event.event_name,
         value: event.id || event.event_name_id,
+        status: event.status,
       }));
     }
     throw new Error("Failed to fetch event names");
@@ -512,6 +513,105 @@ export const fetchYearLevels = async () => {
       }));
     }
     throw new Error("Failed to fetch roles");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchEvents = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/api/events/`);
+
+    if (response.data.success) {
+      return response.data;
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteEvent = async (eventId) => {
+  try {
+    const response = await axios.delete(
+      `${API_URL}/api/events/admin/delete/${eventId}`
+    );
+    if (response.data.success) {
+      return response.data;
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const approveEvent = async (eventId, adminId) => {
+  try {
+    const response = await axios.put(
+      `${API_URL}/api/events/admin/approve/${eventId}`,
+      {
+        admin_id_number: adminId,
+      }
+    );
+
+    if (response.data.success) {
+      return response.data;
+    }
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchEventNameById = async (id) => {
+  try {
+    const response = await axios.get(`${API_URL}/api/event-names/${id}`);
+    if (response.data.success) {
+      return response.data.eventName;
+    }
+    throw new Error("Failed to fetch event name");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const addEventName = async (name) => {
+  try {
+    const response = await axios.post(`${API_URL}/api/event-names/add`, {
+      name,
+    });
+    if (response.data.success) {
+      return response.data.eventName;
+    }
+    throw new Error("Failed to add event name");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const editEventName = async (id, name) => {
+  try {
+    const response = await axios.put(
+      `${API_URL}/api/event-names/update/${id}`,
+      {
+        name,
+      }
+    );
+    if (response.data.success) {
+      return response.data.eventName;
+    }
+    throw new Error("Failed to update event name");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteEventName = async (id) => {
+  try {
+    const response = await axios.delete(
+      `${API_URL}/api/event-names/delete/${id}`
+    );
+    if (response.data.success) {
+      return true;
+    }
+    throw new Error("Failed to delete event name");
   } catch (error) {
     throw error;
   }
