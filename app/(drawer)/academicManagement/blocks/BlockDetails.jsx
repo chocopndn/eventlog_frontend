@@ -3,32 +3,34 @@ import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
 
-import TabsComponent from "../../../components/TabsComponent";
-import CustomButton from "../../../components/CustomButton";
-import CustomModal from "../../../components/CustomModal";
+import TabsComponent from "../../../../components/TabsComponent";
+import CustomButton from "../../../../components/CustomButton";
+import CustomModal from "../../../../components/CustomModal";
 
-import globalStyles from "../../../constants/globalStyles";
-import theme from "../../../constants/theme";
-import { fetchDepartmentById, deleteDepartment } from "../../../services/api";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
+import { fetchBlockById, deleteBlock } from "../../../../services/api";
 import { useLocalSearchParams } from "expo-router";
 
-const DepartmentDetails = () => {
-  const { id: department_id } = useLocalSearchParams();
-  const [departmentDetails, setDepartmentDetails] = useState(null);
+const BlockDetails = () => {
+  const { id: block_id } = useLocalSearchParams();
+  const [blockDetails, setBlockDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 
-  const fetchDepartmentDetails = async () => {
+  const fetchBlockDetails = async () => {
     try {
-      if (!department_id) throw new Error("Invalid department ID");
+      if (!block_id) throw new Error("Invalid block ID");
 
-      const departmentData = await fetchDepartmentById(department_id);
-      if (!departmentData) throw new Error("Department details not found");
+      const blockData = await fetchBlockById(block_id);
+      if (!blockData || Object.keys(blockData).length === 0) {
+        throw new Error("Block details not found");
+      }
 
-      setDepartmentDetails(departmentData);
+      setBlockDetails(blockData);
     } catch (error) {
-      console.error("Error fetching department details:", error);
+      console.error(error.message || error);
     } finally {
       setIsLoading(false);
     }
@@ -37,8 +39,8 @@ const DepartmentDetails = () => {
   useFocusEffect(
     React.useCallback(() => {
       setIsLoading(true);
-      fetchDepartmentDetails();
-    }, [department_id])
+      fetchBlockDetails();
+    }, [block_id])
   );
 
   if (isLoading) {
@@ -49,31 +51,31 @@ const DepartmentDetails = () => {
     );
   }
 
-  if (!departmentDetails) {
+  if (!blockDetails) {
     return (
       <SafeAreaView style={globalStyles.secondaryContainer}>
-        <Text style={styles.errorText}>Department details not found.</Text>
+        <Text style={styles.errorText}>
+          Block details not found. Please check the block ID.
+        </Text>
       </SafeAreaView>
     );
   }
 
-  const handleDeletePress = () => {
-    setIsDeleteModalVisible(true);
-  };
+  const handleDeletePress = () => setIsDeleteModalVisible(true);
 
   const handleConfirmDelete = async () => {
     try {
-      await deleteDepartment(departmentDetails.department_id);
+      await deleteBlock(blockDetails.block_id);
       setIsDeleteModalVisible(false);
       setIsSuccessModalVisible(true);
     } catch (error) {
-      console.error("Error deleting department:", error);
+      console.error(error.message || error);
     }
   };
 
   const handleSuccessModalClose = () => {
     setIsSuccessModalVisible(false);
-    fetchDepartmentDetails();
+    fetchBlockDetails();
   };
 
   return (
@@ -84,21 +86,25 @@ const DepartmentDetails = () => {
       ]}
     >
       <View style={styles.headerContainer}>
-        <Text style={styles.title}>Department Details</Text>
+        <Text style={styles.title}>Block Details</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.detailsWrapper}>
         <View style={styles.detailsContainer}>
-          <Text style={styles.detailTitle}>Department Name:</Text>
-          <Text style={styles.detail}>{departmentDetails.department_name}</Text>
+          <Text style={styles.detailTitle}>Block Name:</Text>
+          <Text style={styles.detail}>{blockDetails.block_name}</Text>
         </View>
         <View style={styles.detailsContainer}>
-          <Text style={styles.detailTitle}>Department Code:</Text>
-          <Text style={styles.detail}>{departmentDetails.department_code}</Text>
+          <Text style={styles.detailTitle}>Course:</Text>
+          <Text style={styles.detail}>{blockDetails.course_code}</Text>
+        </View>
+        <View style={styles.detailsContainer}>
+          <Text style={styles.detailTitle}>Year Level:</Text>
+          <Text style={styles.detail}>{blockDetails.year_level_name}</Text>
         </View>
         <View style={styles.detailsContainer}>
           <Text style={styles.detailTitle}>Status:</Text>
-          <Text style={styles.detail}>{departmentDetails.status}</Text>
+          <Text style={styles.detail}>{blockDetails.status}</Text>
         </View>
       </ScrollView>
 
@@ -107,13 +113,11 @@ const DepartmentDetails = () => {
           <CustomButton
             title="EDIT"
             onPress={() =>
-              router.push(
-                `/departments/EditDepartment?id=${departmentDetails.department_id}`
-              )
+              router.push(`/blocks/EditBlock?id=${blockDetails.block_id}`)
             }
           />
         </View>
-        {departmentDetails.status === "deleted" ? null : (
+        {blockDetails.status !== "deleted" && (
           <View style={styles.button}>
             <CustomButton
               title="DELETE"
@@ -127,7 +131,7 @@ const DepartmentDetails = () => {
       <CustomModal
         visible={isDeleteModalVisible}
         title="Confirm Deletion"
-        message={`Are you sure you want to delete ${departmentDetails.department_name}?`}
+        message={`Are you sure you want to delete ${blockDetails.block_name}?`}
         type="warning"
         onClose={() => setIsDeleteModalVisible(false)}
         onConfirm={handleConfirmDelete}
@@ -138,7 +142,7 @@ const DepartmentDetails = () => {
       <CustomModal
         visible={isSuccessModalVisible}
         title="Success"
-        message="Department deleted successfully!"
+        message="Block deleted successfully!"
         type="success"
         onClose={handleSuccessModalClose}
         cancelTitle="CLOSE"
@@ -150,7 +154,7 @@ const DepartmentDetails = () => {
   );
 };
 
-export default DepartmentDetails;
+export default BlockDetails;
 
 const styles = StyleSheet.create({
   headerContainer: {

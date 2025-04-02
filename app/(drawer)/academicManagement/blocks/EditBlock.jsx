@@ -8,30 +8,30 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import TabsComponent from "../../../components/TabsComponent";
-import globalStyles from "../../../constants/globalStyles";
-import theme from "../../../constants/theme";
-import FormField from "../../../components/FormField";
-import CustomDropdown from "../../../components/CustomDropdown";
-import CustomButton from "../../../components/CustomButton";
-import {
-  fetchDepartments,
-  editCourse,
-  fetchCourseById,
-} from "../../../services/api";
-import CustomModal from "../../../components/CustomModal";
+import TabsComponent from "../../../../components/TabsComponent";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
+import FormField from "../../../../components/FormField";
+import CustomButton from "../../../../components/CustomButton";
+import CustomModal from "../../../../components/CustomModal";
 import { useLocalSearchParams } from "expo-router";
+import CustomDropdown from "../../../../components/CustomDropdown";
+import {
+  fetchBlockById,
+  editBlock,
+  fetchCourses,
+  fetchYearLevels,
+} from "../../../../services/api";
 
-const EditCourse = () => {
-  const { id: course_id } = useLocalSearchParams();
+const EditBlock = () => {
+  const { id: block_id } = useLocalSearchParams();
   const [formData, setFormData] = useState({
-    name: "",
-    course_code: "",
-    department_id: null,
+    block_name: "",
+    course: "",
+    year_level: "",
     status: "active",
   });
 
-  const [departmentOptions, setDepartmentOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [modal, setModal] = useState({
     visible: false,
@@ -39,6 +39,9 @@ const EditCourse = () => {
     message: "",
     type: "success",
   });
+
+  const [courses, setCourses] = useState([]);
+  const [yearLevels, setYearLevels] = useState([]);
 
   const statusOptions = [
     { label: "Active", value: "active" },
@@ -49,30 +52,39 @@ const EditCourse = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        if (!course_id) {
-          throw new Error("Invalid course ID");
-        }
+        if (!block_id) throw new Error("Invalid block ID");
 
-        const departments = await fetchDepartments();
-        setDepartmentOptions(departments);
-
-        const courseDetails = await fetchCourseById(course_id);
-
-        if (!courseDetails) {
-          throw new Error("Course details not found");
-        }
+        const blockDetails = await fetchBlockById(block_id);
+        if (!blockDetails) throw new Error("Block details not found");
 
         setFormData({
-          course_name: courseDetails.course_name || "",
-          course_code: courseDetails.course_code || "",
-          department_id: courseDetails.department_id || null,
-          status: courseDetails.status || "active",
+          block_name: blockDetails.block_name || "",
+          course: blockDetails.course_id || "",
+          year_level: blockDetails.year_level_id || "",
+          status: blockDetails.status || "active",
         });
+
+        const coursesData = await fetchCourses();
+        const yearLevelsData = await fetchYearLevels();
+
+        setCourses(
+          coursesData.map((course) => ({
+            label: course.course_code,
+            value: course.course_id,
+          }))
+        );
+
+        setYearLevels(
+          yearLevelsData.map((yearLevel) => ({
+            label: yearLevel.year_level_name,
+            value: yearLevel.year_level_id,
+          }))
+        );
       } catch (error) {
         setModal({
           visible: true,
           title: "Error",
-          message: error.message || "Failed to load course details.",
+          message: error.message || "Failed to load block details.",
           type: "error",
         });
       } finally {
@@ -81,15 +93,14 @@ const EditCourse = () => {
     };
 
     fetchData();
-  }, [course_id]);
+  }, [block_id]);
 
-  const handleChange = (name, value) => {
+  const handleChange = (name, value) =>
     setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
-  };
 
   const handleSubmit = async () => {
     try {
-      if (!formData.course_name.trim() || formData.department_id === null) {
+      if (!formData.block_name.trim()) {
         setModal({
           visible: true,
           title: "Warning",
@@ -100,37 +111,36 @@ const EditCourse = () => {
       }
 
       const submitData = {
-        name: formData.course_name,
-        course_code: formData.course_code,
-        department_id: formData.department_id,
+        block_name: formData.block_name,
+        course_id: formData.course,
+        year_level_id: formData.year_level,
         status: formData.status,
       };
 
-      await editCourse(course_id, submitData);
+      await editBlock(block_id, submitData);
 
       setModal({
         visible: true,
         title: "Success",
-        message: "Course updated successfully!",
+        message: "Block updated successfully!",
         type: "success",
       });
     } catch (error) {
       setModal({
         visible: true,
         title: "Error",
-        message: error.response?.data?.message || "Failed to update course.",
+        message: error.response?.data?.message || "Failed to update block.",
         type: "error",
       });
     }
   };
 
-  if (isLoading) {
+  if (isLoading)
     return (
       <SafeAreaView style={globalStyles.secondaryContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
       </SafeAreaView>
     );
-  }
 
   return (
     <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
@@ -145,7 +155,7 @@ const EditCourse = () => {
 
       <Text style={styles.textHeader}>EVENTLOG</Text>
       <View style={styles.titleContainer}>
-        <Text style={styles.textTitle}>EDIT COURSE</Text>
+        <Text style={styles.textTitle}>EDIT BLOCK</Text>
       </View>
 
       <ScrollView
@@ -155,25 +165,26 @@ const EditCourse = () => {
       >
         <View>
           <FormField
-            title="Course Name"
-            placeholder="Enter course name"
-            value={formData.course_name}
-            onChangeText={(text) => handleChange("course_name", text)}
-          />
-
-          <FormField
-            title="Course Code"
-            placeholder="Enter course code"
-            value={formData.course_code}
-            onChangeText={(text) => handleChange("course_code", text)}
+            title="Block Name"
+            placeholder="Enter block name"
+            value={formData.block_name}
+            onChangeText={(text) => handleChange("block_name", text)}
           />
 
           <CustomDropdown
-            title="Department"
-            data={departmentOptions}
-            placeholder="Select a department"
-            value={formData.department_id}
-            onSelect={(item) => handleChange("department_id", item.value)}
+            title="Course"
+            data={courses}
+            placeholder="Select Course"
+            value={formData.course}
+            onSelect={(item) => handleChange("course", item.value)}
+          />
+
+          <CustomDropdown
+            title="Year Level"
+            data={yearLevels}
+            placeholder="Select Year Level"
+            value={formData.year_level}
+            onSelect={(item) => handleChange("year_level", item.value)}
           />
 
           <CustomDropdown
@@ -196,7 +207,7 @@ const EditCourse = () => {
   );
 };
 
-export default EditCourse;
+export default EditBlock;
 
 const styles = StyleSheet.create({
   textHeader: {

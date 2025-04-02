@@ -1,4 +1,3 @@
-import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -6,25 +5,27 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useState, useEffect } from "react";
+import { SafeAreaView } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import TabsComponent from "../../../components/TabsComponent";
-import globalStyles from "../../../constants/globalStyles";
-import theme from "../../../constants/theme";
-import FormField from "../../../components/FormField";
-import CustomButton from "../../../components/CustomButton";
-import CustomModal from "../../../components/CustomModal";
-import CustomDropdown from "../../../components/CustomDropdown";
-import { addBlock, fetchCourses, fetchYearLevels } from "../../../services/api";
+import TabsComponent from "../../../../components/TabsComponent";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
+import FormField from "../../../../components/FormField";
+import CustomDropdown from "../../../../components/CustomDropdown";
+import CustomButton from "../../../../components/CustomButton";
+import { fetchDepartments, addCourse } from "../../../../services/api";
+import CustomModal from "../../../../components/CustomModal";
 
-const AddBlock = () => {
+const AddCourse = () => {
   const [formData, setFormData] = useState({
-    name: "",
-    course: "",
-    year_level: "",
+    course_name: "",
+    course_code: "",
+    department_id: null,
   });
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [departmentOptions, setDepartmentOptions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [modal, setModal] = useState({
     visible: false,
     title: "",
@@ -32,34 +33,17 @@ const AddBlock = () => {
     type: "success",
   });
 
-  const [courses, setCourses] = useState([]);
-  const [yearLevels, setYearLevels] = useState([]);
-
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchDepartmentsData = async () => {
       setIsLoading(true);
       try {
-        const coursesData = await fetchCourses();
-        const yearLevelsData = await fetchYearLevels();
-
-        setCourses(
-          coursesData.map((course) => ({
-            label: course.course_code,
-            value: course.course_id,
-          }))
-        );
-
-        setYearLevels(
-          yearLevelsData.map((yearLevel) => ({
-            label: yearLevel.year_level_name,
-            value: yearLevel.year_level_id,
-          }))
-        );
+        const departments = await fetchDepartments();
+        setDepartmentOptions(departments);
       } catch (error) {
         setModal({
           visible: true,
           title: "Error",
-          message: error.message || "Failed to load dropdown data.",
+          message: "Failed to load departments. Please try again.",
           type: "error",
         });
       } finally {
@@ -67,15 +51,20 @@ const AddBlock = () => {
       }
     };
 
-    fetchData();
+    fetchDepartmentsData();
   }, []);
 
-  const handleChange = (name, value) =>
+  const handleChange = (name, value) => {
     setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
+  };
 
   const handleSubmit = async () => {
     try {
-      if (!formData.name.trim() || !formData.course || !formData.year_level) {
+      if (
+        !formData.course_name.trim() ||
+        !formData.course_code.trim() ||
+        formData.department_id === null
+      ) {
         setModal({
           visible: true,
           title: "Warning",
@@ -86,44 +75,43 @@ const AddBlock = () => {
       }
 
       const submitData = {
-        name: formData.name,
-        course_id: formData.course,
-        year_level_id: formData.year_level,
+        course_name: formData.course_name,
+        course_code: formData.course_code,
+        department_id: formData.department_id,
       };
 
-      setIsLoading(true);
-      await addBlock(submitData);
+      await addCourse(submitData);
 
       setModal({
         visible: true,
         title: "Success",
-        message: "Block added successfully!",
+        message: "Course added successfully!",
         type: "success",
       });
-
       setFormData({
-        name: "",
-        course: "",
-        year_level: "",
+        course_name: "",
+        course_code: "",
+        department_id: null,
       });
     } catch (error) {
       setModal({
         visible: true,
         title: "Error",
-        message: error.response?.data?.message || "Failed to add block.",
+        message:
+          error.response?.data?.message ||
+          "Failed to add course. Please try again.",
         type: "error",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  if (isLoading)
+  if (isLoading) {
     return (
       <SafeAreaView style={globalStyles.secondaryContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
       </SafeAreaView>
     );
+  }
 
   return (
     <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
@@ -138,9 +126,8 @@ const AddBlock = () => {
 
       <Text style={styles.textHeader}>EVENTLOG</Text>
       <View style={styles.titleContainer}>
-        <Text style={styles.textTitle}>ADD BLOCK</Text>
+        <Text style={styles.textTitle}>ADD COURSE</Text>
       </View>
-
       <ScrollView
         style={styles.scrollviewContainer}
         contentContainerStyle={styles.scrollview}
@@ -148,29 +135,27 @@ const AddBlock = () => {
       >
         <View>
           <FormField
-            title="Block Name"
-            placeholder="Enter block name"
-            value={formData.name}
-            onChangeText={(text) => handleChange("name", text)}
+            title="Course Name"
+            placeholder="Enter course name"
+            value={formData.course_name}
+            onChangeText={(text) => handleChange("course_name", text)}
+          />
+
+          <FormField
+            title="Course Code"
+            placeholder="Enter course code"
+            value={formData.course_code}
+            onChangeText={(text) => handleChange("course_code", text)}
           />
 
           <CustomDropdown
-            title="Course"
-            data={courses}
-            placeholder="Select Course"
-            value={formData.course}
-            onSelect={(item) => handleChange("course", item.value)}
-          />
-
-          <CustomDropdown
-            title="Year Level"
-            data={yearLevels}
-            placeholder="Select Year Level"
-            value={formData.year_level}
-            onSelect={(item) => handleChange("year_level", item.value)}
+            title="Department"
+            data={departmentOptions}
+            placeholder="Select a department"
+            value={formData.department_id}
+            onSelect={(item) => handleChange("department_id", item.value)}
           />
         </View>
-
         <View>
           <CustomButton title="ADD" onPress={handleSubmit} />
         </View>
@@ -182,7 +167,7 @@ const AddBlock = () => {
   );
 };
 
-export default AddBlock;
+export default AddCourse;
 
 const styles = StyleSheet.create({
   textHeader: {
@@ -198,9 +183,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
   },
   scrollview: {
+    justifyContent: "space-between",
     flexGrow: 1,
     padding: theme.spacing.medium,
-    justifyContent: "space-between",
   },
   titleContainer: {
     borderWidth: 2,

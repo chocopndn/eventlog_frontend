@@ -8,7 +8,7 @@ import TabsComponent from "../../../components/TabsComponent";
 import globalStyles from "../../../constants/globalStyles";
 import theme from "../../../constants/theme";
 
-const UserManagementScreen = () => {
+const AcademicManagement = () => {
   return (
     <SafeAreaView style={globalStyles.secondaryContainerSA}>
       <Text style={styles.title}>User Management</Text>
@@ -16,12 +16,33 @@ const UserManagementScreen = () => {
       <TouchableOpacity
         style={styles.screenWrapper}
         onPress={() => {
-          router.push("/userManagement/admins");
+          router.push("/academicManagement/blocks");
         }}
-        accessibilityLabel="Navigate to Admins"
       >
         <View style={styles.screenContainer}>
-          <Text style={styles.screenTitle}>Admins</Text>
+          <Text style={styles.screenTitle}>Blocks</Text>
+        </View>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.screenWrapper}
+        onPress={() => {
+          router.push("/academicManagement/courses");
+        }}
+      >
+        <View style={styles.screenContainer}>
+          <Text style={styles.screenTitle}>Courses</Text>
+        </View>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.screenWrapper}
+        onPress={() => {
+          router.push("/academicManagement/departments");
+        }}
+      >
+        <View style={styles.screenContainer}>
+          <Text style={styles.screenTitle}>Departments</Text>
         </View>
       </TouchableOpacity>
 
@@ -33,19 +54,7 @@ const UserManagementScreen = () => {
         accessibilityLabel="Navigate to Roles"
       >
         <View style={styles.screenContainer}>
-          <Text style={styles.screenTitle}>Roles</Text>
-        </View>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.screenWrapper}
-        onPress={() => {
-          router.push("/userManagement/students");
-        }}
-        accessibilityLabel="Navigate to Students"
-      >
-        <View style={styles.screenContainer}>
-          <Text style={styles.screenTitle}>Students</Text>
+          <Text style={styles.screenTitle}>School Years</Text>
         </View>
       </TouchableOpacity>
 
@@ -56,7 +65,7 @@ const UserManagementScreen = () => {
   );
 };
 
-export default UserManagementScreen;
+export default AcademicManagement;
 
 const styles = StyleSheet.create({
   title: {

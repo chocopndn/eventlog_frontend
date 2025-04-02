@@ -8,43 +8,43 @@ import {
   Image,
   RefreshControl,
 } from "react-native";
-import TabsComponent from "../../../components/TabsComponent";
+import TabsComponent from "../../../../components/TabsComponent";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { fetchCourses, deleteCourse } from "../../../services/api";
+import { fetchBlocks, deleteBlock } from "../../../../services/api";
 import { router, useFocusEffect } from "expo-router";
 
-import images from "../../../constants/images";
-import SearchBar from "../../../components/CustomSearch";
-import CustomModal from "../../../components/CustomModal";
-import CustomButton from "../../../components/CustomButton";
+import images from "../../../../constants/images";
+import SearchBar from "../../../../components/CustomSearch";
+import CustomModal from "../../../../components/CustomModal";
+import CustomButton from "../../../../components/CustomButton";
 
-import globalStyles from "../../../constants/globalStyles";
-import theme from "../../../constants/theme";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
 
-export default function CoursesScreen() {
-  const [courses, setCourses] = useState([]);
+export default function BlocksScreen() {
+  const [blocks, setBlocks] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
-  const [courseToDelete, setCourseToDelete] = useState(null);
+  const [blockToDelete, setBlockToDelete] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const loadCourses = async () => {
+  const loadBlocks = async () => {
     try {
-      const fetchedCourses = await fetchCourses();
-      setCourses(Array.isArray(fetchedCourses) ? fetchedCourses : []);
+      const fetchedBlocks = await fetchBlocks();
+      setBlocks(Array.isArray(fetchedBlocks) ? fetchedBlocks : []);
     } catch (err) {
-      console.error("Error fetching courses:", err);
+      console.error("Error fetching blocks:", err.message || err);
     }
   };
 
   const refreshData = async () => {
     setRefreshing(true);
     try {
-      await loadCourses();
+      await loadBlocks();
     } catch (error) {
-      console.error("Error refreshing data:", error);
+      console.error("Error refreshing data:", error.message || error);
     } finally {
       setRefreshing(false);
     }
@@ -52,58 +52,58 @@ export default function CoursesScreen() {
 
   useFocusEffect(
     React.useCallback(() => {
-      loadCourses();
+      loadBlocks();
     }, [])
   );
 
-  const filteredCourses = Array.isArray(courses)
-    ? courses.filter((course) => {
-        const courseName = course.course_name?.toLowerCase() || "";
-        const departmentName = course.department_name?.toLowerCase() || "";
-        return (
-          courseName.includes(searchQuery.toLowerCase()) ||
-          departmentName.includes(searchQuery.toLowerCase())
-        );
+  const filteredBlocks = Array.isArray(blocks)
+    ? blocks.filter((block) => {
+        const name = block.name?.toLowerCase() || "";
+        const courseName = block.course_name?.toLowerCase() || "";
+        const query = searchQuery.toLowerCase();
+        return name.includes(query) || courseName.includes(query);
       })
     : [];
 
-  const handleDeletePress = (course) => {
-    setCourseToDelete(course);
+  const handleDeletePress = (block) => {
+    setBlockToDelete(block);
     setIsDeleteModalVisible(true);
-    fetchCourses();
   };
 
   const handleDeleteModalClose = () => {
     setIsDeleteModalVisible(false);
-    setCourseToDelete(null);
+    setBlockToDelete(null);
   };
 
   const handleConfirmDelete = async () => {
-    if (!courseToDelete) return;
+    if (!blockToDelete) return;
 
     try {
-      await deleteCourse(courseToDelete.course_id);
-
-      setCourses((prevCourses) =>
-        prevCourses.map((course) =>
-          course.course_id === courseToDelete.course_id
-            ? { ...course, status: "deleted" }
-            : course
+      await deleteBlock(blockToDelete.value);
+      setBlocks((prevBlocks) =>
+        prevBlocks.map((block) =>
+          block.value === blockToDelete.value
+            ? { ...block, status: "deleted" }
+            : block
         )
       );
-
-      handleDeleteModalClose();
+      setIsDeleteModalVisible(false);
       setIsSuccessModalVisible(true);
     } catch (error) {
-      console.error("Error deleting course:", error);
+      console.error("Error deleting block:", error.message || error);
     }
   };
 
   return (
     <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
-      <Text style={styles.headerText}>COURSES</Text>
+      <Text style={styles.headerText}>BLOCKS</Text>
       <View style={{ paddingHorizontal: theme.spacing.medium, width: "100%" }}>
-        <SearchBar placeholder="Search courses..." onSearch={setSearchQuery} />
+        <SearchBar
+          placeholder="Search blocks..."
+          onSearch={(query) => {
+            setSearchQuery(query);
+          }}
+        />
       </View>
       <ScrollView
         style={{ flex: 1, width: "100%", marginBottom: 70 }}
@@ -113,38 +113,35 @@ export default function CoursesScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={refreshData} />
         }
       >
-        {filteredCourses.length > 0 ? (
-          filteredCourses.map((course) => (
+        {filteredBlocks.length > 0 ? (
+          filteredBlocks.map((block) => (
             <TouchableOpacity
-              key={course.course_id}
-              style={styles.courseContainer}
-              onPress={() =>
-                router.push(`/courses/CourseDetails?id=${course.course_id}`)
-              }
+              key={block.value}
+              style={styles.blockContainer}
+              onPress={() => {
+                router.push(`/blocks/BlockDetails?id=${block.value}`);
+              }}
             >
               <View style={styles.textContainer}>
                 <Text style={styles.name} numberOfLines={1}>
-                  {course.course_name}
+                  {block.label}
                 </Text>
-                <Text style={styles.departmentName} numberOfLines={1}>
-                  {course.status}
+                <Text style={styles.courseName} numberOfLines={1}>
+                  {block.status}
                 </Text>
               </View>
-
               <View style={styles.iconContainer}>
                 <TouchableOpacity
                   onPress={() => {
-                    if (course.course_id) {
-                      router.push(`/courses/EditCourse?id=${course.course_id}`);
-                    }
+                    router.push(`/blocks/EditBlock?id=${block.value}`);
                   }}
                 >
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => handleDeletePress(course)}
-                  disabled={course.status === "deleted"}
-                  style={{ opacity: course.status === "deleted" ? 0.5 : 1 }}
+                  onPress={() => handleDeletePress(block)}
+                  disabled={block.status === "deleted"}
+                  style={{ opacity: block.status === "deleted" ? 0.5 : 1 }}
                 >
                   <Image source={images.trash} style={styles.icon} />
                 </TouchableOpacity>
@@ -152,21 +149,23 @@ export default function CoursesScreen() {
             </TouchableOpacity>
           ))
         ) : (
-          <Text style={styles.noResults}>No courses found</Text>
+          <Text style={styles.noResults}>No blocks found</Text>
         )}
       </ScrollView>
 
       <View style={styles.buttonContainer}>
         <CustomButton
-          title="ADD COURSE"
-          onPress={() => router.push("/courses/AddCourse")}
+          title="ADD BLOCK"
+          onPress={() => {
+            router.push("/blocks/AddBlock");
+          }}
         />
       </View>
 
       <CustomModal
         visible={isDeleteModalVisible}
         title="Confirm Deletion"
-        message={`Are you sure you want to delete ${courseToDelete?.course_name}?`}
+        message={`Are you sure you want to delete ${blockToDelete?.label}?`}
         type="warning"
         onClose={handleDeleteModalClose}
         onConfirm={handleConfirmDelete}
@@ -177,9 +176,11 @@ export default function CoursesScreen() {
       <CustomModal
         visible={isSuccessModalVisible}
         title="Success"
-        message="Course deleted successfully!"
+        message="Block deleted successfully!"
         type="success"
-        onClose={() => setIsSuccessModalVisible(false)}
+        onClose={() => {
+          setIsSuccessModalVisible(false);
+        }}
         cancelTitle="CLOSE"
       />
 
@@ -193,11 +194,11 @@ const styles = StyleSheet.create({
   headerText: {
     color: theme.colors.primary,
     fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: theme.fontSizes.display,
+    fontSize: 60,
     textAlign: "center",
     marginBottom: theme.spacing.medium,
   },
-  courseContainer: {
+  blockContainer: {
     borderWidth: 2,
     borderColor: theme.colors.primary,
     flexDirection: "row",
@@ -232,7 +233,7 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.large,
     flexShrink: 1,
   },
-  departmentName: {
+  courseName: {
     fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
     fontSize: theme.fontSizes.small,

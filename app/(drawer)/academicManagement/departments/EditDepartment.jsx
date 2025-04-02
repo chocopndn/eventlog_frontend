@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -5,26 +6,26 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import React, { useState, useEffect } from "react";
-import { SafeAreaView } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import TabsComponent from "../../../components/TabsComponent";
-import globalStyles from "../../../constants/globalStyles";
-import theme from "../../../constants/theme";
-import FormField from "../../../components/FormField";
-import CustomDropdown from "../../../components/CustomDropdown";
-import CustomButton from "../../../components/CustomButton";
-import { fetchDepartments, addCourse } from "../../../services/api";
-import CustomModal from "../../../components/CustomModal";
+import TabsComponent from "../../../../components/TabsComponent";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
+import FormField from "../../../../components/FormField";
+import CustomButton from "../../../../components/CustomButton";
+import { editDepartment, fetchDepartmentById } from "../../../../services/api";
+import CustomModal from "../../../../components/CustomModal";
+import { useLocalSearchParams } from "expo-router";
+import CustomDropdown from "../../../../components/CustomDropdown";
 
-const AddCourse = () => {
+const EditDepartment = () => {
+  const { id: department_id } = useLocalSearchParams();
   const [formData, setFormData] = useState({
-    course_name: "",
-    course_code: "",
-    department_id: null,
+    department_name: "",
+    department_code: "",
+    status: "active",
   });
 
-  const [departmentOptions, setDepartmentOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [modal, setModal] = useState({
     visible: false,
@@ -33,17 +34,35 @@ const AddCourse = () => {
     type: "success",
   });
 
+  const statusOptions = [
+    { label: "Active", value: "active" },
+    { label: "Deleted", value: "deleted" },
+  ];
+
   useEffect(() => {
-    const fetchDepartmentsData = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        const departments = await fetchDepartments();
-        setDepartmentOptions(departments);
+        if (!department_id) {
+          throw new Error("Invalid department ID");
+        }
+
+        const departmentDetails = await fetchDepartmentById(department_id);
+
+        if (!departmentDetails) {
+          throw new Error("Department details not found");
+        }
+
+        setFormData({
+          department_name: departmentDetails.department_name || "",
+          department_code: departmentDetails.department_code || "",
+          status: departmentDetails.status || "active",
+        });
       } catch (error) {
         setModal({
           visible: true,
           title: "Error",
-          message: "Failed to load departments. Please try again.",
+          message: error.message || "Failed to load department details.",
           type: "error",
         });
       } finally {
@@ -51,8 +70,8 @@ const AddCourse = () => {
       }
     };
 
-    fetchDepartmentsData();
-  }, []);
+    fetchData();
+  }, [department_id]);
 
   const handleChange = (name, value) => {
     setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
@@ -61,9 +80,8 @@ const AddCourse = () => {
   const handleSubmit = async () => {
     try {
       if (
-        !formData.course_name.trim() ||
-        !formData.course_code.trim() ||
-        formData.department_id === null
+        !formData.department_name.trim() ||
+        !formData.department_code.trim()
       ) {
         setModal({
           visible: true,
@@ -75,31 +93,25 @@ const AddCourse = () => {
       }
 
       const submitData = {
-        course_name: formData.course_name,
-        course_code: formData.course_code,
-        department_id: formData.department_id,
+        department_name: formData.department_name,
+        department_code: formData.department_code,
+        status: formData.status,
       };
 
-      await addCourse(submitData);
+      await editDepartment(department_id, submitData);
 
       setModal({
         visible: true,
         title: "Success",
-        message: "Course added successfully!",
+        message: "Department updated successfully!",
         type: "success",
-      });
-      setFormData({
-        course_name: "",
-        course_code: "",
-        department_id: null,
       });
     } catch (error) {
       setModal({
         visible: true,
         title: "Error",
         message:
-          error.response?.data?.message ||
-          "Failed to add course. Please try again.",
+          error.response?.data?.message || "Failed to update department.",
         type: "error",
       });
     }
@@ -126,8 +138,9 @@ const AddCourse = () => {
 
       <Text style={styles.textHeader}>EVENTLOG</Text>
       <View style={styles.titleContainer}>
-        <Text style={styles.textTitle}>ADD COURSE</Text>
+        <Text style={styles.textTitle}>EDIT DEPARTMENT</Text>
       </View>
+
       <ScrollView
         style={styles.scrollviewContainer}
         contentContainerStyle={styles.scrollview}
@@ -135,29 +148,30 @@ const AddCourse = () => {
       >
         <View>
           <FormField
-            title="Course Name"
-            placeholder="Enter course name"
-            value={formData.course_name}
-            onChangeText={(text) => handleChange("course_name", text)}
+            title="Department Name"
+            placeholder="Enter department name"
+            value={formData.department_name}
+            onChangeText={(text) => handleChange("department_name", text)}
           />
 
           <FormField
-            title="Course Code"
-            placeholder="Enter course code"
-            value={formData.course_code}
-            onChangeText={(text) => handleChange("course_code", text)}
+            title="Department Code"
+            placeholder="Enter department code"
+            value={formData.department_code}
+            onChangeText={(text) => handleChange("department_code", text)}
           />
 
           <CustomDropdown
-            title="Department"
-            data={departmentOptions}
-            placeholder="Select a department"
-            value={formData.department_id}
-            onSelect={(item) => handleChange("department_id", item.value)}
+            title="Status"
+            data={statusOptions}
+            placeholder="Select Status"
+            value={formData.status}
+            onSelect={(item) => handleChange("status", item.value)}
           />
         </View>
+
         <View>
-          <CustomButton title="ADD" onPress={handleSubmit} />
+          <CustomButton title="UPDATE" onPress={handleSubmit} />
         </View>
       </ScrollView>
 
@@ -167,7 +181,7 @@ const AddCourse = () => {
   );
 };
 
-export default AddCourse;
+export default EditDepartment;
 
 const styles = StyleSheet.create({
   textHeader: {
@@ -183,9 +197,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
   },
   scrollview: {
-    justifyContent: "space-between",
     flexGrow: 1,
     padding: theme.spacing.medium,
+    justifyContent: "space-between",
   },
   titleContainer: {
     borderWidth: 2,

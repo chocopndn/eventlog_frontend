@@ -3,34 +3,31 @@ import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
 
-import TabsComponent from "../../../components/TabsComponent";
-import CustomButton from "../../../components/CustomButton";
-import CustomModal from "../../../components/CustomModal";
+import TabsComponent from "../../../../components/TabsComponent";
+import CustomButton from "../../../../components/CustomButton";
+import CustomModal from "../../../../components/CustomModal";
 
-import globalStyles from "../../../constants/globalStyles";
-import theme from "../../../constants/theme";
-import { fetchBlockById, deleteBlock } from "../../../services/api";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
+import { fetchCourseById, deleteCourse } from "../../../../services/api";
 import { useLocalSearchParams } from "expo-router";
 
-const BlockDetails = () => {
-  const { id: block_id } = useLocalSearchParams();
-  const [blockDetails, setBlockDetails] = useState(null);
+const CourseDetails = () => {
+  const { id: course_id } = useLocalSearchParams();
+  const [courseDetails, setCourseDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 
-  const fetchBlockDetails = async () => {
+  const fetchCourseDetails = async () => {
     try {
-      if (!block_id) throw new Error("Invalid block ID");
+      if (!course_id) throw new Error("Invalid course ID");
 
-      const blockData = await fetchBlockById(block_id);
-      if (!blockData || Object.keys(blockData).length === 0) {
-        throw new Error("Block details not found");
-      }
+      const courseData = await fetchCourseById(course_id);
+      if (!courseData) throw new Error("Course details not found");
 
-      setBlockDetails(blockData);
+      setCourseDetails(courseData);
     } catch (error) {
-      console.error(error.message || error);
+      console.error("Error fetching course details:", error);
     } finally {
       setIsLoading(false);
     }
@@ -39,8 +36,8 @@ const BlockDetails = () => {
   useFocusEffect(
     React.useCallback(() => {
       setIsLoading(true);
-      fetchBlockDetails();
-    }, [block_id])
+      fetchCourseDetails();
+    }, [course_id])
   );
 
   if (isLoading) {
@@ -51,31 +48,27 @@ const BlockDetails = () => {
     );
   }
 
-  if (!blockDetails) {
+  if (!courseDetails) {
     return (
       <SafeAreaView style={globalStyles.secondaryContainer}>
-        <Text style={styles.errorText}>
-          Block details not found. Please check the block ID.
-        </Text>
+        <Text style={styles.errorText}>Course details not found.</Text>
       </SafeAreaView>
     );
   }
 
-  const handleDeletePress = () => setIsDeleteModalVisible(true);
+  const handleDeletePress = () => {
+    setIsDeleteModalVisible(true);
+  };
 
   const handleConfirmDelete = async () => {
     try {
-      await deleteBlock(blockDetails.block_id);
-      setIsDeleteModalVisible(false);
-      setIsSuccessModalVisible(true);
+      await deleteCourse(courseDetails.course_id);
+      router.back();
     } catch (error) {
-      console.error(error.message || error);
+      console.error("Error deleting course:", error);
+    } finally {
+      setIsDeleteModalVisible(false);
     }
-  };
-
-  const handleSuccessModalClose = () => {
-    setIsSuccessModalVisible(false);
-    fetchBlockDetails();
   };
 
   return (
@@ -86,25 +79,27 @@ const BlockDetails = () => {
       ]}
     >
       <View style={styles.headerContainer}>
-        <Text style={styles.title}>Block Details</Text>
+        <Text style={styles.title}>Course Details</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.detailsWrapper}>
         <View style={styles.detailsContainer}>
-          <Text style={styles.detailTitle}>Block Name:</Text>
-          <Text style={styles.detail}>{blockDetails.block_name}</Text>
+          <Text style={styles.detailTitle}>Course Name:</Text>
+          <Text style={styles.detail}>{courseDetails.course_name}</Text>
         </View>
         <View style={styles.detailsContainer}>
-          <Text style={styles.detailTitle}>Course:</Text>
-          <Text style={styles.detail}>{blockDetails.course_code}</Text>
+          <Text style={styles.detailTitle}>Course Code:</Text>
+          <Text style={styles.detail}>{courseDetails.course_code || "-"}</Text>
         </View>
         <View style={styles.detailsContainer}>
-          <Text style={styles.detailTitle}>Year Level:</Text>
-          <Text style={styles.detail}>{blockDetails.year_level_name}</Text>
+          <Text style={styles.detailTitle}>Department:</Text>
+          <Text style={styles.detail}>
+            {courseDetails.department_name || "-"}
+          </Text>
         </View>
         <View style={styles.detailsContainer}>
           <Text style={styles.detailTitle}>Status:</Text>
-          <Text style={styles.detail}>{blockDetails.status}</Text>
+          <Text style={styles.detail}>{courseDetails.status || "-"}</Text>
         </View>
       </ScrollView>
 
@@ -113,11 +108,11 @@ const BlockDetails = () => {
           <CustomButton
             title="EDIT"
             onPress={() =>
-              router.push(`/blocks/EditBlock?id=${blockDetails.block_id}`)
+              router.push(`/courses/EditCourse?id=${courseDetails.course_id}`)
             }
           />
         </View>
-        {blockDetails.status !== "deleted" && (
+        {courseDetails.status === "deleted" ? null : (
           <View style={styles.button}>
             <CustomButton
               title="DELETE"
@@ -131,21 +126,12 @@ const BlockDetails = () => {
       <CustomModal
         visible={isDeleteModalVisible}
         title="Confirm Deletion"
-        message={`Are you sure you want to delete ${blockDetails.block_name}?`}
+        message={`Are you sure you want to delete ${courseDetails.course_name}?`}
         type="warning"
         onClose={() => setIsDeleteModalVisible(false)}
         onConfirm={handleConfirmDelete}
         cancelTitle="Cancel"
         confirmTitle="Delete"
-      />
-
-      <CustomModal
-        visible={isSuccessModalVisible}
-        title="Success"
-        message="Block deleted successfully!"
-        type="success"
-        onClose={handleSuccessModalClose}
-        cancelTitle="CLOSE"
       />
 
       <TabsComponent />
@@ -154,7 +140,7 @@ const BlockDetails = () => {
   );
 };
 
-export default BlockDetails;
+export default CourseDetails;
 
 const styles = StyleSheet.create({
   headerContainer: {

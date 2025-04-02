@@ -3,31 +3,35 @@ import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
 
-import TabsComponent from "../../../components/TabsComponent";
-import CustomButton from "../../../components/CustomButton";
-import CustomModal from "../../../components/CustomModal";
+import TabsComponent from "../../../../components/TabsComponent";
+import CustomButton from "../../../../components/CustomButton";
+import CustomModal from "../../../../components/CustomModal";
 
-import globalStyles from "../../../constants/globalStyles";
-import theme from "../../../constants/theme";
-import { fetchCourseById, deleteCourse } from "../../../services/api";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
+import {
+  fetchDepartmentById,
+  deleteDepartment,
+} from "../../../../services/api";
 import { useLocalSearchParams } from "expo-router";
 
-const CourseDetails = () => {
-  const { id: course_id } = useLocalSearchParams();
-  const [courseDetails, setCourseDetails] = useState(null);
+const DepartmentDetails = () => {
+  const { id: department_id } = useLocalSearchParams();
+  const [departmentDetails, setDepartmentDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 
-  const fetchCourseDetails = async () => {
+  const fetchDepartmentDetails = async () => {
     try {
-      if (!course_id) throw new Error("Invalid course ID");
+      if (!department_id) throw new Error("Invalid department ID");
 
-      const courseData = await fetchCourseById(course_id);
-      if (!courseData) throw new Error("Course details not found");
+      const departmentData = await fetchDepartmentById(department_id);
+      if (!departmentData) throw new Error("Department details not found");
 
-      setCourseDetails(courseData);
+      setDepartmentDetails(departmentData);
     } catch (error) {
-      console.error("Error fetching course details:", error);
+      console.error("Error fetching department details:", error);
     } finally {
       setIsLoading(false);
     }
@@ -36,8 +40,8 @@ const CourseDetails = () => {
   useFocusEffect(
     React.useCallback(() => {
       setIsLoading(true);
-      fetchCourseDetails();
-    }, [course_id])
+      fetchDepartmentDetails();
+    }, [department_id])
   );
 
   if (isLoading) {
@@ -48,10 +52,10 @@ const CourseDetails = () => {
     );
   }
 
-  if (!courseDetails) {
+  if (!departmentDetails) {
     return (
       <SafeAreaView style={globalStyles.secondaryContainer}>
-        <Text style={styles.errorText}>Course details not found.</Text>
+        <Text style={styles.errorText}>Department details not found.</Text>
       </SafeAreaView>
     );
   }
@@ -62,13 +66,17 @@ const CourseDetails = () => {
 
   const handleConfirmDelete = async () => {
     try {
-      await deleteCourse(courseDetails.course_id);
-      router.back();
-    } catch (error) {
-      console.error("Error deleting course:", error);
-    } finally {
+      await deleteDepartment(departmentDetails.department_id);
       setIsDeleteModalVisible(false);
+      setIsSuccessModalVisible(true);
+    } catch (error) {
+      console.error("Error deleting department:", error);
     }
+  };
+
+  const handleSuccessModalClose = () => {
+    setIsSuccessModalVisible(false);
+    fetchDepartmentDetails();
   };
 
   return (
@@ -79,27 +87,21 @@ const CourseDetails = () => {
       ]}
     >
       <View style={styles.headerContainer}>
-        <Text style={styles.title}>Course Details</Text>
+        <Text style={styles.title}>Department Details</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.detailsWrapper}>
         <View style={styles.detailsContainer}>
-          <Text style={styles.detailTitle}>Course Name:</Text>
-          <Text style={styles.detail}>{courseDetails.course_name}</Text>
+          <Text style={styles.detailTitle}>Department Name:</Text>
+          <Text style={styles.detail}>{departmentDetails.department_name}</Text>
         </View>
         <View style={styles.detailsContainer}>
-          <Text style={styles.detailTitle}>Course Code:</Text>
-          <Text style={styles.detail}>{courseDetails.course_code || "-"}</Text>
-        </View>
-        <View style={styles.detailsContainer}>
-          <Text style={styles.detailTitle}>Department:</Text>
-          <Text style={styles.detail}>
-            {courseDetails.department_name || "-"}
-          </Text>
+          <Text style={styles.detailTitle}>Department Code:</Text>
+          <Text style={styles.detail}>{departmentDetails.department_code}</Text>
         </View>
         <View style={styles.detailsContainer}>
           <Text style={styles.detailTitle}>Status:</Text>
-          <Text style={styles.detail}>{courseDetails.status || "-"}</Text>
+          <Text style={styles.detail}>{departmentDetails.status}</Text>
         </View>
       </ScrollView>
 
@@ -108,11 +110,13 @@ const CourseDetails = () => {
           <CustomButton
             title="EDIT"
             onPress={() =>
-              router.push(`/courses/EditCourse?id=${courseDetails.course_id}`)
+              router.push(
+                `/departments/EditDepartment?id=${departmentDetails.department_id}`
+              )
             }
           />
         </View>
-        {courseDetails.status === "deleted" ? null : (
+        {departmentDetails.status === "deleted" ? null : (
           <View style={styles.button}>
             <CustomButton
               title="DELETE"
@@ -126,12 +130,21 @@ const CourseDetails = () => {
       <CustomModal
         visible={isDeleteModalVisible}
         title="Confirm Deletion"
-        message={`Are you sure you want to delete ${courseDetails.course_name}?`}
+        message={`Are you sure you want to delete ${departmentDetails.department_name}?`}
         type="warning"
         onClose={() => setIsDeleteModalVisible(false)}
         onConfirm={handleConfirmDelete}
         cancelTitle="Cancel"
         confirmTitle="Delete"
+      />
+
+      <CustomModal
+        visible={isSuccessModalVisible}
+        title="Success"
+        message="Department deleted successfully!"
+        type="success"
+        onClose={handleSuccessModalClose}
+        cancelTitle="CLOSE"
       />
 
       <TabsComponent />
@@ -140,7 +153,7 @@ const CourseDetails = () => {
   );
 };
 
-export default CourseDetails;
+export default DepartmentDetails;
 
 const styles = StyleSheet.create({
   headerContainer: {
