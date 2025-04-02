@@ -35,6 +35,7 @@ import arrowRight from "../assets/icons/right-arrow.png";
 import trash from "../assets/icons/trash.png";
 import edit from "../assets/icons/edit.png";
 import disabled from "../assets/icons/disabled.png";
+import blocks from "../assets/icons/blocks.png";
 
 export default {
   logo,
@@ -72,4 +73,5 @@ export default {
   trash,
   edit,
   disabled,
+  blocks,
 };
