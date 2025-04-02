@@ -142,6 +142,7 @@ export default function DrawerLayout() {
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerShown: true,
+        headerShadowVisible: false,
         headerLeft: () => <DrawerToggleButton />,
         drawerStyle: {
           backgroundColor: theme.colors.secondary,

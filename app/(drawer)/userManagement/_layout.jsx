@@ -1,5 +1,4 @@
 import { Stack } from "expo-router";
-
 import theme from "../../../constants/theme";
 
 const UserManagementLayout = () => {
@@ -7,25 +6,50 @@ const UserManagementLayout = () => {
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen
-        name="admins"
+        name="admins/index"
         options={{
-          headerTintColor: theme.colors.secondary,
+          headerShadowVisible: false,
+          headerTintColor: theme.colors.primary,
           headerStyle: {
-            backgroundColor: theme.colors.primary,
+            backgroundColor: theme.colors.secondary,
           },
-          title: "Admins",
+          title: "",
         }}
       />
       <Stack.Screen
-        name="students"
+        name="admins/AdminDetails"
         options={{
-          headerTintColor: theme.colors.secondary,
+          headerShadowVisible: false,
+          headerTintColor: theme.colors.primary,
           headerStyle: {
-            backgroundColor: theme.colors.primary,
+            backgroundColor: theme.colors.secondary,
           },
-          title: "Students",
+          title: "",
         }}
       />
+      <Stack.Screen
+        name="admins/EditAdmin"
+        options={{
+          headerShadowVisible: false,
+          headerTintColor: theme.colors.primary,
+          headerStyle: {
+            backgroundColor: theme.colors.secondary,
+          },
+          title: "",
+        }}
+      />
+      <Stack.Screen
+        name="admins/AddAdmin"
+        options={{
+          headerShadowVisible: false,
+          headerTintColor: theme.colors.primary,
+          headerStyle: {
+            backgroundColor: theme.colors.secondary,
+          },
+          title: "",
+        }}
+      />
+
       <Stack.Screen
         name="roles"
         options={{
@@ -34,6 +58,17 @@ const UserManagementLayout = () => {
             backgroundColor: theme.colors.primary,
           },
           title: "Roles",
+        }}
+      />
+
+      <Stack.Screen
+        name="students"
+        options={{
+          headerTintColor: theme.colors.secondary,
+          headerStyle: {
+            backgroundColor: theme.colors.primary,
+          },
+          title: "Students",
         }}
       />
     </Stack>

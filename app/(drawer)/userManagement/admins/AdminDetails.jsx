@@ -165,7 +165,7 @@ const AdminDetails = () => {
             title="EDIT"
             onPress={() =>
               router.push(
-                `/admins/EditAdmin?id_number=${adminDetails.id_number}`
+                `/userManagement/admins/EditAdmin?id_number=${adminDetails.id_number}`
               )
             }
           />

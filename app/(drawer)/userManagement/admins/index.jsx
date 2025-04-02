@@ -132,7 +132,9 @@ export default function AdminsScreen() {
               key={admin.id_number}
               style={styles.adminContainer}
               onPress={() =>
-                router.push(`/admins/AdminDetails?id_number=${admin.id_number}`)
+                router.push(
+                  `/userManagement/admins/AdminDetails?id_number=${admin.id_number}`
+                )
               }
             >
               <View>
@@ -145,7 +147,7 @@ export default function AdminsScreen() {
                 <TouchableOpacity
                   onPress={() =>
                     router.push(
-                      `/admins/EditAdmin?id_number=${admin.id_number}`
+                      `/userManagement/admins/EditAdmin?id_number=${admin.id_number}`
                     )
                   }
                 >
@@ -168,7 +170,7 @@ export default function AdminsScreen() {
       <View style={styles.buttonContainer}>
         <CustomButton
           title="ADD ADMIN"
-          onPress={() => router.push("/admins/AddAdmin")}
+          onPress={() => router.push("/userManagement/admins/AddAdmin")}
         />
       </View>
       <CustomModal
