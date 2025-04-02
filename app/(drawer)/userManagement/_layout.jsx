@@ -51,24 +51,59 @@ const UserManagementLayout = () => {
       />
 
       <Stack.Screen
-        name="roles"
+        name="roles/index"
         options={{
-          headerTintColor: theme.colors.secondary,
+          headerShadowVisible: false,
+          headerTintColor: theme.colors.primary,
           headerStyle: {
-            backgroundColor: theme.colors.primary,
+            backgroundColor: theme.colors.secondary,
           },
-          title: "Roles",
+          title: "",
         }}
       />
 
       <Stack.Screen
-        name="students"
+        name="students/index"
         options={{
-          headerTintColor: theme.colors.secondary,
+          headerShadowVisible: false,
+          headerTintColor: theme.colors.primary,
           headerStyle: {
-            backgroundColor: theme.colors.primary,
+            backgroundColor: theme.colors.secondary,
           },
-          title: "Students",
+          title: "",
+        }}
+      />
+      <Stack.Screen
+        name="students/AddStudent"
+        options={{
+          headerShadowVisible: false,
+          headerTintColor: theme.colors.primary,
+          headerStyle: {
+            backgroundColor: theme.colors.secondary,
+          },
+          title: "",
+        }}
+      />
+      <Stack.Screen
+        name="students/EditStudent"
+        options={{
+          headerShadowVisible: false,
+          headerTintColor: theme.colors.primary,
+          headerStyle: {
+            backgroundColor: theme.colors.secondary,
+          },
+          title: "",
+        }}
+      />
+      <Stack.Screen
+        name="students/StudentDetails"
+        options={{
+          headerShadowVisible: false,
+          headerTintColor: theme.colors.primary,
+          headerStyle: {
+            backgroundColor: theme.colors.secondary,
+          },
+          title: "",
         }}
       />
     </Stack>

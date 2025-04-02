@@ -134,7 +134,7 @@ const StudentDetails = () => {
             title="EDIT"
             onPress={() =>
               router.push(
-                `/students/EditStudent?id=${studentDetails.id_number}`
+                `/userManagement/students/EditStudent?id=${studentDetails.id_number}`
               )
             }
           />

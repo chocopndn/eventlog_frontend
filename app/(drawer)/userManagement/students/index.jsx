@@ -122,7 +122,9 @@ export default function StudentsScreen() {
               key={student.id_number}
               style={styles.studentContainer}
               onPress={() =>
-                router.push(`/students/StudentDetails?id=${student.id_number}`)
+                router.push(
+                  `/userManagement/students/StudentDetails?id=${student.id_number}`
+                )
               }
             >
               <View style={styles.textContainer}>
@@ -138,7 +140,9 @@ export default function StudentsScreen() {
               <View style={styles.iconContainer}>
                 <TouchableOpacity
                   onPress={() =>
-                    router.push(`/students/EditStudent?id=${student.id_number}`)
+                    router.push(
+                      `/userManagement/students/EditStudent?id=${student.id_number}`
+                    )
                   }
                 >
                   <Image source={images.edit} style={styles.icon} />
@@ -206,7 +210,7 @@ export default function StudentsScreen() {
         <CustomButton
           title="ADD STUDENT"
           onPress={() => {
-            router.push("/students/AddStudent");
+            router.push("/userManagement/students/AddStudent");
           }}
         />
       </View>
