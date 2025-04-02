@@ -176,7 +176,9 @@ const EventDetails = () => {
           <CustomButton
             title="EDIT"
             onPress={() =>
-              router.push(`/events/EditEvent?id=${eventDetails.event_id}`)
+              router.push(
+                `/eventManagement/events/EditEvent?id=${eventDetails.event_id}`
+              )
             }
           />
         </View>

@@ -1,46 +1,284 @@
-import React from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  RefreshControl,
+} from "react-native";
+import TabsComponent from "../../../../components/TabsComponent";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { router } from "expo-router";
+import { fetchEvents, deleteEvent } from "../../../../services/api";
+import { router, useFocusEffect } from "expo-router";
+import images from "../../../../constants/images";
+import SearchBar from "../../../../components/CustomSearch";
+import CustomModal from "../../../../components/CustomModal";
 import CustomButton from "../../../../components/CustomButton";
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 
-export default function EventsScreen() {
+export default function EventsList() {
+  const [events, setEvents] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadEvents = async () => {
+    try {
+      const response = await fetchEvents();
+      const fetchedEvents = Array.isArray(response?.events)
+        ? response.events
+        : [];
+      const filteredEvents = fetchedEvents.filter(
+        (event) => event.status !== "deleted"
+      );
+      setEvents(filteredEvents);
+    } catch (err) {}
+  };
+
+  const refreshData = async () => {
+    setRefreshing(true);
+    try {
+      await loadEvents();
+    } catch (error) {
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadEvents();
+    }, [])
+  );
+
+  const filteredEvents = events.filter((event) => {
+    const eventName = event.event_name?.toLowerCase() || "";
+    const venue = event.venue?.toLowerCase() || "";
+    return (
+      eventName.includes(searchQuery.toLowerCase()) ||
+      venue.includes(searchQuery.toLowerCase())
+    );
+  });
+
+  const handleDeletePress = (event) => {
+    setEventToDelete(event);
+    setIsDeleteModalVisible(true);
+  };
+
+  const handleDeleteModalClose = () => {
+    setIsDeleteModalVisible(false);
+    setEventToDelete(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!eventToDelete) return;
+    try {
+      await deleteEvent(eventToDelete.event_id);
+      setEvents((prevEvents) =>
+        prevEvents.map((event) =>
+          event.event_id === eventToDelete.event_id
+            ? { ...event, status: "deleted" }
+            : event
+        )
+      );
+      handleDeleteModalClose();
+      setIsSuccessModalVisible(true);
+    } catch (error) {}
+  };
+
+  const pendingEventsCount = events.filter(
+    (event) => event.status === "pending"
+  ).length;
+
   return (
     <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
-      <View style={styles.buttonWrapper}>
-        <View style={styles.buttonContainer}>
-          <CustomButton
-            title="Events"
-            onPress={() => router.push("/events/EventsList")}
-          />
-        </View>
-        <View style={styles.buttonContainer}>
-          <CustomButton
-            title="Event Names"
-            onPress={() => router.push("/events/EventNames")}
-            type="secondary"
-          />
-        </View>
+      <Text style={styles.headerText}>EVENTS</Text>
+      <View style={{ paddingHorizontal: theme.spacing.medium, width: "100%" }}>
+        <SearchBar placeholder="Search events..." onSearch={setSearchQuery} />
       </View>
 
+      {pendingEventsCount > 0 && (
+        <TouchableOpacity
+          style={{ width: "100%" }}
+          onPress={() => router.push(`/eventManagement/events/PendingEvents`)}
+        >
+          <View style={styles.pendingContainer}>
+            <Text style={styles.pendingText}>
+              {pendingEventsCount} PENDING EVENT
+              {pendingEventsCount > 1 ? "s" : ""}
+            </Text>
+          </View>
+        </TouchableOpacity>
+      )}
+      <ScrollView
+        style={{ flex: 1, width: "100%", marginBottom: 70 }}
+        contentContainerStyle={[styles.scrollview, { paddingBottom: 80 }]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={refreshData} />
+        }
+      >
+        {filteredEvents.length > 0 ? (
+          filteredEvents.map((event) => (
+            <TouchableOpacity
+              key={event.event_id}
+              style={styles.eventContainer}
+              onPress={() =>
+                router.push(
+                  `/eventManagement/events/EventDetails?id=${event.event_id}`
+                )
+              }
+            >
+              <View style={styles.textContainer}>
+                <Text style={styles.name} numberOfLines={1}>
+                  {event.event_name}
+                </Text>
+                <Text style={styles.venue} numberOfLines={1}>
+                  {event.venue}
+                </Text>
+              </View>
+              <View style={styles.iconContainer}>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (event.event_id) {
+                      router.push(
+                        `/eventManagement/events/EditEvent?id=${event.event_id}`
+                      );
+                    }
+                  }}
+                >
+                  <Image source={images.edit} style={styles.icon} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleDeletePress(event)}
+                  disabled={event.status === "deleted"}
+                  style={{ opacity: event.status === "deleted" ? 0.5 : 1 }}
+                >
+                  <Image source={images.trash} style={styles.icon} />
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <Text style={styles.noResults}>No events found</Text>
+        )}
+      </ScrollView>
+
+      <View style={styles.buttonContainer}>
+        <CustomButton
+          title="ADD EVENT"
+          onPress={() => router.push("/eventManagement/events/AddEvent")}
+        />
+      </View>
+
+      <CustomModal
+        visible={isDeleteModalVisible}
+        title="Confirm Deletion"
+        message={`Are you sure you want to delete ${eventToDelete?.event_name}?`}
+        type="warning"
+        onClose={handleDeleteModalClose}
+        onConfirm={handleConfirmDelete}
+        cancelTitle="Cancel"
+        confirmTitle="Delete"
+      />
+
+      <CustomModal
+        visible={isSuccessModalVisible}
+        title="Success"
+        message="Event deleted successfully!"
+        type="success"
+        onClose={() => setIsSuccessModalVisible(false)}
+        cancelTitle="CLOSE"
+      />
+      <TabsComponent />
       <StatusBar style="auto" />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  buttonWrapper: {
-    flex: 1,
+  headerText: {
+    color: theme.colors.primary,
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.display,
+    textAlign: "center",
+    marginBottom: theme.spacing.medium,
+  },
+  pendingContainer: {
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    flexDirection: "row",
+    height: 50,
     justifyContent: "center",
     alignItems: "center",
-    width: "100%",
-    paddingHorizontal: theme.spacing.medium,
+    marginHorizontal: theme.spacing.medium,
+    marginTop: theme.spacing.medium,
+  },
+  pendingText: {
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.extraLarge,
+    color: theme.colors.primary,
+  },
+  eventContainer: {
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    flexDirection: "row",
+    height: 50,
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: theme.spacing.small,
+    marginBottom: theme.spacing.small,
+  },
+  textContainer: {
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "center",
+  },
+  scrollview: {
+    padding: theme.spacing.medium,
+    flexGrow: 1,
+  },
+  icon: {
+    width: 20,
+    height: 20,
+    tintColor: theme.colors.primary,
+    marginLeft: theme.spacing.small,
+  },
+  iconContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  name: {
+    fontFamily: theme.fontFamily.SquadaOne,
+    color: theme.colors.primary,
+    fontSize: theme.fontSizes.large,
+    flexShrink: 1,
+  },
+  venue: {
+    fontFamily: theme.fontFamily.SquadaOne,
+    color: theme.colors.primary,
+    fontSize: theme.fontSizes.small,
+    flexShrink: 1,
+  },
+  noResults: {
+    textAlign: "center",
+    fontFamily: theme.fontFamily.SquadaOne,
+    color: theme.colors.primary,
+    fontSize: theme.fontSizes.medium,
+    marginTop: theme.spacing.medium,
   },
   buttonContainer: {
+    position: "absolute",
+    bottom: theme.spacing.medium,
+    alignSelf: "center",
     width: "80%",
-    marginVertical: theme.spacing.small,
+    padding: theme.spacing.medium,
+    marginBottom: 80,
   },
 });

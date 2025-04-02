@@ -27,6 +27,17 @@ const AcademicManagement = () => {
       <TouchableOpacity
         style={styles.screenWrapper}
         onPress={() => {
+          router.push("/eventManagement/eventnames");
+        }}
+      >
+        <View style={styles.screenContainer}>
+          <Text style={styles.screenTitle}>Event Names</Text>
+        </View>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.screenWrapper}
+        onPress={() => {
           router.push("/eventManagement/records");
         }}
       >

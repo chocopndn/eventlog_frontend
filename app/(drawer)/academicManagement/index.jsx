@@ -11,7 +11,7 @@ import theme from "../../../constants/theme";
 const AcademicManagement = () => {
   return (
     <SafeAreaView style={globalStyles.secondaryContainerSA}>
-      <Text style={styles.title}>User Management</Text>
+      <Text style={styles.title}>Academic Management</Text>
 
       <TouchableOpacity
         style={styles.screenWrapper}

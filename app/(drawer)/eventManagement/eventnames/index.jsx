@@ -108,7 +108,9 @@ export default function EventNamesScreen() {
               key={eventName.value}
               style={styles.eventNameContainer}
               onPress={() =>
-                router.push(`/events/EventNameDetails?id=${eventName.value}`)
+                router.push(
+                  `/eventManagement/eventnames/EventNameDetails?id=${eventName.value}`
+                )
               }
             >
               <View style={styles.textContainer}>
@@ -124,7 +126,7 @@ export default function EventNamesScreen() {
                   onPress={() => {
                     if (eventName.value) {
                       router.push(
-                        `/events/EditEventName?id=${eventName.value}`
+                        `/eventManagement/eventnames/EditEventName?id=${eventName.value}`
                       );
                     }
                   }}
@@ -149,7 +151,9 @@ export default function EventNamesScreen() {
       <View style={styles.buttonContainer}>
         <CustomButton
           title="ADD EVENT NAME"
-          onPress={() => router.push("/events/AddEventName")}
+          onPress={() =>
+            router.push("/eventManagement/eventnames/AddEventName")
+          }
         />
       </View>
 
