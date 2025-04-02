@@ -614,3 +614,20 @@ export const deleteEventName = async (id) => {
     throw error;
   }
 };
+
+export const addEvent = async (eventData) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/api/events/admin/add`,
+      eventData
+    );
+
+    if (response.data.success) {
+      return response.data;
+    }
+
+    throw new Error("Failed to add event");
+  } catch (error) {
+    throw error;
+  }
+};

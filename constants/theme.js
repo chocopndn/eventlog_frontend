@@ -11,6 +11,7 @@ const theme = {
     large: 20,
     extraLarge: 24,
     huge: 32,
+    title: 50,
     display: 70,
   },
   spacing: {

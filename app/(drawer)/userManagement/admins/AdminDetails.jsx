@@ -2,14 +2,14 @@ import { StyleSheet, Text, View, SafeAreaView, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
-import TabsComponent from "../../../components/TabsComponent";
-import CustomButton from "../../../components/CustomButton";
-import CustomModal from "../../../components/CustomModal";
-import globalStyles from "../../../constants/globalStyles";
-import theme from "../../../constants/theme";
-import { fetchAdminById, disableAdmin } from "../../../services/api";
+import TabsComponent from "../../../../components/TabsComponent";
+import CustomButton from "../../../../components/CustomButton";
+import CustomModal from "../../../../components/CustomModal";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
+import { fetchAdminById, disableAdmin } from "../../../../services/api";
 import { useLocalSearchParams } from "expo-router";
-import { getStoredUser } from "../../../database/queries";
+import { getStoredUser } from "../../../../database/queries";
 
 const AdminDetails = () => {
   const { id_number } = useLocalSearchParams();

@@ -16,6 +16,16 @@ const globalStyles = StyleSheet.create({
     justifyContent: "center",
     padding: theme.spacing.medium,
   },
+  secondaryContainerSA: {
+    backgroundColor: theme.colors.secondary,
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: theme.spacing.medium,
+    paddingTop: 0,
+    paddingBottom: 100,
+    paddingHorizontal: 0,
+  },
   icons: {
     width: 24,
     height: 24,

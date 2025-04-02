@@ -8,14 +8,14 @@ import {
 import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import TabsComponent from "../../../components/TabsComponent";
-import globalStyles from "../../../constants/globalStyles";
-import theme from "../../../constants/theme";
-import FormField from "../../../components/FormField";
-import CustomDropdown from "../../../components/CustomDropdown";
-import CustomButton from "../../../components/CustomButton";
-import { fetchDepartments, addAdmin } from "../../../services/api";
-import CustomModal from "../../../components/CustomModal";
+import TabsComponent from "../../../../components/TabsComponent";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
+import FormField from "../../../../components/FormField";
+import CustomDropdown from "../../../../components/CustomDropdown";
+import CustomButton from "../../../../components/CustomButton";
+import { fetchDepartments, addAdmin } from "../../../../services/api";
+import CustomModal from "../../../../components/CustomModal";
 
 const AddAdmin = () => {
   const [formData, setFormData] = useState({

@@ -8,17 +8,17 @@ import {
   Image,
   RefreshControl,
 } from "react-native";
-import TabsComponent from "../../../components/TabsComponent";
+import TabsComponent from "../../../../components/TabsComponent";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { fetchUsers, disableUser } from "../../../services/api";
+import { fetchUsers, disableUser } from "../../../../services/api";
 import { router, useFocusEffect } from "expo-router";
-import images from "../../../constants/images";
-import SearchBar from "../../../components/CustomSearch";
-import CustomButton from "../../../components/CustomButton";
-import CustomModal from "../../../components/CustomModal";
-import globalStyles from "../../../constants/globalStyles";
-import theme from "../../../constants/theme";
+import images from "../../../../constants/images";
+import SearchBar from "../../../../components/CustomSearch";
+import CustomButton from "../../../../components/CustomButton";
+import CustomModal from "../../../../components/CustomModal";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
 
 export default function StudentsScreen() {
   const [students, setStudents] = useState([]);

@@ -2,10 +2,10 @@ import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { fetchRoles } from "../../../services/api";
-import globalStyles from "../../../constants/globalStyles";
-import theme from "../../../constants/theme";
-import TabsComponent from "../../../components/TabsComponent";
+import { fetchRoles } from "../../../../services/api";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
+import TabsComponent from "../../../../components/TabsComponent";
 
 export default function RolesScreen() {
   const [roles, setRoles] = useState([]);

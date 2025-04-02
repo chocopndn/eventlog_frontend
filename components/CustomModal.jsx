@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   cancelButton: {
     backgroundColor: theme.colors.secondary,
     paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingHorizontal: theme.spacing.medium,
     borderRadius: theme.borderRadius.medium,
     borderWidth: 2,
     borderColor: theme.colors.primary,
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
   confirmButton: {
     backgroundColor: theme.colors.primary,
     paddingVertical: 10,
-    paddingHorizontal: 20,
+    paddingHorizontal: theme.spacing.medium,
     borderRadius: theme.borderRadius.medium,
     width: "40%",
     justifyContent: "center",

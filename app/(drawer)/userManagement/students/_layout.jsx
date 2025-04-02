@@ -1,13 +1,13 @@
 import { Stack } from "expo-router";
 
-import theme from "../../../constants/theme";
+import theme from "../../../../constants/theme";
 
-const AdminsLayout = () => {
+const DepartmentsLayout = () => {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen
-        name="AddAdmin"
+        name="AddStudent"
         options={{
           headerTitle: "",
           headerTintColor: theme.colors.secondary,
@@ -15,7 +15,7 @@ const AdminsLayout = () => {
         }}
       />
       <Stack.Screen
-        name="EditAdmin"
+        name="EditStudent"
         options={{
           headerTitle: "",
           headerTintColor: theme.colors.secondary,
@@ -23,7 +23,7 @@ const AdminsLayout = () => {
         }}
       />
       <Stack.Screen
-        name="AdminDetails"
+        name="StudentDetails"
         options={{
           headerTitle: "",
           headerTintColor: theme.colors.secondary,
@@ -34,4 +34,4 @@ const AdminsLayout = () => {
   );
 };
 
-export default AdminsLayout;
+export default DepartmentsLayout;

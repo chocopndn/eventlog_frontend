@@ -8,18 +8,18 @@ import {
   Image,
   RefreshControl,
 } from "react-native";
-import TabsComponent from "../../../components/TabsComponent";
+import TabsComponent from "../../../../components/TabsComponent";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { fetchAdmins, disableAdmin } from "../../../services/api";
+import { fetchAdmins, disableAdmin } from "../../../../services/api";
 import { router, useFocusEffect } from "expo-router";
-import images from "../../../constants/images";
-import SearchBar from "../../../components/CustomSearch";
-import CustomModal from "../../../components/CustomModal";
-import CustomButton from "../../../components/CustomButton";
-import globalStyles from "../../../constants/globalStyles";
-import theme from "../../../constants/theme";
-import { getStoredUser } from "../../../database/queries";
+import images from "../../../../constants/images";
+import SearchBar from "../../../../components/CustomSearch";
+import CustomModal from "../../../../components/CustomModal";
+import CustomButton from "../../../../components/CustomButton";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
+import { getStoredUser } from "../../../../database/queries";
 
 export default function AdminsScreen() {
   const [admins, setAdmins] = useState([]);
