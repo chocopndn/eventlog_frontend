@@ -38,20 +38,20 @@ const Home = () => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const user = await getStoredUser();
-      setRoleId(user.role_id);
-      setBlockId(user.block_id);
+      try {
+        const user = await getStoredUser();
+        if (!user) return;
+        setRoleId(user?.role_id);
+        setBlockId(user?.block_id);
+      } catch (error) {}
     };
-
     fetchUserData();
   }, []);
 
   const fetchEvent = async () => {
     if (roleId === null) return;
-
     setRefreshing(true);
     let timeoutTriggered = false;
-
     const timeout = setTimeout(() => {
       timeoutTriggered = true;
       setModalTitle("Connection Issue");
@@ -71,16 +71,39 @@ const Home = () => {
         return;
       }
 
-      if (response?.success) {
-        await Promise.all(response.events.map((event) => storeEvent(event)));
-        const storedEvents = await getStoredEvents();
-        setEvents(storedEvents || []);
+      if (!response?.success) {
+        throw new Error(
+          response?.message || "Failed to fetch events from API."
+        );
       }
-    } catch (error) {
-      setModalTitle("No Internet Connection");
-      setModalMessage("You're currently offline. Showing saved events.");
-      setModalVisible(true);
 
+      if (response.events.length === 0) {
+        await clearEventsTable();
+        setEvents([]);
+        return;
+      }
+
+      const allApiEventIds = response.events.map((e) => e.event_id);
+      await Promise.all(
+        response.events.map(async (event) => {
+          try {
+            await storeEvent(event, allApiEventIds);
+          } catch (error) {}
+        })
+      );
+
+      const storedEvents = await getStoredEvents();
+      setEvents(storedEvents || []);
+    } catch (error) {
+      const netState = await NetInfo.fetch();
+      if (netState.isConnected === false) {
+        setModalTitle("No Internet Connection");
+        setModalMessage("You're currently offline. Showing saved events.");
+      } else {
+        setModalTitle("Error");
+        setModalMessage("An unexpected error occurred while fetching events.");
+      }
+      setModalVisible(true);
       const storedEvents = await getStoredEvents();
       setEvents(storedEvents || []);
     } finally {
@@ -90,7 +113,9 @@ const Home = () => {
   };
 
   useEffect(() => {
-    fetchEvent();
+    if (roleId !== null && (roleId === 3 || roleId === 4 || blockId !== null)) {
+      fetchEvent();
+    }
   }, [roleId, blockId]);
 
   const onRefresh = async () => {
@@ -98,19 +123,15 @@ const Home = () => {
   };
 
   const formatTime = (timeString) => {
-    const date = new Date(`1970-01-01T${timeString}Z`);
-    let hours = date.getHours();
-    const minutes = date.getMinutes();
+    if (!timeString) return "N/A";
+    const [hours, minutes] = timeString.split(":").map(Number);
     const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-    const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
-    return `${hours}:${formattedMinutes} ${ampm}`;
+    const formattedHours = hours % 12 || 12;
+    return `${formattedHours}:${minutes.toString().padStart(2, "0")} ${ampm}`;
   };
 
   const formatEventDates = (datesArray) => {
     if (!Array.isArray(datesArray) || datesArray.length === 0) return "N/A";
-
     if (datesArray.length === 1) {
       return new Date(datesArray[0]).toLocaleDateString("en-US", {
         year: "numeric",
@@ -118,23 +139,17 @@ const Home = () => {
         day: "numeric",
       });
     }
-
     let groups = {};
-
     datesArray.forEach((date) => {
       let d = new Date(date);
-      if (isNaN(d.getTime())) {
-        return;
-      }
+      if (isNaN(d.getTime())) return;
       let month = d.toLocaleString("en-US", { month: "long" });
       let day = d.getDate();
       let year = d.getFullYear();
       let key = `${month} ${year}`;
-
       if (!groups[key]) groups[key] = [];
       groups[key].push(day);
     });
-
     return Object.entries(groups)
       .map(
         ([monthYear, days]) =>
@@ -190,15 +205,13 @@ const Home = () => {
           )}
         </ScrollView>
       </View>
-
       <CustomModal
         visible={modalVisible}
-        title="Offline Mode"
+        title={modalTitle}
         message={modalMessage}
         type="warning"
         onClose={() => setModalVisible(false)}
       />
-
       <StatusBar style="auto" />
     </SafeAreaView>
   );
