@@ -34,14 +34,11 @@ export default function EventsList() {
       const fetchedEvents = Array.isArray(response?.events)
         ? response.events
         : [];
-
       const filteredEvents = fetchedEvents.filter(
         (event) => event.status !== "deleted"
       );
       setEvents(filteredEvents);
-    } catch (err) {
-      console.error("Error fetching events:", err);
-    }
+    } catch (err) {}
   };
 
   const refreshData = async () => {
@@ -49,7 +46,6 @@ export default function EventsList() {
     try {
       await loadEvents();
     } catch (error) {
-      console.error("Error refreshing data:", error);
     } finally {
       setRefreshing(false);
     }
@@ -81,10 +77,7 @@ export default function EventsList() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!eventToDelete) {
-      console.warn("No event selected for deletion.");
-      return;
-    }
+    if (!eventToDelete) return;
     try {
       await deleteEvent(eventToDelete.event_id);
       setEvents((prevEvents) =>
@@ -96,9 +89,7 @@ export default function EventsList() {
       );
       handleDeleteModalClose();
       setIsSuccessModalVisible(true);
-    } catch (error) {
-      console.error("Error deleting event:", error);
-    }
+    } catch (error) {}
   };
 
   const pendingEventsCount = events.filter(
