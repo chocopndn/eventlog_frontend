@@ -116,10 +116,10 @@ export default function BlocksScreen() {
         {filteredBlocks.length > 0 ? (
           filteredBlocks.map((block) => (
             <TouchableOpacity
-              key={block.id}
+              key={block.value}
               style={styles.blockContainer}
               onPress={() => {
-                router.push(`/blocks/BlockDetails?id=${block.id}`);
+                router.push(`/blocks/BlockDetails?id=${block.value}`);
               }}
             >
               <View style={styles.textContainer}>
@@ -133,7 +133,7 @@ export default function BlocksScreen() {
               <View style={styles.iconContainer}>
                 <TouchableOpacity
                   onPress={() => {
-                    router.push(`/blocks/EditBlock?id=${block.id}`);
+                    router.push(`/blocks/EditBlock?id=${block.value}`);
                   }}
                 >
                   <Image source={images.edit} style={styles.icon} />
