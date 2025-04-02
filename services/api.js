@@ -564,7 +564,7 @@ export const fetchEventNameById = async (id) => {
   try {
     const response = await axios.get(`${API_URL}/api/event-names/${id}`);
     if (response.data.success) {
-      return response.data.eventName;
+      return response.data;
     }
     throw new Error("Failed to fetch event name");
   } catch (error) {
