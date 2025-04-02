@@ -17,6 +17,7 @@ const EventNameDetails = () => {
   const [eventNameDetails, setEventNameDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 
   const fetchEventNameDetails = async () => {
     try {
@@ -66,7 +67,7 @@ const EventNameDetails = () => {
   const handleConfirmDelete = async () => {
     try {
       await deleteEventName(eventNameDetails.id);
-      router.back();
+      setIsSuccessModalVisible(true);
     } catch (error) {
       console.error(error.message || error);
     } finally {
@@ -125,6 +126,18 @@ const EventNameDetails = () => {
         onConfirm={handleConfirmDelete}
         cancelTitle="Cancel"
         confirmTitle="Delete"
+      />
+
+      <CustomModal
+        visible={isSuccessModalVisible}
+        title="Success"
+        message={`${eventNameDetails.name} has been deleted successfully.`}
+        type="success"
+        onClose={() => {
+          setIsSuccessModalVisible(false);
+          router.back();
+        }}
+        cancelTitle="Close"
       />
 
       <TabsComponent />
