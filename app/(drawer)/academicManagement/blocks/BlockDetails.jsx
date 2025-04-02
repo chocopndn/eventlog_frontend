@@ -113,7 +113,9 @@ const BlockDetails = () => {
           <CustomButton
             title="EDIT"
             onPress={() =>
-              router.push(`/blocks/EditBlock?id=${blockDetails.block_id}`)
+              router.push(
+                `/academicManagement/blocks/EditBlock?id=${blockDetails.block_id}`
+              )
             }
           />
         </View>

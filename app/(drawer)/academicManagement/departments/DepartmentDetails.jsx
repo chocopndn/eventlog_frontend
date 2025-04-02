@@ -111,7 +111,7 @@ const DepartmentDetails = () => {
             title="EDIT"
             onPress={() =>
               router.push(
-                `/departments/EditDepartment?id=${departmentDetails.department_id}`
+                `/academicManagement/departments/EditDepartment?id=${departmentDetails.department_id}`
               )
             }
           />

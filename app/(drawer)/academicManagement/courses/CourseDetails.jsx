@@ -108,7 +108,9 @@ const CourseDetails = () => {
           <CustomButton
             title="EDIT"
             onPress={() =>
-              router.push(`/courses/EditCourse?id=${courseDetails.course_id}`)
+              router.push(
+                `/academicManagement/courses/EditCourse?id=${courseDetails.course_id}`
+              )
             }
           />
         </View>

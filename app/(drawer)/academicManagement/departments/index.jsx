@@ -115,7 +115,7 @@ export default function DepartmentsScreen() {
               style={styles.departmentContainer}
               onPress={() =>
                 router.push(
-                  `/departments/DepartmentDetails?id=${department.value}`
+                  `/academicManagement/departments/DepartmentDetails?id=${department.value}`
                 )
               }
             >
@@ -132,7 +132,7 @@ export default function DepartmentsScreen() {
                   onPress={() => {
                     if (department.value) {
                       router.push(
-                        `/departments/EditDepartment?id=${department.value}`
+                        `/academicManagement/departments/EditDepartment?id=${department.value}`
                       );
                     }
                   }}
@@ -157,7 +157,9 @@ export default function DepartmentsScreen() {
       <View style={styles.buttonContainer}>
         <CustomButton
           title="ADD DEPARTMENT"
-          onPress={() => router.push("/departments/AddDepartment")}
+          onPress={() =>
+            router.push("/academicManagement/departments/AddDepartment")
+          }
         />
       </View>
 

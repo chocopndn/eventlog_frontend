@@ -119,7 +119,9 @@ export default function CoursesScreen() {
               key={course.course_id}
               style={styles.courseContainer}
               onPress={() =>
-                router.push(`/courses/CourseDetails?id=${course.course_id}`)
+                router.push(
+                  `/academicManagement/courses/CourseDetails?id=${course.course_id}`
+                )
               }
             >
               <View style={styles.textContainer}>
@@ -135,7 +137,9 @@ export default function CoursesScreen() {
                 <TouchableOpacity
                   onPress={() => {
                     if (course.course_id) {
-                      router.push(`/courses/EditCourse?id=${course.course_id}`);
+                      router.push(
+                        `/academicManagement/courses/EditCourse?id=${course.course_id}`
+                      );
                     }
                   }}
                 >
@@ -159,7 +163,7 @@ export default function CoursesScreen() {
       <View style={styles.buttonContainer}>
         <CustomButton
           title="ADD COURSE"
-          onPress={() => router.push("/courses/AddCourse")}
+          onPress={() => router.push("/academicManagement/courses/AddCourse")}
         />
       </View>
 

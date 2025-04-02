@@ -49,7 +49,7 @@ const AcademicManagement = () => {
       <TouchableOpacity
         style={styles.screenWrapper}
         onPress={() => {
-          router.push("/userManagement/roles");
+          router.push("/academicManagement/schoolyears");
         }}
         accessibilityLabel="Navigate to Roles"
       >

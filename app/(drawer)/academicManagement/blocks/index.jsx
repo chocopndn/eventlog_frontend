@@ -119,7 +119,9 @@ export default function BlocksScreen() {
               key={block.value}
               style={styles.blockContainer}
               onPress={() => {
-                router.push(`/blocks/BlockDetails?id=${block.value}`);
+                router.push(
+                  `/academicManagement/blocks/BlockDetails?id=${block.value}`
+                );
               }}
             >
               <View style={styles.textContainer}>
@@ -133,7 +135,9 @@ export default function BlocksScreen() {
               <View style={styles.iconContainer}>
                 <TouchableOpacity
                   onPress={() => {
-                    router.push(`/blocks/EditBlock?id=${block.value}`);
+                    router.push(
+                      `/academicManagement/blocks/EditBlock?id=${block.value}`
+                    );
                   }}
                 >
                   <Image source={images.edit} style={styles.icon} />
@@ -157,7 +161,7 @@ export default function BlocksScreen() {
         <CustomButton
           title="ADD BLOCK"
           onPress={() => {
-            router.push("/blocks/AddBlock");
+            router.push("/academicManagement/blocks/AddBlock");
           }}
         />
       </View>
