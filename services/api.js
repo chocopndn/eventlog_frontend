@@ -118,12 +118,79 @@ export const fetchBlocks = async () => {
       return response.data.data.map((block) => ({
         label: block.block_name || `Block ${block.block_id}`,
         value: block.block_id,
+        status: block.status,
       }));
     }
 
     throw new Error("Invalid blocks data received");
   } catch (error) {
     console.error("Error fetching blocks:", error);
+    throw error;
+  }
+};
+
+export const fetchBlockById = async (blockId) => {
+  if (!blockId || isNaN(blockId)) {
+    console.error("Invalid block ID provided:", blockId);
+    throw new Error("Invalid block ID");
+  }
+
+  try {
+    const response = await axios.get(`${API_URL}/api/blocks/block/${blockId}`);
+
+    if (response.data.success) {
+      return response.data.data;
+    }
+
+    console.error(
+      "Failed to fetch block. Backend message:",
+      response.data.message
+    );
+    throw new Error(response.data.message || "Failed to fetch block");
+  } catch (error) {
+    console.error(
+      "Error fetching block details:",
+      error.response?.data?.message || error.message
+    );
+
+    throw new Error(
+      error.response?.data?.message ||
+        "An error occurred while fetching the block."
+    );
+  }
+};
+
+export const addBlock = async (blockData) => {
+  try {
+    const response = await axios.post(`${API_URL}/api/blocks`, blockData);
+    if (response.data.success) return response.data.data;
+    throw new Error("Failed to add block");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const editBlock = async (blockId, blockData) => {
+  try {
+    const response = await axios.put(
+      `${API_URL}/api/blocks/block/${blockId}`,
+      blockData
+    );
+    if (response.data.success) return response.data.data;
+    throw new Error("Failed to edit block");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteBlock = async (blockId) => {
+  try {
+    const response = await axios.delete(`${API_URL}/api/blocks/${blockId}`);
+    if (response.data.success) return response.data.message;
+    throw new Error("Failed to delete block");
+  } catch (error) {
+    console.log(error.message);
+
     throw error;
   }
 };
@@ -426,6 +493,22 @@ export const fetchRoles = async () => {
       return response.data.roles.map((role) => ({
         role_id: role.role_id,
         role_name: role.role_name,
+      }));
+    }
+    throw new Error("Failed to fetch roles");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchYearLevels = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/api/year-level`);
+
+    if (response.data.success) {
+      return response.data.yearlevel.map((yearlevel) => ({
+        year_level_id: yearlevel.year_level_id,
+        year_level_name: yearlevel.year_level_name,
       }));
     }
     throw new Error("Failed to fetch roles");
