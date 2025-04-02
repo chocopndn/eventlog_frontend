@@ -61,6 +61,12 @@ const CustomDrawerContent = (props) => {
           icon={() => <Image source={images.admin} style={styles.icon} />}
         />
         <DrawerItem
+          label="Blocks"
+          onPress={() => router.push("/(drawer)/blocks")}
+          labelStyle={styles.navItemLabel}
+          icon={() => <Image source={images.blocks} style={styles.icon} />}
+        />
+        <DrawerItem
           label="Courses"
           onPress={() => router.push("/(drawer)/courses")}
           labelStyle={styles.navItemLabel}
@@ -183,6 +189,14 @@ export default function DrawerLayout() {
         name="admins"
         options={{
           headerTitle: "Admins",
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: theme.colors.secondary,
+        }}
+      />
+      <Drawer.Screen
+        name="blocks"
+        options={{
+          headerTitle: "Blocks",
           headerStyle: { backgroundColor: theme.colors.primary },
           headerTintColor: theme.colors.secondary,
         }}
