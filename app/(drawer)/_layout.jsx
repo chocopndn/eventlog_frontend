@@ -58,26 +58,21 @@ const CustomDrawerContent = (props) => {
           label="User Management"
           onPress={() => router.push("/(drawer)/userManagement")}
           labelStyle={styles.navItemLabel}
-          icon={() => <Image source={images.admin} style={styles.icon} />}
+          icon={() => <Image source={images.role} style={styles.icon} />}
         />
         <DrawerItem
           label="Academic Management"
           onPress={() => router.push("/(drawer)/academicManagement")}
           labelStyle={styles.navItemLabel}
-          icon={() => <Image source={images.admin} style={styles.icon} />}
-        />
-
-        <DrawerItem
-          label="Events"
-          onPress={() => router.push("/(drawer)/events")}
-          labelStyle={styles.navItemLabel}
-          icon={() => <Image source={images.event} style={styles.icon} />}
+          icon={() => <Image source={images.school} style={styles.icon} />}
         />
         <DrawerItem
-          label="Records"
-          onPress={() => router.push("/(drawer)/records")}
+          label="Event Management"
+          onPress={() => router.push("/(drawer)/eventManagement")}
           labelStyle={styles.navItemLabel}
-          icon={() => <Image source={images.calendar} style={styles.icon} />}
+          icon={() => (
+            <Image source={images.calendarStar} style={styles.icon} />
+          )}
         />
       </View>
       <View>
@@ -178,23 +173,15 @@ export default function DrawerLayout() {
           headerTintColor: theme.colors.secondary,
         }}
       />
+      <Drawer.Screen
+        name="eventManagement"
+        options={{
+          headerTitle: "Event Management",
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: theme.colors.secondary,
+        }}
+      />
 
-      <Drawer.Screen
-        name="events"
-        options={{
-          headerTitle: "Events",
-          headerStyle: { backgroundColor: theme.colors.primary },
-          headerTintColor: theme.colors.secondary,
-        }}
-      />
-      <Drawer.Screen
-        name="records"
-        options={{
-          headerTitle: "Records",
-          headerStyle: { backgroundColor: theme.colors.primary },
-          headerTintColor: theme.colors.secondary,
-        }}
-      />
       <Drawer.Screen
         name="sAdminAcc"
         options={{

@@ -8,22 +8,22 @@ import {
 import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import TabsComponent from "../../../components/TabsComponent";
-import globalStyles from "../../../constants/globalStyles";
-import theme from "../../../constants/theme";
-import CustomDropdown from "../../../components/CustomDropdown";
-import CustomButton from "../../../components/CustomButton";
-import CustomModal from "../../../components/CustomModal";
-import { fetchDepartments, fetchEventNames } from "../../../services/api";
+import TabsComponent from "../../../../components/TabsComponent";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
+import CustomDropdown from "../../../../components/CustomDropdown";
+import CustomButton from "../../../../components/CustomButton";
+import CustomModal from "../../../../components/CustomModal";
+import { fetchDepartments, fetchEventNames } from "../../../../services/api";
 
 const AddEvent = () => {
   const [formData, setFormData] = useState({
     event_name_id: "",
-    department_ids: [], // Array to store selected department IDs
+    department_ids: [],
   });
 
-  const [eventNames, setEventNames] = useState([]); // Event name options
-  const [departmentOptions, setDepartmentOptions] = useState([]); // Department options
+  const [eventNames, setEventNames] = useState([]);
+  const [departmentOptions, setDepartmentOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
   const [errorDepartments, setErrorDepartments] = useState(null);
@@ -34,28 +34,27 @@ const AddEvent = () => {
     type: "success",
   });
 
-  // Fetch Event Names
   useEffect(() => {
     const fetchEventNamesData = async () => {
       setIsLoading(true);
       try {
         console.log("Fetching event names...");
         const eventNamesData = await fetchEventNames();
-        console.log("Raw Event Names Data:", eventNamesData); // Log raw API response
+        console.log("Raw Event Names Data:", eventNamesData);
 
         if (Array.isArray(eventNamesData)) {
           const formattedEventNames = eventNamesData.map((name) => ({
-            label: name.label || name.name, // Adjust based on API structure
-            value: name.value || name.id, // Adjust based on API structure
+            label: name.label || name.name,
+            value: name.value || name.id,
           }));
-          console.log("Formatted Event Names:", formattedEventNames); // Log formatted data
+          console.log("Formatted Event Names:", formattedEventNames);
           setEventNames(formattedEventNames);
         } else {
           console.error("Invalid event names data format:", eventNamesData);
           throw new Error("Invalid data format from API.");
         }
       } catch (error) {
-        console.error("Error fetching event names:", error); // Log error details
+        console.error("Error fetching event names:", error);
         setModal({
           visible: true,
           title: "Error",
@@ -70,7 +69,6 @@ const AddEvent = () => {
     fetchEventNamesData();
   }, []);
 
-  // Fetch Departments
   useEffect(() => {
     const fetchDepartmentData = async () => {
       console.log("Fetching departments...");
@@ -79,21 +77,19 @@ const AddEvent = () => {
 
       try {
         console.log("Calling fetchDepartments...");
-        const departmentsData = await fetchDepartments(); // Use the imported fetchDepartments function
-        console.log("Departments Data from fetchDepartments:", departmentsData); // Log the returned data
+        const departmentsData = await fetchDepartments();
+        console.log("Departments Data from fetchDepartments:", departmentsData);
 
         if (!Array.isArray(departmentsData)) {
           console.error("Invalid departments data format:", departmentsData);
           throw new Error("Invalid data format from API: Expected an array.");
         }
 
-        // Format the data for the dropdown
         const formattedDepartments = departmentsData.map((dept) => ({
           label: dept.label,
           value: dept.value,
         }));
 
-        // Validate the formatted data
         if (
           formattedDepartments.some(
             (dept) => !dept.label || dept.value === undefined
@@ -107,9 +103,9 @@ const AddEvent = () => {
           return;
         }
 
-        setDepartmentOptions(formattedDepartments); // Update state with valid formatted data
+        setDepartmentOptions(formattedDepartments);
       } catch (err) {
-        console.error("Error fetching departments:", err); // Log error details
+        console.error("Error fetching departments:", err);
         setErrorDepartments(err);
         setModal({
           visible: true,
@@ -126,26 +122,24 @@ const AddEvent = () => {
   }, []);
 
   const handleChange = (name, value) => {
-    console.log(`Form field "${name}" updated with value:`, value); // Log form changes
+    console.log(`Form field "${name}" updated with value:`, value);
     setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
   };
 
   const handleDepartmentChange = (selectedItems) => {
-    // Filter out any items that are not objects or do not have a 'value' property
     const validSelectedItems = selectedItems.filter(
       (item) =>
         typeof item === "object" && item !== null && item.value !== undefined
     );
 
-    // Extract selected department IDs from the valid items
     const selectedValues = validSelectedItems.map((item) => item.value);
-    console.log("Selected departments:", selectedValues); // Log selected departments
+    console.log("Selected departments:", selectedValues);
     handleChange("department_ids", selectedValues);
   };
 
   const handleSubmit = async () => {
     try {
-      console.log("Submitting form data:", formData); // Log submitted data
+      console.log("Submitting form data:", formData);
 
       if (!formData.event_name_id.trim()) {
         console.warn("Event name is missing.");
@@ -176,10 +170,8 @@ const AddEvent = () => {
         message: "Event and department selected successfully!",
         type: "success",
       });
-      // In a real application, you would send the formData to your backend here
-      // Example: await yourApiService.addEvent(formData);
     } catch (error) {
-      console.error("Error submitting form:", error); // Log error details
+      console.error("Error submitting form:", error);
       setModal({
         visible: true,
         title: "Error",
@@ -270,7 +262,6 @@ const AddEvent = () => {
 
 export default AddEvent;
 
-// Styles
 const styles = StyleSheet.create({
   textHeader: {
     fontFamily: theme.fontFamily.SquadaOne,

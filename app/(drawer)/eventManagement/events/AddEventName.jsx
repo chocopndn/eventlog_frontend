@@ -2,13 +2,13 @@ import { StyleSheet, Text, View, ScrollView } from "react-native";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import TabsComponent from "../../../components/TabsComponent";
-import globalStyles from "../../../constants/globalStyles";
-import theme from "../../../constants/theme";
-import FormField from "../../../components/FormField";
-import CustomButton from "../../../components/CustomButton";
-import CustomModal from "../../../components/CustomModal";
-import { addEventName } from "../../../services/api";
+import TabsComponent from "../../../../components/TabsComponent";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
+import FormField from "../../../../components/FormField";
+import CustomButton from "../../../../components/CustomButton";
+import CustomModal from "../../../../components/CustomModal";
+import { addEventName } from "../../../../services/api";
 
 const AddEventName = () => {
   const [formData, setFormData] = useState({ name: "" });

@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 
-import theme from "../../../constants/theme";
+import theme from "../../../../constants/theme";
 
 const EventsLayout = () => {
   return (

@@ -10,13 +10,17 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { fetchEvents, approveEvent, deleteEvent } from "../../../services/api";
+import {
+  fetchEvents,
+  approveEvent,
+  deleteEvent,
+} from "../../../../services/api";
 import { router } from "expo-router";
-import images from "../../../constants/images";
-import globalStyles from "../../../constants/globalStyles";
-import theme from "../../../constants/theme";
-import CustomModal from "../../../components/CustomModal";
-import { getStoredUser } from "../../../database/queries";
+import images from "../../../../constants/images";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
+import CustomModal from "../../../../components/CustomModal";
+import { getStoredUser } from "../../../../database/queries";
 
 export default function PendingEvents() {
   const [events, setEvents] = useState([]);

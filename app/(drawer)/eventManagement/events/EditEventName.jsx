@@ -8,14 +8,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import TabsComponent from "../../../components/TabsComponent";
-import globalStyles from "../../../constants/globalStyles";
-import theme from "../../../constants/theme";
-import FormField from "../../../components/FormField";
-import CustomDropdown from "../../../components/CustomDropdown";
-import CustomButton from "../../../components/CustomButton";
-import { fetchEventNameById, editEventName } from "../../../services/api";
-import CustomModal from "../../../components/CustomModal";
+import TabsComponent from "../../../../components/TabsComponent";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
+import FormField from "../../../../components/FormField";
+import CustomDropdown from "../../../../components/CustomDropdown";
+import CustomButton from "../../../../components/CustomButton";
+import { fetchEventNameById, editEventName } from "../../../../services/api";
+import CustomModal from "../../../../components/CustomModal";
 import { useLocalSearchParams } from "expo-router";
 
 const EditEventName = () => {

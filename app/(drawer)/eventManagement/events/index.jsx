@@ -3,9 +3,9 @@ import { View, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
-import CustomButton from "../../../components/CustomButton";
-import globalStyles from "../../../constants/globalStyles";
-import theme from "../../../constants/theme";
+import CustomButton from "../../../../components/CustomButton";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
 
 export default function EventsScreen() {
   return (

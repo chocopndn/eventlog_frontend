@@ -37,6 +37,8 @@ import edit from "../assets/icons/edit.png";
 import disabled from "../assets/icons/disabled.png";
 import blocks from "../assets/icons/blocks.png";
 import check from "../assets/icons/check.png";
+import school from "../assets/icons/school.png";
+import calendarStar from "../assets/icons/calendar-star.png";
 
 export default {
   logo,
@@ -76,4 +78,6 @@ export default {
   disabled,
   blocks,
   check,
+  school,
+  calendarStar,
 };
