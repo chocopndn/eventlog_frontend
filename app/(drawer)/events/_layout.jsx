@@ -47,7 +47,7 @@ const EventsLayout = () => {
         }}
       />
       <Stack.Screen
-        name="EditEventNames"
+        name="EditEventName"
         options={{
           headerTitle: "",
           headerTintColor: theme.colors.secondary,
@@ -56,6 +56,22 @@ const EventsLayout = () => {
       />
       <Stack.Screen
         name="EventNames"
+        options={{
+          headerTitle: "",
+          headerTintColor: theme.colors.secondary,
+          headerStyle: { backgroundColor: theme.colors.primary },
+        }}
+      />
+      <Stack.Screen
+        name="EventNameDetails"
+        options={{
+          headerTitle: "",
+          headerTintColor: theme.colors.secondary,
+          headerStyle: { backgroundColor: theme.colors.primary },
+        }}
+      />
+      <Stack.Screen
+        name="AddEventName"
         options={{
           headerTitle: "",
           headerTintColor: theme.colors.secondary,

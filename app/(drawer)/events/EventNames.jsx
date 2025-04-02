@@ -149,7 +149,7 @@ export default function EventNamesScreen() {
       <View style={styles.buttonContainer}>
         <CustomButton
           title="ADD EVENT NAME"
-          onPress={() => router.push("/event-names/AddEventName")}
+          onPress={() => router.push("/events/AddEventName")}
         />
       </View>
 
