@@ -586,13 +586,11 @@ export const addEventName = async (name) => {
   }
 };
 
-export const editEventName = async (id, name) => {
+export const editEventName = async (id, data) => {
   try {
     const response = await axios.put(
       `${API_URL}/api/event-names/update/${id}`,
-      {
-        name,
-      }
+      data
     );
     if (response.data.success) {
       return response.data.eventName;
