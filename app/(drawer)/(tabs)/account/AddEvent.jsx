@@ -96,35 +96,65 @@ const AddEvent = () => {
         setBlocks([]);
         return;
       }
+
       setLoadingBlocks(true);
       setErrorBlocks(null);
+
       try {
+        console.log(
+          "Fetching blocks for selected departments:",
+          selectedDepartments
+        );
+
         const blockRequests = selectedDepartments.map((departmentId) =>
           axios.get(API_URL + `/api/blocks/${departmentId}`)
         );
+
+        console.log("Sending requests for blocks...");
         const responses = await Promise.all(blockRequests);
+        console.log("Received responses for block requests.");
 
         let mergedBlocks = [];
-        responses.forEach((response) => {
+
+        responses.forEach((response, index) => {
           const responseData = response.data;
+          console.log(
+            `Response from department ${selectedDepartments[index]}:`,
+            responseData
+          );
+
           if (
             responseData &&
             responseData.success &&
             Array.isArray(responseData.data)
           ) {
             mergedBlocks = [...mergedBlocks, ...responseData.data];
+          } else {
+            console.warn(
+              `Warning: Invalid data format or unsuccessful response from department ${selectedDepartments[index]}`
+            );
           }
         });
 
         const uniqueBlocks = Array.from(
-          new Map(mergedBlocks.map((block) => [block.id, block])).values()
-        ).map((block) => ({ label: block.name, value: block.id }));
+          new Map(mergedBlocks.map((block) => [block.block_id, block])).values()
+        ).map((block) => ({
+          label: block.block_name,
+          value: block.block_id,
+        }));
+
+        console.log(
+          "Unique blocks after merging and removing duplicates:",
+          uniqueBlocks
+        );
 
         setBlocks(uniqueBlocks);
       } catch (err) {
         setErrorBlocks(err);
+        console.error("Error fetching blocks:", err);
       } finally {
         setLoadingBlocks(false);
+        console.log("Finished fetching blocks.");
       }
     };
 
@@ -551,6 +581,7 @@ const AddEvent = () => {
         title={modalTitle}
         message={modalMessage}
         type={modalType}
+        cancelTitle="CLOSE"
         onClose={() => setModalVisible(false)}
       />
       <StatusBar style="light" />
