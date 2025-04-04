@@ -57,11 +57,11 @@ export default AcademicManagement;
 
 const styles = StyleSheet.create({
   title: {
-    fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: 45,
     color: theme.colors.primary,
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.title,
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: theme.spacing.small,
   },
   screenWrapper: {
     borderWidth: 2,
@@ -73,7 +73,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderRadius: 8,
   },
-  screenContainer: {},
   screenTitle: {
     fontFamily: theme.fontFamily.SquadaOne,
     fontSize: theme.fontSizes.extraLarge,

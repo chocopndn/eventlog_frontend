@@ -1,6 +1,5 @@
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import React from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 
@@ -10,7 +9,7 @@ import theme from "../../../constants/theme";
 
 const AcademicManagement = () => {
   return (
-    <SafeAreaView style={globalStyles.secondaryContainerSA}>
+    <View style={globalStyles.secondaryContainerSA}>
       <Text style={styles.title}>Academic Management</Text>
 
       <TouchableOpacity
@@ -61,7 +60,7 @@ const AcademicManagement = () => {
       <TabsComponent />
 
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -69,11 +68,11 @@ export default AcademicManagement;
 
 const styles = StyleSheet.create({
   title: {
-    fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: 45,
     color: theme.colors.primary,
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.title,
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: theme.spacing.small,
   },
   screenWrapper: {
     borderWidth: 2,
