@@ -9,7 +9,6 @@ import {
   RefreshControl,
 } from "react-native";
 import TabsComponent from "../../../../components/TabsComponent";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { fetchAdmins, disableAdmin } from "../../../../services/api";
 import { router, useFocusEffect } from "expo-router";
@@ -114,7 +113,7 @@ export default function AdminsScreen() {
   };
 
   return (
-    <SafeAreaView style={globalStyles.secondaryContainer}>
+    <View style={globalStyles.secondaryContainer}>
       <Text style={styles.headerText}>ADMINS</Text>
       <View style={{ paddingHorizontal: theme.spacing.medium, width: "100%" }}>
         <SearchBar placeholder="Search admins..." onSearch={setSearchQuery} />
@@ -202,7 +201,7 @@ export default function AdminsScreen() {
       />
       <TabsComponent />
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -210,7 +209,9 @@ const styles = StyleSheet.create({
   headerText: {
     color: theme.colors.primary,
     fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: theme.fontSizes.display,
+    fontSize: theme.fontSizes.title,
+    textAlign: "center",
+    marginBottom: theme.spacing.small,
   },
   adminContainer: {
     borderWidth: 2,

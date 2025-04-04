@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+
 import { StatusBar } from "expo-status-bar";
 import { fetchRoles } from "../../../../services/api";
 import globalStyles from "../../../../constants/globalStyles";
@@ -24,7 +24,7 @@ export default function RolesScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={globalStyles.secondaryContainer}>
+    <View style={globalStyles.secondaryContainer}>
       <Text style={styles.headerText}>ROLES</Text>
       <ScrollView style={{ flex: 1, width: "100%" }}>
         {roles.length > 0 ? (
@@ -40,7 +40,7 @@ export default function RolesScreen() {
 
       <TabsComponent />
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 }
 

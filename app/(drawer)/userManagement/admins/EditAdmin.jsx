@@ -6,7 +6,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+
 import { StatusBar } from "expo-status-bar";
 import TabsComponent from "../../../../components/TabsComponent";
 import globalStyles from "../../../../constants/globalStyles";
@@ -153,14 +153,14 @@ const EditAdmin = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
+    <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
       <CustomModal
         visible={modal.visible}
         title={modal.title}
@@ -221,7 +221,7 @@ const EditAdmin = () => {
       </ScrollView>
       <TabsComponent />
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -229,9 +229,11 @@ export default EditAdmin;
 
 const styles = StyleSheet.create({
   textHeader: {
-    fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: theme.fontSizes.display,
     color: theme.colors.primary,
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.title,
+    textAlign: "center",
+    marginBottom: theme.spacing.small,
   },
   scrollviewContainer: {
     width: "100%",

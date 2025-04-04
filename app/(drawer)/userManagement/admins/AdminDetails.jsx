@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, SafeAreaView, ScrollView } from "react-native";
+import { StyleSheet, Text, View, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
@@ -66,17 +66,17 @@ const AdminDetails = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <Text style={styles.loadingText}>Loading...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!adminDetails) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <Text style={styles.errorText}>Admin details not found.</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -108,7 +108,7 @@ const AdminDetails = () => {
   };
 
   return (
-    <SafeAreaView
+    <View
       style={[
         globalStyles.secondaryContainer,
         { paddingTop: 0, paddingBottom: 110 },
@@ -208,7 +208,7 @@ const AdminDetails = () => {
 
       <TabsComponent />
       <StatusBar style="light" />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -222,9 +222,11 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.medium,
   },
   title: {
-    fontSize: theme.fontSizes.huge,
-    fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.title,
+    textAlign: "center",
+    marginBottom: theme.spacing.small,
   },
   detailsWrapper: {
     flexGrow: 1,
