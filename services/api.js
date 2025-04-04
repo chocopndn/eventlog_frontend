@@ -17,12 +17,7 @@ export const fetchDepartments = async () => {
   try {
     const response = await axios.get(`${API_URL}/api/departments/departments`);
     if (response.data.success) {
-      return response.data.departments.map((dept) => ({
-        label: dept.department_code,
-        value: dept.department_id,
-        department_name: dept.department_name,
-        status: dept.status,
-      }));
+      return response.data;
     }
     throw new Error("Failed to fetch departments");
   } catch (error) {

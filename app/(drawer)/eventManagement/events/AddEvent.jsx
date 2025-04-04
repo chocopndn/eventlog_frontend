@@ -6,7 +6,6 @@ import {
   ActivityIndicator,
 } from "react-native";
 import React, { useState, useEffect } from "react";
-import { SafeAreaView } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import TabsComponent from "../../../../components/TabsComponent";
 import globalStyles from "../../../../constants/globalStyles";
@@ -38,23 +37,16 @@ const AddEvent = () => {
     const fetchEventNamesData = async () => {
       setIsLoading(true);
       try {
-        console.log("Fetching event names...");
         const eventNamesData = await fetchEventNames();
-        console.log("Raw Event Names Data:", eventNamesData);
-
-        if (Array.isArray(eventNamesData)) {
-          const formattedEventNames = eventNamesData.map((name) => ({
-            label: name.label || name.name,
-            value: name.value || name.id,
-          }));
-          console.log("Formatted Event Names:", formattedEventNames);
-          setEventNames(formattedEventNames);
-        } else {
-          console.error("Invalid event names data format:", eventNamesData);
+        if (!Array.isArray(eventNamesData)) {
           throw new Error("Invalid data format from API.");
         }
+        const formattedEventNames = eventNamesData.map((name) => ({
+          label: name.label || name.name,
+          value: name.value || name.id,
+        }));
+        setEventNames(formattedEventNames);
       } catch (error) {
-        console.error("Error fetching event names:", error);
         setModal({
           visible: true,
           title: "Error",
@@ -65,47 +57,35 @@ const AddEvent = () => {
         setIsLoading(false);
       }
     };
-
     fetchEventNamesData();
   }, []);
 
   useEffect(() => {
     const fetchDepartmentData = async () => {
-      console.log("Fetching departments...");
       setLoadingDepartments(true);
       setErrorDepartments(null);
-
       try {
-        console.log("Calling fetchDepartments...");
-        const departmentsData = await fetchDepartments();
-        console.log("Departments Data from fetchDepartments:", departmentsData);
-
-        if (!Array.isArray(departmentsData)) {
-          console.error("Invalid departments data format:", departmentsData);
-          throw new Error("Invalid data format from API: Expected an array.");
+        const response = await fetchDepartments();
+        if (!response || !Array.isArray(response.departments)) {
+          throw new Error(
+            "Invalid data format from API: Expected 'departments' array."
+          );
         }
-
+        const departmentsData = response.departments;
         const formattedDepartments = departmentsData.map((dept) => ({
-          label: dept.label,
-          value: dept.value,
+          label: dept.department_name,
+          value: dept.department_id,
         }));
-
         if (
           formattedDepartments.some(
             (dept) => !dept.label || dept.value === undefined
           )
         ) {
-          console.warn(
-            "Some formatted departments have missing label or value:",
-            formattedDepartments
-          );
           setErrorDepartments(new Error("Invalid department data."));
           return;
         }
-
         setDepartmentOptions(formattedDepartments);
       } catch (err) {
-        console.error("Error fetching departments:", err);
         setErrorDepartments(err);
         setModal({
           visible: true,
@@ -117,94 +97,64 @@ const AddEvent = () => {
         setLoadingDepartments(false);
       }
     };
-
     fetchDepartmentData();
   }, []);
 
   const handleChange = (name, value) => {
-    console.log(`Form field "${name}" updated with value:`, value);
     setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
   };
 
   const handleDepartmentChange = (selectedItems) => {
-    const validSelectedItems = selectedItems.filter(
-      (item) =>
-        typeof item === "object" && item !== null && item.value !== undefined
+    const validSelectedItems = Array.isArray(selectedItems)
+      ? selectedItems.map((item) => {
+          if (
+            typeof item === "object" &&
+            item !== null &&
+            item.value !== undefined
+          ) {
+            return item;
+          } else {
+            const department = departmentOptions.find(
+              (dept) => dept.value === item
+            );
+            return department || null;
+          }
+        })
+      : [];
+    const filteredSelectedItems = validSelectedItems.filter(
+      (item) => item !== null && item.value !== undefined
     );
-
-    const selectedValues = validSelectedItems.map((item) => item.value);
-    console.log("Selected departments:", selectedValues);
+    const selectedValues = filteredSelectedItems.map((item) => item.value);
     handleChange("department_ids", selectedValues);
-  };
-
-  const handleSubmit = async () => {
-    try {
-      console.log("Submitting form data:", formData);
-
-      if (!formData.event_name_id.trim()) {
-        console.warn("Event name is missing.");
-        setModal({
-          visible: true,
-          title: "Warning",
-          message: "Please select an event name.",
-          type: "warning",
-        });
-        return;
-      }
-
-      if (formData.department_ids.length === 0) {
-        console.warn("No departments selected.");
-        setModal({
-          visible: true,
-          title: "Warning",
-          message: "Please select at least one department.",
-          type: "warning",
-        });
-        return;
-      }
-
-      console.log("Form submission successful.");
-      setModal({
-        visible: true,
-        title: "Success",
-        message: "Event and department selected successfully!",
-        type: "success",
-      });
-    } catch (error) {
-      console.error("Error submitting form:", error);
-      setModal({
-        visible: true,
-        title: "Error",
-        message:
-          error.response?.data?.message ||
-          "Failed to add event. Please try again.",
-        type: "error",
-      });
-    }
   };
 
   if (isLoading || loadingDepartments) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (errorDepartments) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <Text style={{ color: "red", textAlign: "center" }}>
           Failed to load departments. Please try again.
         </Text>
-        <CustomButton title="Retry" onPress={fetchDepartmentData} />
-      </SafeAreaView>
+        <CustomButton
+          title="Retry"
+          onPress={() => {
+            setLoadingDepartments(true);
+            setErrorDepartments(null);
+          }}
+        />
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
-      {/* Modal for Alerts */}
+    <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
       <CustomModal
         visible={modal.visible}
         title={modal.title}
@@ -213,21 +163,16 @@ const AddEvent = () => {
         onClose={() => setModal({ ...modal, visible: false })}
         cancelTitle="CLOSE"
       />
-
-      {/* Header */}
       <Text style={styles.textHeader}>EVENTLOG</Text>
       <View style={styles.titleContainer}>
         <Text style={styles.textTitle}>ADD EVENT</Text>
       </View>
-
-      {/* Scroll View */}
       <ScrollView
         style={styles.scrollviewContainer}
         contentContainerStyle={styles.scrollview}
         showsVerticalScrollIndicator={false}
       >
         <View>
-          {/* Event Name Dropdown */}
           <CustomDropdown
             title="Select Event Name"
             data={eventNames}
@@ -235,8 +180,6 @@ const AddEvent = () => {
             value={formData.event_name_id}
             onSelect={(item) => handleChange("event_name_id", item.value)}
           />
-
-          {/* Department Dropdown (Multi-Select) */}
           <CustomDropdown
             title="Select Departments"
             data={departmentOptions}
@@ -245,18 +188,14 @@ const AddEvent = () => {
             onSelect={handleDepartmentChange}
             multiSelect
           />
-
-          {/* Submit Button */}
           <View style={styles.buttonContainer}>
-            <CustomButton title="SUBMIT" onPress={handleSubmit} />
+            <CustomButton title="SUBMIT" onPress={() => handleSubmit()} />
           </View>
         </View>
       </ScrollView>
-
-      {/* Tabs and Status Bar */}
       <TabsComponent />
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -264,9 +203,11 @@ export default AddEvent;
 
 const styles = StyleSheet.create({
   textHeader: {
-    fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: theme.fontSizes.display,
     color: theme.colors.primary,
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.title,
+    textAlign: "center",
+    marginBottom: theme.spacing.small,
   },
   scrollviewContainer: {
     width: "100%",
