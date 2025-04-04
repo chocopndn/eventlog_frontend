@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -16,13 +16,26 @@ const DurationPicker = ({
   onDurationSelect,
   selectedDuration,
 }) => {
-  const [hours, setHours] = useState(0);
-  const [minutes, setMinutes] = useState(0);
+  const initialHours = visible ? Math.floor(selectedDuration / 60) : 0;
+  const initialMinutes = visible
+    ? Math.round((selectedDuration % 60) / 5) * 5
+    : 0;
+
+  const [hours, setHours] = useState(initialHours);
+  const [minutes, setMinutes] = useState(initialMinutes);
+  const isInitialRender = useRef(true);
 
   useEffect(() => {
-    if (visible && selectedDuration !== undefined) {
-      setHours(Math.floor(selectedDuration / 60));
-      setMinutes(selectedDuration % 60);
+    if (visible) {
+      const newHours = Math.floor(selectedDuration / 60);
+      const newMinutes = Math.round((selectedDuration % 60) / 5) * 5;
+      if (newHours !== hours || newMinutes !== minutes) {
+        setHours(newHours);
+        setMinutes(newMinutes);
+      }
+      isInitialRender.current = false;
+    } else {
+      isInitialRender.current = true;
     }
   }, [visible, selectedDuration]);
 
@@ -40,11 +53,15 @@ const DurationPicker = ({
 
           <View style={styles.pickerRow}>
             <WheelPickerExpo
+              key={`hours-picker-${visible}`}
               items={Array.from({ length: 24 }, (_, i) => ({
                 label: `${i} hrs`,
                 value: i,
               }))}
               selectedValue={hours}
+              initialSelectedIndex={
+                visible && isInitialRender.current ? hours : undefined
+              }
               onChange={({ item }) => setHours(item.value)}
               height={150}
               width={100}
@@ -52,11 +69,15 @@ const DurationPicker = ({
             />
             <Text style={styles.separator}>:</Text>
             <WheelPickerExpo
+              key={`minutes-picker-${visible}`}
               items={Array.from({ length: 12 }, (_, i) => ({
                 label: `${i * 5} mins`,
                 value: i * 5,
               }))}
               selectedValue={minutes}
+              initialSelectedIndex={
+                visible && isInitialRender.current ? minutes / 5 : undefined
+              }
               onChange={({ item }) => setMinutes(item.value)}
               height={150}
               width={100}
