@@ -14,6 +14,7 @@ import CustomDropdown from "../../../../components/CustomDropdown";
 import CustomButton from "../../../../components/CustomButton";
 import CustomModal from "../../../../components/CustomModal";
 import FormField from "../../../../components/FormField";
+import DateTimePickerComponent from "../../../../components/DateTimePickerComponent";
 import {
   fetchDepartments,
   fetchEventNames,
@@ -27,8 +28,8 @@ const AddEvent = () => {
     block_ids: [],
     venue: "",
     description: "",
+    am_in: null,
   });
-
   const [eventNames, setEventNames] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
   const [blockOptions, setBlockOptions] = useState([]);
@@ -149,54 +150,56 @@ const AddEvent = () => {
   };
 
   const handleDepartmentChange = (selectedItems) => {
-    const validSelectedItems = Array.isArray(selectedItems)
-      ? selectedItems.map((item) => {
-          if (
-            typeof item === "object" &&
-            item !== null &&
-            item.value !== undefined
-          ) {
-            return item;
-          } else {
-            const department = departmentOptions.find(
-              (dept) => dept.value === item
-            );
-            return department || null;
-          }
-        })
-      : [];
-    const filteredSelectedItems = validSelectedItems.filter(
-      (item) => item !== null && item.value !== undefined
-    );
-    const selectedValues = filteredSelectedItems.map((item) => item.value);
-    handleChange("department_ids", selectedValues);
+    try {
+      const validSelectedItems = Array.isArray(selectedItems)
+        ? selectedItems.map((item) => {
+            if (
+              typeof item === "object" &&
+              item !== null &&
+              item.value !== undefined
+            ) {
+              return item;
+            } else {
+              const department = departmentOptions.find(
+                (dept) => dept.value === item
+              );
+              return department || null;
+            }
+          })
+        : [];
+      const filteredSelectedItems = validSelectedItems.filter(
+        (item) => item !== null && item.value !== undefined
+      );
+      const selectedValues = filteredSelectedItems.map((item) => item.value);
+      handleChange("department_ids", selectedValues);
+    } catch (error) {}
   };
 
   const handleBlockChange = (selectedItems) => {
-    const validSelectedItems = Array.isArray(selectedItems)
-      ? selectedItems.map((item) => {
-          if (
-            typeof item === "object" &&
-            item !== null &&
-            item.value !== undefined
-          ) {
-            return item;
-          } else {
-            const block = blockOptions.find((blk) => blk.value === item);
-            return block || null;
-          }
-        })
-      : [];
-    const filteredSelectedItems = validSelectedItems.filter(
-      (item) => item !== null && item.value !== undefined
-    );
-    const selectedValues = filteredSelectedItems.map((item) => item.value);
-    handleChange("block_ids", selectedValues);
+    try {
+      const validSelectedItems = Array.isArray(selectedItems)
+        ? selectedItems.map((item) => {
+            if (
+              typeof item === "object" &&
+              item !== null &&
+              item.value !== undefined
+            ) {
+              return item;
+            } else {
+              const block = blockOptions.find((blk) => blk.value === item);
+              return block || null;
+            }
+          })
+        : [];
+      const filteredSelectedItems = validSelectedItems.filter(
+        (item) => item !== null && item.value !== undefined
+      );
+      const selectedValues = filteredSelectedItems.map((item) => item.value);
+      handleChange("block_ids", selectedValues);
+    } catch (error) {}
   };
 
-  const handleSubmit = () => {
-    console.log("Form Data Submitted:", formData);
-  };
+  const handleSubmit = () => {};
 
   if (isLoading || loadingDepartments) {
     return (
@@ -230,7 +233,9 @@ const AddEvent = () => {
         title={modal.title}
         message={modal.message}
         type={modal.type}
-        onClose={() => setModal({ ...modal, visible: false })}
+        onClose={() => {
+          setModal({ ...modal, visible: false });
+        }}
         cancelTitle="CLOSE"
       />
       <Text style={styles.textHeader}>EVENTLOG</Text>
@@ -270,14 +275,12 @@ const AddEvent = () => {
               multiSelect
             />
           )}
-          {/* Venue Field */}
           <FormField
             title="Venue"
             placeholder="Enter venue details"
             value={formData.venue}
             onChangeText={(text) => handleChange("venue", text)}
           />
-          {/* Description Field */}
           <FormField
             title="Description"
             placeholder="Enter event description..."
@@ -285,6 +288,46 @@ const AddEvent = () => {
             onChangeText={(text) => handleChange("description", text)}
             multiline={true}
           />
+          <View>
+            <View style={styles.timeWrapper}>
+              <View style={styles.timeContainer}>
+                <DateTimePickerComponent
+                  title="AM Time In"
+                  type="time"
+                  mode="single"
+                  onDateChange={(time) => handleChange("am_in", time)}
+                />
+              </View>
+              <View style={styles.timeContainer}>
+                <DateTimePickerComponent
+                  title="AM Time Out"
+                  type="time"
+                  mode="single"
+                  onDateChange={(time) => handleChange("am_in", time)}
+                />
+              </View>
+            </View>
+          </View>
+          <View>
+            <View style={styles.timeWrapper}>
+              <View style={styles.timeContainer}>
+                <DateTimePickerComponent
+                  title="PM Time In"
+                  type="time"
+                  mode="single"
+                  onDateChange={(time) => handleChange("am_in", time)}
+                />
+              </View>
+              <View style={styles.timeContainer}>
+                <DateTimePickerComponent
+                  title="PM Time Out"
+                  type="time"
+                  mode="single"
+                  onDateChange={(time) => handleChange("am_in", time)}
+                />
+              </View>
+            </View>
+          </View>
           <View style={styles.buttonContainer}>
             <CustomButton title="SUBMIT" onPress={handleSubmit} />
           </View>
@@ -333,5 +376,19 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: theme.spacing.medium,
+  },
+  timeOfDayText: {
+    fontSize: theme.fontSizes.medium,
+    fontFamily: theme.fontFamily.Arial,
+    color: theme.colors.primary,
+    marginBottom: theme.spacing.small,
+  },
+  timeWrapper: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  timeContainer: {
+    width: "45%",
   },
 });

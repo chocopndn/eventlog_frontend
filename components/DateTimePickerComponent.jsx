@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import theme from "../constants/theme";
 
-const DatePickerComponent = ({
+const DateTimePickerComponent = ({
   type = "date",
   label,
   title,
@@ -27,13 +27,15 @@ const DatePickerComponent = ({
         ? initialSelectedValues
         : new Date(initialSelectedValues);
     }
-    return type === "date" ? [] : new Date();
+    return type === "date" ? [] : null;
   });
+
   const [tempDate, setTempDate] = useState(() =>
     type === "date" && selectedDatesInternal.length > 0
       ? selectedDatesInternal[0]
-      : new Date()
+      : null
   );
+
   const [initiallyFetchedDates, setInitiallyFetchedDates] = useState([]);
   const hasFetchedInitial = useRef(false);
 
@@ -93,7 +95,6 @@ const DatePickerComponent = ({
               .map((date) => new Date(date))
               .sort((a, b) => a - b)
           );
-          setTempDate(new Date());
         } else if (
           type === "date" &&
           initialSelectedValues &&
@@ -104,61 +105,12 @@ const DatePickerComponent = ({
               ? initialSelectedValues
               : new Date(initialSelectedValues)
           );
-          setTempDate(
-            initialSelectedValues instanceof Date
-              ? initialSelectedValues
-              : new Date(initialSelectedValues)
-          );
-        } else if (type !== "date" && initialSelectedValues) {
-          const initialTimeDate =
-            typeof initialSelectedValues === "string"
-              ? new Date(`2000-01-01T${initialSelectedValues}Z`)
-              : initialSelectedValues instanceof Date
-              ? initialSelectedValues
-              : new Date();
-          setSelectedDatesInternal(initialTimeDate);
-          setTempDate(initialTimeDate);
-        } else if (type === "date" && mode === "multiple") {
-          setSelectedDatesInternal([]);
-          setTempDate(new Date());
-        } else if (type !== "date") {
-          const now = new Date();
-          setSelectedDatesInternal(now);
-          setTempDate(now);
         }
       }
     };
 
     if (typeof fetchData === "function" && !hasFetchedInitial.current) {
       populateDatesFromFetch();
-    } else if (typeof fetchData !== "function") {
-      if (
-        type === "date" &&
-        Array.isArray(initialSelectedValues) &&
-        mode === "multiple"
-      ) {
-        setSelectedDatesInternal(
-          initialSelectedValues
-            .map((date) => new Date(date))
-            .sort((a, b) => a - b)
-        );
-        setTempDate(new Date());
-      } else if (
-        type === "date" &&
-        initialSelectedValues &&
-        mode === "single"
-      ) {
-        setSelectedDatesInternal(
-          initialSelectedValues instanceof Date
-            ? initialSelectedValues
-            : new Date(initialSelectedValues)
-        );
-        setTempDate(
-          initialSelectedValues instanceof Date
-            ? initialSelectedValues
-            : new Date(initialSelectedValues)
-        );
-      }
     }
   }, [mode, onDateChange, type, initialSelectedValues, fetchData]);
 
@@ -179,33 +131,39 @@ const DatePickerComponent = ({
   const handleDateChange = (event, selectedDate) => {
     setShowPicker(false);
     if (selectedDate) {
-      if (type === "date") {
-        if (mode === "multiple") {
-          const formattedValue = formatDateValue(selectedDate);
-          const isCurrentlySelected = selectedDatesInternal.some(
-            (date) => formatDateValue(date) === formattedValue
-          );
-          let newSelectedDates = [...selectedDatesInternal];
-          if (isCurrentlySelected) {
-            newSelectedDates = newSelectedDates.filter(
-              (date) => formatDateValue(date) !== formattedValue
+      try {
+        setTempDate(selectedDate);
+        if (type === "date") {
+          if (mode === "multiple") {
+            const formattedValue = formatDateValue(selectedDate);
+            const isCurrentlySelected = selectedDatesInternal.some(
+              (date) => formatDateValue(date) === formattedValue
             );
+            let newSelectedDates = [...selectedDatesInternal];
+            if (isCurrentlySelected) {
+              newSelectedDates = newSelectedDates.filter(
+                (date) => formatDateValue(date) !== formattedValue
+              );
+            } else {
+              newSelectedDates.push(selectedDate);
+              newSelectedDates.sort((a, b) => a - b);
+            }
+            setSelectedDatesInternal(newSelectedDates);
+            onDateChange?.(newSelectedDates.map(formatDateValue));
           } else {
-            newSelectedDates.push(selectedDate);
-            newSelectedDates.sort((a, b) => a - b);
+            setSelectedDatesInternal(selectedDate);
+            onDateChange?.(formatDateValue(selectedDate));
           }
-          setSelectedDatesInternal(newSelectedDates);
-          onDateChange?.(newSelectedDates.map(formatDateValue));
-        } else {
+        } else if (type !== "date") {
+          const formattedTime = selectedDate.toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          });
           setSelectedDatesInternal(selectedDate);
-          onDateChange?.(formatDateValue(selectedDate));
+          onDateChange?.(formattedTime);
         }
-      } else if (type !== "date") {
-        const hours = selectedDate.getHours().toString().padStart(2, "0");
-        const minutes = selectedDate.getMinutes().toString().padStart(2, "0");
-        const formattedTime = `${hours}:${minutes}:00`;
-        onDateChange?.(formattedTime);
-      }
+      } catch (error) {}
     }
   };
 
@@ -217,10 +175,10 @@ const DatePickerComponent = ({
         ? formatDisplayDate(selectedDatesInternal)
         : "Select date"
       : selectedDatesInternal instanceof Date
-      ? selectedDatesInternal.toLocaleTimeString([], {
-          hour: "2-digit",
+      ? selectedDatesInternal.toLocaleTimeString("en-US", {
+          hour: "numeric",
           minute: "2-digit",
-          hour12: false,
+          hour12: true,
         })
       : "Select time";
 
@@ -235,14 +193,13 @@ const DatePickerComponent = ({
           {label && <Text style={styles.label}>{label}</Text>}
           <Text style={styles.dateDisplay}>{formattedDisplay}</Text>
         </TouchableOpacity>
-
         {showPicker && (
           <DateTimePicker
-            value={tempDate}
+            value={tempDate || new Date()}
             mode={type}
             display="default"
             onChange={handleDateChange}
-            is24Hour={true}
+            is24Hour={false}
           />
         )}
       </View>
@@ -267,7 +224,7 @@ const DatePickerComponent = ({
   );
 };
 
-export default DatePickerComponent;
+export default DateTimePickerComponent;
 
 const styles = StyleSheet.create({
   container: {
