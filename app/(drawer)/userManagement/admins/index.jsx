@@ -155,8 +155,8 @@ export default function AdminsScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => handleDisablePress(admin)}
-                  disabled={admin.status === "disabled"}
-                  style={{ opacity: admin.status === "disabled" ? 0.5 : 1 }}
+                  disabled={admin.status === "Disabled"}
+                  style={{ opacity: admin.status === "Disabled" ? 0.5 : 1 }}
                 >
                   <Image source={images.disabled} style={styles.icon} />
                 </TouchableOpacity>

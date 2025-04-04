@@ -143,12 +143,7 @@ const AdminDetails = () => {
           <Text style={styles.detailTitle}>Email Address:</Text>
           <Text style={styles.detail}>{adminDetails.email}</Text>
         </View>
-        <View style={styles.detailsContainer}>
-          <Text style={styles.detailTitle}>Department:</Text>
-          <Text style={styles.detail}>
-            {adminDetails.department_code || "-"}
-          </Text>
-        </View>
+
         <View style={styles.detailsContainer}>
           <Text style={styles.detailTitle}>Role:</Text>
           <Text style={styles.detail}>{adminDetails.role_name || "-"}</Text>
@@ -170,7 +165,7 @@ const AdminDetails = () => {
             }
           />
         </View>
-        {adminDetails.status !== "disabled" &&
+        {adminDetails.status !== "Disabled" &&
           currentUser?.id_number !== adminDetails.id_number && (
             <View style={styles.button}>
               <CustomButton

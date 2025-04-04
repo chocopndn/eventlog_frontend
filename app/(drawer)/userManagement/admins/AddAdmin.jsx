@@ -14,7 +14,7 @@ import theme from "../../../../constants/theme";
 import FormField from "../../../../components/FormField";
 import CustomDropdown from "../../../../components/CustomDropdown";
 import CustomButton from "../../../../components/CustomButton";
-import { fetchDepartments, addAdmin } from "../../../../services/api";
+import { addAdmin } from "../../../../services/api";
 import CustomModal from "../../../../components/CustomModal";
 
 const AddAdmin = () => {
@@ -25,12 +25,10 @@ const AddAdmin = () => {
     last_name: "",
     suffix: "",
     email: "",
-    department_id: null,
     role_id: null,
   });
 
-  const [departmentOptions, setDepartmentOptions] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [modal, setModal] = useState({
     visible: false,
     title: "",
@@ -43,27 +41,6 @@ const AddAdmin = () => {
     { label: "Super Admin", value: 4 },
   ];
 
-  useEffect(() => {
-    const fetchDepartmentsData = async () => {
-      setIsLoading(true);
-      try {
-        const departments = await fetchDepartments();
-        setDepartmentOptions(departments);
-      } catch (error) {
-        setModal({
-          visible: true,
-          title: "Error",
-          message: "Failed to load departments. Please try again.",
-          type: "error",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDepartmentsData();
-  }, []);
-
   const handleChange = (name, value) => {
     setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
   };
@@ -75,7 +52,6 @@ const AddAdmin = () => {
         !formData.first_name ||
         !formData.last_name ||
         !formData.email.trim() ||
-        formData.department_id === null ||
         formData.role_id === null
       ) {
         setModal({
@@ -94,7 +70,6 @@ const AddAdmin = () => {
         last_name: formData.last_name,
         suffix: formData.suffix,
         email: formData.email,
-        department_id: formData.department_id,
         role_id: formData.role_id,
       };
 
@@ -112,7 +87,6 @@ const AddAdmin = () => {
         last_name: "",
         suffix: "",
         email: "",
-        department_id: null,
         role_id: null,
       });
     } catch (error) {
@@ -196,13 +170,6 @@ const AddAdmin = () => {
           onChangeText={(text) => handleChange("email", text)}
         />
 
-        <CustomDropdown
-          title="Department"
-          data={departmentOptions}
-          placeholder="Select a department"
-          value={formData.department_id}
-          onSelect={(item) => handleChange("department_id", item.value)}
-        />
         <CustomDropdown
           title="Role"
           data={roleOptions}
