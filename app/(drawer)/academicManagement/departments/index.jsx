@@ -9,9 +9,9 @@ import {
   RefreshControl,
 } from "react-native";
 import TabsComponent from "../../../../components/TabsComponent";
-import { SafeAreaView } from "react-native-safe-area-context";
+
 import { StatusBar } from "expo-status-bar";
-import { fetchDepartments, deleteDepartment } from "../../../../services/api";
+import { fetchDepartments, disableDepartment } from "../../../../services/api";
 import { router, useFocusEffect } from "expo-router";
 
 import images from "../../../../constants/images";
@@ -25,9 +25,9 @@ import theme from "../../../../constants/theme";
 export default function DepartmentsScreen() {
   const [departments, setDepartments] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isDisableModalVisible, setIsDisableModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
-  const [departmentToDelete, setDepartmentToDelete] = useState(null);
+  const [departmentToDisable, setDepartmentToDisable] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadDepartments = async () => {
@@ -64,35 +64,37 @@ export default function DepartmentsScreen() {
       })
     : [];
 
-  const handleDeletePress = (department) => {
-    setDepartmentToDelete(department);
-    setIsDeleteModalVisible(true);
+  const handleDisablePress = (department) => {
+    setDepartmentToDisable(department);
+    setIsDisableModalVisible(true);
   };
 
-  const handleDeleteModalClose = () => {
-    setIsDeleteModalVisible(false);
-    setDepartmentToDelete(null);
+  const handleDisableModalClose = () => {
+    setIsDisableModalVisible(false);
+    setDepartmentToDisable(null);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!departmentToDelete) return;
+  const handleConfirmDisable = async () => {
+    if (!departmentToDisable) return;
 
     try {
-      await deleteDepartment(departmentToDelete.value);
+      await disableDepartment(departmentToDisable.value);
+
       setDepartments((prevDepartments) =>
         prevDepartments.map((dept) =>
-          dept.value === departmentToDelete.value
-            ? { ...dept, status: "deleted" }
+          dept.value === departmentToDisable.value
+            ? { ...dept, status: "Disabled" }
             : dept
         )
       );
-      handleDeleteModalClose();
+
+      handleDisableModalClose();
       setIsSuccessModalVisible(true);
     } catch (error) {}
   };
 
   return (
-    <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
+    <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
       <Text style={styles.headerText}>DEPARTMENTS</Text>
       <View style={{ paddingHorizontal: theme.spacing.medium, width: "100%" }}>
         <SearchBar
@@ -140,11 +142,13 @@ export default function DepartmentsScreen() {
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => handleDeletePress(department)}
-                  disabled={department.status === "deleted"}
-                  style={{ opacity: department.status === "deleted" ? 0.5 : 1 }}
+                  onPress={() => handleDisablePress(department)}
+                  disabled={department.status === "Disabled"}
+                  style={{
+                    opacity: department.status === "Disabled" ? 0.5 : 1,
+                  }}
                 >
-                  <Image source={images.trash} style={styles.icon} />
+                  <Image source={images.disabled} style={styles.icon} />
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -164,20 +168,20 @@ export default function DepartmentsScreen() {
       </View>
 
       <CustomModal
-        visible={isDeleteModalVisible}
-        title="Confirm Deletion"
-        message={`Are you sure you want to delete ${departmentToDelete?.label}?`}
+        visible={isDisableModalVisible}
+        title="Confirm Disable"
+        message={`Are you sure you want to disable ${departmentToDisable?.label}?`}
         type="warning"
-        onClose={handleDeleteModalClose}
-        onConfirm={handleConfirmDelete}
+        onClose={handleDisableModalClose}
+        onConfirm={handleConfirmDisable}
         cancelTitle="Cancel"
-        confirmTitle="Delete"
+        confirmTitle="Disable"
       />
 
       <CustomModal
         visible={isSuccessModalVisible}
         title="Success"
-        message="Department deleted successfully!"
+        message="Department disabled successfully!"
         type="success"
         onClose={() => setIsSuccessModalVisible(false)}
         cancelTitle="CLOSE"
@@ -185,7 +189,7 @@ export default function DepartmentsScreen() {
 
       <TabsComponent />
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -193,9 +197,9 @@ const styles = StyleSheet.create({
   headerText: {
     color: theme.colors.primary,
     fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: 60,
+    fontSize: theme.fontSizes.title,
     textAlign: "center",
-    marginBottom: theme.spacing.medium,
+    marginBottom: theme.spacing.small,
   },
   departmentContainer: {
     borderWidth: 2,

@@ -74,10 +74,10 @@ export const editDepartment = async (departmentId, departmentData) => {
   }
 };
 
-export const deleteDepartment = async (departmentId) => {
+export const disableDepartment = async (departmentId) => {
   try {
     const response = await axios.put(
-      `${API_URL}/api/departments/departments/del/${departmentId}`
+      `${API_URL}/api/departments/departments/dis/${departmentId}`
     );
     if (response.data.success) {
       return true;

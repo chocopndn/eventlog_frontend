@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, SafeAreaView, ScrollView } from "react-native";
+import { StyleSheet, Text, View, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
@@ -11,7 +11,7 @@ import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import {
   fetchDepartmentById,
-  deleteDepartment,
+  disableDepartment, // Updated API function
 } from "../../../../services/api";
 import { useLocalSearchParams } from "expo-router";
 
@@ -19,7 +19,7 @@ const DepartmentDetails = () => {
   const { id: department_id } = useLocalSearchParams();
   const [departmentDetails, setDepartmentDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isDisableModalVisible, setIsDisableModalVisible] = useState(false); // Renamed variable
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 
   const fetchDepartmentDetails = async () => {
@@ -46,31 +46,37 @@ const DepartmentDetails = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <Text style={styles.loadingText}>Loading...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!departmentDetails) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <Text style={styles.errorText}>Department details not found.</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
-  const handleDeletePress = () => {
-    setIsDeleteModalVisible(true);
+  const handleDisablePress = () => {
+    setIsDisableModalVisible(true);
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDisable = async () => {
     try {
-      await deleteDepartment(departmentDetails.department_id);
-      setIsDeleteModalVisible(false);
+      await disableDepartment(departmentDetails.department_id); // Call the disable API
+
+      // Update the department's status in the state
+      setDepartmentDetails((prevDetails) =>
+        prevDetails ? { ...prevDetails, status: "Disabled" } : null
+      );
+
+      setIsDisableModalVisible(false);
       setIsSuccessModalVisible(true);
     } catch (error) {
-      console.error("Error deleting department:", error);
+      console.error("Error disabling department:", error);
     }
   };
 
@@ -80,7 +86,7 @@ const DepartmentDetails = () => {
   };
 
   return (
-    <SafeAreaView
+    <View
       style={[
         globalStyles.secondaryContainer,
         { paddingTop: 0, paddingBottom: 110 },
@@ -116,32 +122,33 @@ const DepartmentDetails = () => {
             }
           />
         </View>
-        {departmentDetails.status === "deleted" ? null : (
+        {departmentDetails.status === "Disabled" ? null : (
           <View style={styles.button}>
             <CustomButton
-              title="DELETE"
+              title="DISABLE"
               type="secondary"
-              onPress={handleDeletePress}
+              onPress={handleDisablePress}
             />
           </View>
         )}
       </View>
 
       <CustomModal
-        visible={isDeleteModalVisible}
-        title="Confirm Deletion"
-        message={`Are you sure you want to delete ${departmentDetails.department_name}?`}
+        visible={isDisableModalVisible}
+        title="Confirm Disable"
+        message={`Are you sure you want to disable ${departmentDetails.department_name}?`}
         type="warning"
-        onClose={() => setIsDeleteModalVisible(false)}
-        onConfirm={handleConfirmDelete}
+        onClose={() => setIsDisableModalVisible(false)}
+        onConfirm={handleConfirmDisable}
         cancelTitle="Cancel"
-        confirmTitle="Delete"
+        confirmTitle="Disable"
       />
 
+      {/* Success Modal */}
       <CustomModal
         visible={isSuccessModalVisible}
         title="Success"
-        message="Department deleted successfully!"
+        message="Department disabled successfully!"
         type="success"
         onClose={handleSuccessModalClose}
         cancelTitle="CLOSE"
@@ -149,7 +156,7 @@ const DepartmentDetails = () => {
 
       <TabsComponent />
       <StatusBar style="light" />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -163,9 +170,11 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.medium,
   },
   title: {
-    fontSize: theme.fontSizes.huge,
-    fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: 40,
+    textAlign: "center",
+    marginBottom: theme.spacing.small,
   },
   detailsWrapper: {
     flexGrow: 1,
