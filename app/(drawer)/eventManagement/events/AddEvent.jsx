@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -5,7 +6,6 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import TabsComponent from "../../../../components/TabsComponent";
 import globalStyles from "../../../../constants/globalStyles";
@@ -14,7 +14,7 @@ import CustomDropdown from "../../../../components/CustomDropdown";
 import CustomButton from "../../../../components/CustomButton";
 import CustomModal from "../../../../components/CustomModal";
 import FormField from "../../../../components/FormField";
-import DateTimePickerComponent from "../../../../components/DateTimePickerComponent";
+import TimePickerComponent from "../../../../components/TimePickerComponent";
 import {
   fetchDepartments,
   fetchEventNames,
@@ -29,7 +29,11 @@ const AddEvent = () => {
     venue: "",
     description: "",
     am_in: null,
+    am_out: null,
+    pm_in: null,
+    pm_out: null,
   });
+
   const [eventNames, setEventNames] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
   const [blockOptions, setBlockOptions] = useState([]);
@@ -149,57 +153,96 @@ const AddEvent = () => {
     setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
   };
 
-  const handleDepartmentChange = (selectedItems) => {
-    try {
-      const validSelectedItems = Array.isArray(selectedItems)
-        ? selectedItems.map((item) => {
-            if (
-              typeof item === "object" &&
-              item !== null &&
-              item.value !== undefined
-            ) {
-              return item;
-            } else {
-              const department = departmentOptions.find(
-                (dept) => dept.value === item
-              );
-              return department || null;
-            }
-          })
-        : [];
-      const filteredSelectedItems = validSelectedItems.filter(
-        (item) => item !== null && item.value !== undefined
-      );
-      const selectedValues = filteredSelectedItems.map((item) => item.value);
-      handleChange("department_ids", selectedValues);
-    } catch (error) {}
+  const handleSubmit = () => {
+    const {
+      event_name_id,
+      department_ids,
+      block_ids,
+      venue,
+      description,
+      am_in,
+      am_out,
+      pm_in,
+      pm_out,
+    } = formData;
+
+    if (!event_name_id) {
+      setModal({
+        visible: true,
+        title: "Error",
+        message: "Please select an event name.",
+        type: "error",
+      });
+      return;
+    }
+
+    if (department_ids.length === 0) {
+      setModal({
+        visible: true,
+        title: "Error",
+        message: "Please select at least one department.",
+        type: "error",
+      });
+      return;
+    }
+
+    if (block_ids.length === 0) {
+      setModal({
+        visible: true,
+        title: "Error",
+        message: "Please select at least one block.",
+        type: "error",
+      });
+      return;
+    }
+
+    if (!venue.trim()) {
+      setModal({
+        visible: true,
+        title: "Error",
+        message: "Please enter venue details.",
+        type: "error",
+      });
+      return;
+    }
+
+    if (!description.trim()) {
+      setModal({
+        visible: true,
+        title: "Error",
+        message: "Please enter an event description.",
+        type: "error",
+      });
+      return;
+    }
+
+    if ((!am_in && am_out) || (!pm_in && pm_out)) {
+      setModal({
+        visible: true,
+        title: "Error",
+        message:
+          "AM In/AM Out and PM In/PM Out must be selected as pairs. Partial selections are invalid.",
+        type: "error",
+      });
+      return;
+    }
+
+    if (!am_in && !am_out && !pm_in && !pm_out) {
+      setModal({
+        visible: true,
+        title: "Error",
+        message: "At least one time pair (AM or PM) must be selected.",
+        type: "error",
+      });
+      return;
+    }
+
+    console.log("Form Data:", formData);
   };
 
-  const handleBlockChange = (selectedItems) => {
-    try {
-      const validSelectedItems = Array.isArray(selectedItems)
-        ? selectedItems.map((item) => {
-            if (
-              typeof item === "object" &&
-              item !== null &&
-              item.value !== undefined
-            ) {
-              return item;
-            } else {
-              const block = blockOptions.find((blk) => blk.value === item);
-              return block || null;
-            }
-          })
-        : [];
-      const filteredSelectedItems = validSelectedItems.filter(
-        (item) => item !== null && item.value !== undefined
-      );
-      const selectedValues = filteredSelectedItems.map((item) => item.value);
-      handleChange("block_ids", selectedValues);
-    } catch (error) {}
+  const handleModalClose = () => {
+    setModal({ ...modal, visible: false });
   };
-
-  const handleSubmit = () => {};
 
   if (isLoading || loadingDepartments) {
     return (
@@ -233,9 +276,7 @@ const AddEvent = () => {
         title={modal.title}
         message={modal.message}
         type={modal.type}
-        onClose={() => {
-          setModal({ ...modal, visible: false });
-        }}
+        onClose={handleModalClose}
         cancelTitle="CLOSE"
       />
       <Text style={styles.textHeader}>EVENTLOG</Text>
@@ -260,7 +301,31 @@ const AddEvent = () => {
             data={departmentOptions}
             placeholder="Select departments"
             value={formData.department_ids}
-            onSelect={handleDepartmentChange}
+            onSelect={(selectedItems) => {
+              const validSelectedItems = Array.isArray(selectedItems)
+                ? selectedItems.map((item) => {
+                    if (
+                      typeof item === "object" &&
+                      item !== null &&
+                      item.value !== undefined
+                    ) {
+                      return item;
+                    } else {
+                      const department = departmentOptions.find(
+                        (dept) => dept.value === item
+                      );
+                      return department || null;
+                    }
+                  })
+                : [];
+              const filteredSelectedItems = validSelectedItems.filter(
+                (item) => item !== null && item.value !== undefined
+              );
+              const selectedValues = filteredSelectedItems.map(
+                (item) => item.value
+              );
+              handleChange("department_ids", selectedValues);
+            }}
             multiSelect
           />
           {loadingBlocks ? (
@@ -271,7 +336,31 @@ const AddEvent = () => {
               data={blockOptions}
               placeholder="Select blocks"
               value={formData.block_ids}
-              onSelect={handleBlockChange}
+              onSelect={(selectedItems) => {
+                const validSelectedItems = Array.isArray(selectedItems)
+                  ? selectedItems.map((item) => {
+                      if (
+                        typeof item === "object" &&
+                        item !== null &&
+                        item.value !== undefined
+                      ) {
+                        return item;
+                      } else {
+                        const block = blockOptions.find(
+                          (blk) => blk.value === item
+                        );
+                        return block || null;
+                      }
+                    })
+                  : [];
+                const filteredSelectedItems = validSelectedItems.filter(
+                  (item) => item !== null && item.value !== undefined
+                );
+                const selectedValues = filteredSelectedItems.map(
+                  (item) => item.value
+                );
+                handleChange("block_ids", selectedValues);
+              }}
               multiSelect
             />
           )}
@@ -291,40 +380,40 @@ const AddEvent = () => {
           <View>
             <View style={styles.timeWrapper}>
               <View style={styles.timeContainer}>
-                <DateTimePickerComponent
+                <TimePickerComponent
                   title="AM Time In"
-                  type="time"
                   mode="single"
-                  onDateChange={(time) => handleChange("am_in", time)}
+                  onTimeChange={(time) => handleChange("am_in", time)}
                 />
               </View>
               <View style={styles.timeContainer}>
-                <DateTimePickerComponent
-                  title="AM Time Out"
-                  type="time"
-                  mode="single"
-                  onDateChange={(time) => handleChange("am_in", time)}
-                />
+                {formData.am_in && (
+                  <TimePickerComponent
+                    title="AM Time Out"
+                    mode="single"
+                    onTimeChange={(time) => handleChange("am_out", time)}
+                  />
+                )}
               </View>
             </View>
           </View>
           <View>
             <View style={styles.timeWrapper}>
               <View style={styles.timeContainer}>
-                <DateTimePickerComponent
+                <TimePickerComponent
                   title="PM Time In"
-                  type="time"
                   mode="single"
-                  onDateChange={(time) => handleChange("am_in", time)}
+                  onTimeChange={(time) => handleChange("pm_in", time)}
                 />
               </View>
               <View style={styles.timeContainer}>
-                <DateTimePickerComponent
-                  title="PM Time Out"
-                  type="time"
-                  mode="single"
-                  onDateChange={(time) => handleChange("am_in", time)}
-                />
+                {formData.pm_in && (
+                  <TimePickerComponent
+                    title="PM Time Out"
+                    mode="single"
+                    onTimeChange={(time) => handleChange("pm_out", time)}
+                  />
+                )}
               </View>
             </View>
           </View>
