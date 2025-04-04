@@ -93,18 +93,12 @@ export const fetchBlocksByDepartment = async (departmentIds) => {
       )
     );
 
-    return responses.flatMap((res) =>
-      res.data.success
-        ? res.data.data.map((block) => ({
-            label: block.name,
-            value: block.id,
-          }))
-        : []
-    );
+    return responses.flatMap((res) => (res.data.success ? res.data.data : []));
   } catch (error) {
     throw error;
   }
 };
+
 export const fetchBlocks = async () => {
   try {
     const response = await axios.get(`${API_URL}/api/blocks`);

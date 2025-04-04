@@ -13,18 +13,25 @@ import theme from "../../../../constants/theme";
 import CustomDropdown from "../../../../components/CustomDropdown";
 import CustomButton from "../../../../components/CustomButton";
 import CustomModal from "../../../../components/CustomModal";
-import { fetchDepartments, fetchEventNames } from "../../../../services/api";
+import {
+  fetchDepartments,
+  fetchEventNames,
+  fetchBlocksByDepartment,
+} from "../../../../services/api";
 
 const AddEvent = () => {
   const [formData, setFormData] = useState({
     event_name_id: "",
     department_ids: [],
+    block_ids: [],
   });
 
   const [eventNames, setEventNames] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
+  const [blockOptions, setBlockOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
+  const [loadingBlocks, setLoadingBlocks] = useState(false);
   const [errorDepartments, setErrorDepartments] = useState(null);
   const [modal, setModal] = useState({
     visible: false,
@@ -81,8 +88,7 @@ const AddEvent = () => {
             (dept) => !dept.label || dept.value === undefined
           )
         ) {
-          setErrorDepartments(new Error("Invalid department data."));
-          return;
+          throw new Error("Invalid department data.");
         }
         setDepartmentOptions(formattedDepartments);
       } catch (err) {
@@ -99,6 +105,41 @@ const AddEvent = () => {
     };
     fetchDepartmentData();
   }, []);
+
+  useEffect(() => {
+    const fetchBlocksData = async () => {
+      setLoadingBlocks(true);
+      try {
+        const departmentIds = formData.department_ids;
+        if (!departmentIds || departmentIds.length === 0) {
+          setBlockOptions([]);
+          return;
+        }
+        const blocksResponse = await fetchBlocksByDepartment(departmentIds);
+        if (!Array.isArray(blocksResponse)) {
+          throw new Error("Invalid API response: Expected an array of blocks.");
+        }
+        const activeBlocks = blocksResponse.filter(
+          (block) => block.status === "Active"
+        );
+        const formattedBlocks = activeBlocks.map((block) => ({
+          label: block.block_name,
+          value: block.block_id,
+        }));
+        setBlockOptions(formattedBlocks);
+      } catch (error) {
+        setModal({
+          visible: true,
+          title: "Error",
+          message: "Failed to load blocks. Please try again.",
+          type: "error",
+        });
+      } finally {
+        setLoadingBlocks(false);
+      }
+    };
+    fetchBlocksData();
+  }, [formData.department_ids]);
 
   const handleChange = (name, value) => {
     setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
@@ -126,6 +167,32 @@ const AddEvent = () => {
     );
     const selectedValues = filteredSelectedItems.map((item) => item.value);
     handleChange("department_ids", selectedValues);
+  };
+
+  const handleBlockChange = (selectedItems) => {
+    const validSelectedItems = Array.isArray(selectedItems)
+      ? selectedItems.map((item) => {
+          if (
+            typeof item === "object" &&
+            item !== null &&
+            item.value !== undefined
+          ) {
+            return item;
+          } else {
+            const block = blockOptions.find((blk) => blk.value === item);
+            return block || null;
+          }
+        })
+      : [];
+    const filteredSelectedItems = validSelectedItems.filter(
+      (item) => item !== null && item.value !== undefined
+    );
+    const selectedValues = filteredSelectedItems.map((item) => item.value);
+    handleChange("block_ids", selectedValues);
+  };
+
+  const handleSubmit = () => {
+    console.log("Form Data Submitted:", formData);
   };
 
   if (isLoading || loadingDepartments) {
@@ -188,8 +255,20 @@ const AddEvent = () => {
             onSelect={handleDepartmentChange}
             multiSelect
           />
+          {loadingBlocks ? (
+            <ActivityIndicator size="small" color={theme.colors.primary} />
+          ) : (
+            <CustomDropdown
+              title="Select Blocks"
+              data={blockOptions}
+              placeholder="Select blocks"
+              value={formData.block_ids}
+              onSelect={handleBlockChange}
+              multiSelect
+            />
+          )}
           <View style={styles.buttonContainer}>
-            <CustomButton title="SUBMIT" onPress={() => handleSubmit()} />
+            <CustomButton title="SUBMIT" onPress={handleSubmit} />
           </View>
         </View>
       </ScrollView>
