@@ -5,6 +5,7 @@ import {
   View,
   ScrollView,
   ActivityIndicator,
+  TouchableOpacity,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import TabsComponent from "../../../../components/TabsComponent";
@@ -15,6 +16,8 @@ import CustomButton from "../../../../components/CustomButton";
 import CustomModal from "../../../../components/CustomModal";
 import FormField from "../../../../components/FormField";
 import TimePickerComponent from "../../../../components/TimePickerComponent";
+import DatePickerComponent from "../../../../components/DatePickerComponent";
+import DurationPicker from "../../../../components/DurationPicker";
 import {
   fetchDepartments,
   fetchEventNames,
@@ -32,6 +35,8 @@ const AddEvent = () => {
     am_out: null,
     pm_in: null,
     pm_out: null,
+    event_date: null,
+    duration: 0,
   });
 
   const [eventNames, setEventNames] = useState([]);
@@ -47,6 +52,7 @@ const AddEvent = () => {
     message: "",
     type: "success",
   });
+  const [isDurationPickerVisible, setIsDurationPickerVisible] = useState(false);
 
   useEffect(() => {
     const fetchEventNamesData = async () => {
@@ -54,6 +60,10 @@ const AddEvent = () => {
       try {
         const eventNamesData = await fetchEventNames();
         if (!Array.isArray(eventNamesData)) {
+          console.error(
+            "Error fetching event names: Invalid data format",
+            eventNamesData
+          );
           throw new Error("Invalid data format from API.");
         }
         const formattedEventNames = eventNamesData.map((name) => ({
@@ -62,6 +72,7 @@ const AddEvent = () => {
         }));
         setEventNames(formattedEventNames);
       } catch (error) {
+        console.error("Error fetching event names:", error);
         setModal({
           visible: true,
           title: "Error",
@@ -82,6 +93,10 @@ const AddEvent = () => {
       try {
         const response = await fetchDepartments();
         if (!response || !Array.isArray(response.departments)) {
+          console.error(
+            "Error fetching departments: Invalid data format",
+            response
+          );
           throw new Error(
             "Invalid data format from API: Expected 'departments' array."
           );
@@ -96,10 +111,15 @@ const AddEvent = () => {
             (dept) => !dept.label || dept.value === undefined
           )
         ) {
+          console.error(
+            "Error fetching departments: Invalid department data",
+            formattedDepartments
+          );
           throw new Error("Invalid department data.");
         }
         setDepartmentOptions(formattedDepartments);
       } catch (err) {
+        console.error("Error fetching departments:", err);
         setErrorDepartments(err);
         setModal({
           visible: true,
@@ -125,6 +145,10 @@ const AddEvent = () => {
         }
         const blocksResponse = await fetchBlocksByDepartment(departmentIds);
         if (!Array.isArray(blocksResponse)) {
+          console.error(
+            "Error fetching blocks: Invalid API response",
+            blocksResponse
+          );
           throw new Error("Invalid API response: Expected an array of blocks.");
         }
         const activeBlocks = blocksResponse.filter(
@@ -136,6 +160,7 @@ const AddEvent = () => {
         }));
         setBlockOptions(formattedBlocks);
       } catch (error) {
+        console.error("Error fetching blocks:", error);
         setModal({
           visible: true,
           title: "Error",
@@ -154,94 +179,29 @@ const AddEvent = () => {
   };
 
   const handleSubmit = () => {
-    const {
-      event_name_id,
-      department_ids,
-      block_ids,
-      venue,
-      description,
-      am_in,
-      am_out,
-      pm_in,
-      pm_out,
-    } = formData;
-
-    if (!event_name_id) {
-      setModal({
-        visible: true,
-        title: "Error",
-        message: "Please select an event name.",
-        type: "error",
-      });
-      return;
-    }
-
-    if (department_ids.length === 0) {
-      setModal({
-        visible: true,
-        title: "Error",
-        message: "Please select at least one department.",
-        type: "error",
-      });
-      return;
-    }
-
-    if (block_ids.length === 0) {
-      setModal({
-        visible: true,
-        title: "Error",
-        message: "Please select at least one block.",
-        type: "error",
-      });
-      return;
-    }
-
-    if (!venue.trim()) {
-      setModal({
-        visible: true,
-        title: "Error",
-        message: "Please enter venue details.",
-        type: "error",
-      });
-      return;
-    }
-
-    if (!description.trim()) {
-      setModal({
-        visible: true,
-        title: "Error",
-        message: "Please enter an event description.",
-        type: "error",
-      });
-      return;
-    }
-
-    if ((!am_in && am_out) || (!pm_in && pm_out)) {
-      setModal({
-        visible: true,
-        title: "Error",
-        message:
-          "AM In/AM Out and PM In/PM Out must be selected as pairs. Partial selections are invalid.",
-        type: "error",
-      });
-      return;
-    }
-
-    if (!am_in && !am_out && !pm_in && !pm_out) {
-      setModal({
-        visible: true,
-        title: "Error",
-        message: "At least one time pair (AM or PM) must be selected.",
-        type: "error",
-      });
-      return;
-    }
-
+    // Implement your submit logic here
     console.log("Form Data:", formData);
   };
 
   const handleModalClose = () => {
     setModal({ ...modal, visible: false });
+  };
+
+  const handleDateChange = (date) => {
+    handleChange("event_date", date);
+  };
+
+  const openDurationPicker = () => {
+    setIsDurationPickerVisible(true);
+  };
+
+  const closeDurationPicker = () => {
+    setIsDurationPickerVisible(false);
+  };
+
+  const handleDurationSelect = (durationInMinutes) => {
+    handleChange("duration", durationInMinutes);
+    closeDurationPicker();
   };
 
   if (isLoading || loadingDepartments) {
@@ -263,6 +223,7 @@ const AddEvent = () => {
           onPress={() => {
             setLoadingDepartments(true);
             setErrorDepartments(null);
+            fetchDepartmentData();
           }}
         />
       </View>
@@ -302,28 +263,13 @@ const AddEvent = () => {
             placeholder="Select departments"
             value={formData.department_ids}
             onSelect={(selectedItems) => {
-              const validSelectedItems = Array.isArray(selectedItems)
-                ? selectedItems.map((item) => {
-                    if (
-                      typeof item === "object" &&
-                      item !== null &&
-                      item.value !== undefined
-                    ) {
-                      return item;
-                    } else {
-                      const department = departmentOptions.find(
-                        (dept) => dept.value === item
-                      );
-                      return department || null;
-                    }
-                  })
+              const selectedValues = Array.isArray(selectedItems)
+                ? selectedItems.map((item) =>
+                    typeof item === "object" && item !== null
+                      ? item.value
+                      : item
+                  )
                 : [];
-              const filteredSelectedItems = validSelectedItems.filter(
-                (item) => item !== null && item.value !== undefined
-              );
-              const selectedValues = filteredSelectedItems.map(
-                (item) => item.value
-              );
               handleChange("department_ids", selectedValues);
             }}
             multiSelect
@@ -337,28 +283,13 @@ const AddEvent = () => {
               placeholder="Select blocks"
               value={formData.block_ids}
               onSelect={(selectedItems) => {
-                const validSelectedItems = Array.isArray(selectedItems)
-                  ? selectedItems.map((item) => {
-                      if (
-                        typeof item === "object" &&
-                        item !== null &&
-                        item.value !== undefined
-                      ) {
-                        return item;
-                      } else {
-                        const block = blockOptions.find(
-                          (blk) => blk.value === item
-                        );
-                        return block || null;
-                      }
-                    })
+                const selectedValues = Array.isArray(selectedItems)
+                  ? selectedItems.map((item) =>
+                      typeof item === "object" && item !== null
+                        ? item.value
+                        : item
+                    )
                   : [];
-                const filteredSelectedItems = validSelectedItems.filter(
-                  (item) => item !== null && item.value !== undefined
-                );
-                const selectedValues = filteredSelectedItems.map(
-                  (item) => item.value
-                );
                 handleChange("block_ids", selectedValues);
               }}
               multiSelect
@@ -376,6 +307,11 @@ const AddEvent = () => {
             value={formData.description}
             onChangeText={(text) => handleChange("description", text)}
             multiline={true}
+          />
+          <DatePickerComponent
+            title="Date of Event"
+            onDateChange={handleDateChange}
+            selectedDate={formData.event_date}
           />
           <View>
             <View style={styles.timeWrapper}>
@@ -416,6 +352,28 @@ const AddEvent = () => {
                 )}
               </View>
             </View>
+            <TouchableOpacity
+              style={styles.durationButton}
+              onPress={openDurationPicker}
+            >
+              <Text style={styles.durationButtonText}>
+                Set Duration:{" "}
+                {formData.duration > 0
+                  ? `${Math.floor(formData.duration / 60)} hrs ${
+                      formData.duration % 60
+                    } mins`
+                  : "Not set"}
+              </Text>
+            </TouchableOpacity>
+            {isDurationPickerVisible && (
+              <DurationPicker
+                visible={isDurationPickerVisible}
+                onClose={closeDurationPicker}
+                onDurationSelect={handleDurationSelect}
+                selectedDuration={formData.duration}
+                key={isDurationPickerVisible ? "visible" : "hidden"} // Force remount
+              />
+            )}
           </View>
           <View style={styles.buttonContainer}>
             <CustomButton title="SUBMIT" onPress={handleSubmit} />
@@ -427,8 +385,6 @@ const AddEvent = () => {
     </View>
   );
 };
-
-export default AddEvent;
 
 const styles = StyleSheet.create({
   textHeader: {
@@ -466,12 +422,6 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginTop: theme.spacing.medium,
   },
-  timeOfDayText: {
-    fontSize: theme.fontSizes.medium,
-    fontFamily: theme.fontFamily.Arial,
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.small,
-  },
   timeWrapper: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -480,4 +430,21 @@ const styles = StyleSheet.create({
   timeContainer: {
     width: "45%",
   },
+  durationButton: {
+    padding: theme.spacing.small,
+    borderRadius: theme.borderRadius.medium,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    marginTop: theme.spacing.medium,
+    alignItems: "center",
+    justifyContent: "center",
+    height: 50,
+  },
+  durationButtonText: {
+    color: theme.colors.primary,
+    fontSize: theme.fontSizes.medium,
+    fontFamily: theme.fontFamily.Arial,
+  },
 });
+
+export default AddEvent;
