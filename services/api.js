@@ -115,11 +115,7 @@ export const fetchBlocks = async () => {
     const response = await axios.get(`${API_URL}/api/blocks`);
 
     if (response.data.success && Array.isArray(response.data.data)) {
-      return response.data.data.map((block) => ({
-        label: block.block_name || `Block ${block.block_id}`,
-        value: block.block_id,
-        status: block.status,
-      }));
+      return response.data.data;
     }
 
     throw new Error("Invalid blocks data received");

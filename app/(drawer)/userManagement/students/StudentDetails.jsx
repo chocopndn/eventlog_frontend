@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, SafeAreaView, ScrollView } from "react-native";
+import { StyleSheet, Text, View, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
@@ -43,17 +43,17 @@ const StudentDetails = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <Text style={styles.loadingText}>Loading...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!studentDetails) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <Text style={styles.errorText}>Student details not found.</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -77,15 +77,13 @@ const StudentDetails = () => {
   };
 
   return (
-    <SafeAreaView
+    <View
       style={[
         globalStyles.secondaryContainer,
         { paddingTop: 0, paddingBottom: 110 },
       ]}
     >
-      <View style={styles.headerContainer}>
-        <Text style={styles.title}>Student Details</Text>
-      </View>
+      <Text style={styles.textHeader}>Student Details</Text>
 
       <ScrollView contentContainerStyle={styles.detailsWrapper}>
         <View style={styles.detailsContainer}>
@@ -119,8 +117,8 @@ const StudentDetails = () => {
           <Text style={styles.detail}>{studentDetails.suffix || "-"}</Text>
         </View>
         <View style={styles.detailsContainer}>
-          <Text style={styles.detailTitle}>Email:</Text>
-          <Text style={styles.detail}>{studentDetails.email}</Text>
+          <Text style={styles.detailTitle}>Email: </Text>
+          <Text style={styles.detail}>{studentDetails.email || "-"}</Text>
         </View>
         <View style={styles.detailsContainer}>
           <Text style={styles.detailTitle}>Status:</Text>
@@ -139,7 +137,7 @@ const StudentDetails = () => {
             }
           />
         </View>
-        {studentDetails.status === "disabled" ? null : (
+        {studentDetails.status === "Disabled" ? null : (
           <View style={styles.button}>
             <CustomButton
               title="DISABLE"
@@ -172,23 +170,18 @@ const StudentDetails = () => {
 
       <TabsComponent />
       <StatusBar style="light" />
-    </SafeAreaView>
+    </View>
   );
 };
 
 export default StudentDetails;
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: theme.spacing.medium,
-  },
-  title: {
-    fontSize: theme.fontSizes.huge,
-    fontFamily: theme.fontFamily.SquadaOne,
+  textHeader: {
     color: theme.colors.primary,
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.title,
+    textAlign: "center",
   },
   detailsWrapper: {
     flexGrow: 1,

@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -5,8 +6,6 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import React, { useState, useEffect } from "react";
-import { SafeAreaView } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import TabsComponent from "../../../../components/TabsComponent";
 import globalStyles from "../../../../constants/globalStyles";
@@ -48,19 +47,15 @@ const AddStudent = () => {
       try {
         const blocksData = await fetchBlocks();
         if (Array.isArray(blocksData)) {
-          setBlocks(
-            blocksData.map((block) => ({
-              label: block.label || `Block ${block.id}`,
-              value: block.value,
-            }))
-          );
+          const activeBlocks = blocksData
+            .filter((block) => block.status === "Active")
+            .map((block) => ({
+              label: block.block_name || `Block ${block.block_id}`,
+              value: block.block_id,
+            }));
+          setBlocks(activeBlocks);
         } else {
-          setModal({
-            visible: true,
-            title: "Error",
-            message: "Failed to load blocks. Please try again.",
-            type: "error",
-          });
+          throw new Error("Invalid blocks data");
         }
       } catch (error) {
         setModal({
@@ -71,7 +66,6 @@ const AddStudent = () => {
         });
       }
     };
-
     fetchData();
   }, []);
 
@@ -110,7 +104,7 @@ const AddStudent = () => {
       };
 
       setIsLoading(true);
-      const response = await addUser(submitData);
+      await addUser(submitData);
 
       setModal({
         visible: true,
@@ -145,14 +139,14 @@ const AddStudent = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
+    <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
       <CustomModal
         visible={modal.visible}
         title={modal.title}
@@ -162,9 +156,9 @@ const AddStudent = () => {
         cancelTitle="CLOSE"
       />
 
-      <Text style={styles.textHeader}>ADD STUDENT</Text>
+      <Text style={styles.textHeader}>EVENTLOG</Text>
       <View style={styles.titleContainer}>
-        <Text style={styles.textTitle}>ADD STUDENT DETAILS</Text>
+        <Text style={styles.textTitle}>ADD STUDENT</Text>
       </View>
       <ScrollView
         style={styles.scrollviewContainer}
@@ -179,22 +173,6 @@ const AddStudent = () => {
             placeholder="12345678"
             value={formData.id_number}
             onChangeText={(text) => handleChange("id_number", text)}
-          />
-
-          <CustomDropdown
-            title="Role"
-            data={roles}
-            placeholder="Select a role"
-            value={formData.role_id}
-            onSelect={(item) => handleChange("role_id", item.value)}
-          />
-
-          <CustomDropdown
-            title="Block"
-            data={blocks}
-            placeholder="Select a block"
-            value={formData.block_id}
-            onSelect={(item) => handleChange("block_id", item.value)}
           />
 
           <FormField
@@ -234,6 +212,20 @@ const AddStudent = () => {
             onChangeText={(text) => handleChange("email", text)}
           />
         </View>
+        <CustomDropdown
+          title="Block"
+          data={blocks}
+          placeholder="Select a block"
+          value={formData.block_id}
+          onSelect={(item) => handleChange("block_id", item.value)}
+        />
+        <CustomDropdown
+          title="Role"
+          data={roles}
+          placeholder="Select a role"
+          value={formData.role_id}
+          onSelect={(item) => handleChange("role_id", item.value)}
+        />
         <View>
           <CustomButton title="ADD STUDENT" onPress={handleSubmit} />
         </View>
@@ -241,7 +233,7 @@ const AddStudent = () => {
 
       <TabsComponent />
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -250,10 +242,9 @@ export default AddStudent;
 const styles = StyleSheet.create({
   textHeader: {
     fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: theme.fontSizes.display,
+    fontSize: theme.fontSizes.title,
     color: theme.colors.primary,
     textAlign: "center",
-    marginBottom: theme.spacing.medium,
   },
   scrollviewContainer: {
     width: "100%",

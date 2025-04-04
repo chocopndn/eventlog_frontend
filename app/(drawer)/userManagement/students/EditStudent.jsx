@@ -6,7 +6,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+
 import { StatusBar } from "expo-status-bar";
 import TabsComponent from "../../../../components/TabsComponent";
 import globalStyles from "../../../../constants/globalStyles";
@@ -33,7 +33,7 @@ const EditStudent = () => {
     last_name: "",
     suffix: "",
     email: null,
-    status: "active",
+    status: "Active",
   });
   const [blocks, setBlocks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,28 +50,28 @@ const EditStudent = () => {
   ];
 
   const getStatusOptions = () => {
-    if (formData.status === "unregistered") {
+    if (formData.status === "Unregistered") {
       return [
-        { label: "Unregistered", value: "unregistered" },
-        { label: "Disabled", value: "disabled" },
+        { label: "Unregistered", value: "Unregistered" },
+        { label: "Disabled", value: "Disabled" },
       ];
     }
-    if (formData.status === "disabled") {
+    if (formData.status === "Disabled") {
       if (formData.email) {
         return [
-          { label: "Disabled", value: "disabled" },
-          { label: "Active", value: "active" },
+          { label: "Disabled", value: "Disabled" },
+          { label: "Active", value: "Active" },
         ];
       } else {
         return [
-          { label: "Disabled", value: "disabled" },
-          { label: "Unregistered", value: "unregistered" },
+          { label: "Disabled", value: "Disabled" },
+          { label: "Unregistered", value: "Unregistered" },
         ];
       }
     }
     return [
-      { label: "Active", value: "active" },
-      { label: "Disabled", value: "disabled" },
+      { label: "Active", value: "Active" },
+      { label: "Disabled", value: "Disabled" },
     ];
   };
 
@@ -85,14 +85,15 @@ const EditStudent = () => {
 
         const blocksData = await fetchBlocks();
         setBlocks(
-          blocksData.map((block) => ({
-            label: block.block_name || `Block ${block.id}`,
-            value: block.id,
-          }))
+          blocksData
+            .filter((block) => block.status === "Active")
+            .map((block) => ({
+              label: block.block_name || `Block ${block.block_id}`,
+              value: block.block_id,
+            }))
         );
 
         const studentDetails = await fetchUserById(id_number);
-
         if (!studentDetails) {
           throw new Error("Student details not found");
         }
@@ -100,13 +101,13 @@ const EditStudent = () => {
         setFormData({
           id_number: studentDetails.id_number || "",
           role_id: String(studentDetails.role_id) || null,
-          block_id: String(studentDetails.block_id) || null,
+          block_id: studentDetails.block_id || null,
           first_name: studentDetails.first_name || "",
           middle_name: studentDetails.middle_name || "",
           last_name: studentDetails.last_name || "",
           suffix: studentDetails.suffix || "",
           email: studentDetails.email || null,
-          status: studentDetails.status || "active",
+          status: studentDetails.status || "Active",
         });
       } catch (error) {
         setModal({
@@ -119,14 +120,13 @@ const EditStudent = () => {
         setIsLoading(false);
       }
     };
-
     fetchData();
   }, [id_number]);
 
   const handleChange = (name, value) => {
     if (
       name === "email" &&
-      formData.status === "unregistered" &&
+      formData.status === "Unregistered" &&
       value.trim() !== ""
     ) {
       setFormData((prevFormData) => ({ ...prevFormData, email: null }));
@@ -139,12 +139,10 @@ const EditStudent = () => {
       });
       return;
     }
-
     if (name === "email" && value.trim() === "") {
       setFormData((prevFormData) => ({ ...prevFormData, email: null }));
       return;
     }
-
     setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
   };
 
@@ -166,7 +164,7 @@ const EditStudent = () => {
         return;
       }
 
-      if (formData.status === "active" && !formData.email) {
+      if (formData.status === "Active" && !formData.email) {
         setModal({
           visible: true,
           title: "Warning",
@@ -177,8 +175,7 @@ const EditStudent = () => {
       }
 
       let emailValue = formData.email;
-
-      if (formData.status === "unregistered") {
+      if (formData.status === "Unregistered") {
         emailValue = null;
       }
 
@@ -214,14 +211,14 @@ const EditStudent = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
+    <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
       <CustomModal
         visible={modal.visible}
         title={modal.title}
@@ -230,12 +227,10 @@ const EditStudent = () => {
         onClose={() => setModal({ ...modal, visible: false })}
         cancelTitle="CLOSE"
       />
-
-      <Text style={styles.textHeader}>EDIT STUDENT</Text>
+      <Text style={styles.textHeader}>EVENTLOG</Text>
       <View style={styles.titleContainer}>
         <Text style={styles.textTitle}>EDIT STUDENT DETAILS</Text>
       </View>
-
       <ScrollView
         style={styles.scrollviewContainer}
         contentContainerStyle={styles.scrollview}
@@ -243,20 +238,36 @@ const EditStudent = () => {
       >
         <View>
           <FormField
-            title="ID Number"
-            placeholder="12345678"
-            value={formData.id_number}
-            onChangeText={(text) => handleChange("id_number", text)}
+            title="First Name"
+            placeholder="Juan Miguel"
+            value={formData.first_name}
+            onChangeText={(text) => handleChange("first_name", text)}
           />
-
-          <CustomDropdown
-            title="Role"
-            data={roles}
-            placeholder="Select a role"
-            value={formData.role_id}
-            onSelect={(item) => handleChange("role_id", item.value)}
+          <FormField
+            title="Middle Name (Optional)"
+            placeholder="Reyes"
+            value={formData.middle_name}
+            onChangeText={(text) => handleChange("middle_name", text)}
           />
-
+          <FormField
+            title="Last Name"
+            placeholder="Santos"
+            value={formData.last_name}
+            onChangeText={(text) => handleChange("last_name", text)}
+          />
+          <FormField
+            title="Suffix (Optional)"
+            placeholder="Jr"
+            value={formData.suffix}
+            onChangeText={(text) => handleChange("suffix", text)}
+          />
+          <FormField
+            title="Email"
+            placeholder="example@gmail.com"
+            value={formData.email || ""}
+            onChangeText={(text) => handleChange("email", text)}
+            editable={formData.status !== "Unregistered"}
+          />
           <CustomDropdown
             title="Block"
             data={blocks}
@@ -264,43 +275,13 @@ const EditStudent = () => {
             value={formData.block_id}
             onSelect={(item) => handleChange("block_id", item.value)}
           />
-
-          <FormField
-            title="First Name"
-            placeholder="Juan Miguel"
-            value={formData.first_name}
-            onChangeText={(text) => handleChange("first_name", text)}
+          <CustomDropdown
+            title="Role"
+            data={roles}
+            placeholder="Select a role"
+            value={formData.role_id}
+            onSelect={(item) => handleChange("role_id", item.value)}
           />
-
-          <FormField
-            title="Middle Name (Optional)"
-            placeholder="Reyes"
-            value={formData.middle_name}
-            onChangeText={(text) => handleChange("middle_name", text)}
-          />
-
-          <FormField
-            title="Last Name"
-            placeholder="Santos"
-            value={formData.last_name}
-            onChangeText={(text) => handleChange("last_name", text)}
-          />
-
-          <FormField
-            title="Suffix (Optional)"
-            placeholder="Jr"
-            value={formData.suffix}
-            onChangeText={(text) => handleChange("suffix", text)}
-          />
-
-          <FormField
-            title="Email"
-            placeholder="example@gmail.com"
-            value={formData.email || ""}
-            onChangeText={(text) => handleChange("email", text)}
-            editable={formData.status !== "unregistered"}
-          />
-
           <CustomDropdown
             title="Status"
             data={getStatusOptions()}
@@ -308,15 +289,13 @@ const EditStudent = () => {
             onSelect={(item) => handleChange("status", item.value)}
           />
         </View>
-
         <View>
           <CustomButton title="UPDATE" onPress={handleSubmit} />
         </View>
       </ScrollView>
-
       <TabsComponent />
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -324,11 +303,11 @@ export default EditStudent;
 
 const styles = StyleSheet.create({
   textHeader: {
-    fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: theme.fontSizes.display,
     color: theme.colors.primary,
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.title,
     textAlign: "center",
-    marginBottom: theme.spacing.medium,
+    marginBottom: theme.spacing.small,
   },
   scrollviewContainer: {
     width: "100%",

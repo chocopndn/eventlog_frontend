@@ -9,7 +9,7 @@ import {
   RefreshControl,
 } from "react-native";
 import TabsComponent from "../../../../components/TabsComponent";
-import { SafeAreaView } from "react-native-safe-area-context";
+
 import { StatusBar } from "expo-status-bar";
 import { fetchUsers, disableUser } from "../../../../services/api";
 import { router, useFocusEffect } from "expo-router";
@@ -95,7 +95,7 @@ export default function StudentsScreen() {
   };
 
   return (
-    <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
+    <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
       <Text style={styles.headerText}>STUDENTS</Text>
       <View style={{ paddingHorizontal: theme.spacing.medium, width: "100%" }}>
         <SearchBar
@@ -107,7 +107,6 @@ export default function StudentsScreen() {
           }}
         />
       </View>
-
       <ScrollView
         style={{ flex: 1, width: "100%" }}
         contentContainerStyle={[styles.scrollview]}
@@ -131,7 +130,7 @@ export default function StudentsScreen() {
                 <Text style={styles.name} numberOfLines={1}>
                   {`${student.first_name || ""} ${student.middle_name || ""} ${
                     student.last_name || ""
-                  }`}
+                  }${student.suffix ? `, ${student.suffix}` : ""}`}
                 </Text>
                 <Text style={styles.status} numberOfLines={1}>
                   {student.status}
@@ -149,8 +148,8 @@ export default function StudentsScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => handleDisablePress(student)}
-                  disabled={student.status === "disabled"}
-                  style={{ opacity: student.status === "disabled" ? 0.5 : 1 }}
+                  disabled={student.status === "Disabled"}
+                  style={{ opacity: student.status === "Disabled" ? 0.5 : 1 }}
                 >
                   <Image source={images.disabled} style={styles.icon} />
                 </TouchableOpacity>
@@ -161,7 +160,6 @@ export default function StudentsScreen() {
           <Text style={styles.noResults}>No students found</Text>
         )}
       </ScrollView>
-
       <View style={styles.pageNav}>
         <TouchableOpacity
           onPress={() => handlePageChange(currentPage - 1)}
@@ -181,11 +179,9 @@ export default function StudentsScreen() {
             ]}
           />
         </TouchableOpacity>
-
         <View style={styles.textPage}>
           <Text style={styles.page}>{currentPage.toString()}</Text>
         </View>
-
         <TouchableOpacity
           onPress={() => handlePageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
@@ -205,7 +201,6 @@ export default function StudentsScreen() {
           />
         </TouchableOpacity>
       </View>
-
       <View style={styles.buttonContainer}>
         <CustomButton
           title="ADD STUDENT"
@@ -214,7 +209,6 @@ export default function StudentsScreen() {
           }}
         />
       </View>
-
       <CustomModal
         visible={isDisableModalVisible}
         title="Confirm Disable"
@@ -225,7 +219,6 @@ export default function StudentsScreen() {
         cancelTitle="Cancel"
         confirmTitle="Disable"
       />
-
       <CustomModal
         visible={isSuccessModalVisible}
         title="Success"
@@ -234,10 +227,9 @@ export default function StudentsScreen() {
         onClose={handleSuccessModalClose}
         cancelTitle="CLOSE"
       />
-
       <TabsComponent />
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -245,9 +237,9 @@ const styles = StyleSheet.create({
   headerText: {
     color: theme.colors.primary,
     fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: theme.fontSizes.display,
+    fontSize: theme.fontSizes.title,
     textAlign: "center",
-    marginBottom: theme.spacing.medium,
+    marginBottom: theme.spacing.small,
   },
   studentContainer: {
     borderWidth: 2,
