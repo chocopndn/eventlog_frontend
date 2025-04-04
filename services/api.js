@@ -179,9 +179,9 @@ export const editBlock = async (blockId, blockData) => {
   }
 };
 
-export const deleteBlock = async (blockId) => {
+export const disableBlock = async (blockId) => {
   try {
-    const response = await axios.delete(`${API_URL}/api/blocks/${blockId}`);
+    const response = await axios.put(`${API_URL}/api/blocks/${blockId}`);
     if (response.data.success) return response.data.message;
     throw new Error("Failed to delete block");
   } catch (error) {

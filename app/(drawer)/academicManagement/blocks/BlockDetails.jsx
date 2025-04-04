@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, SafeAreaView, ScrollView } from "react-native";
+import { StyleSheet, Text, View, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
@@ -9,14 +9,14 @@ import CustomModal from "../../../../components/CustomModal";
 
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
-import { fetchBlockById, deleteBlock } from "../../../../services/api";
+import { fetchBlockById, disableBlock } from "../../../../services/api";
 import { useLocalSearchParams } from "expo-router";
 
 const BlockDetails = () => {
   const { id: block_id } = useLocalSearchParams();
   const [blockDetails, setBlockDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isDisableModalVisible, setIsDisableModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 
   const fetchBlockDetails = async () => {
@@ -45,28 +45,28 @@ const BlockDetails = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <Text style={styles.loadingText}>Loading...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!blockDetails) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <Text style={styles.errorText}>
           Block details not found. Please check the block ID.
         </Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
-  const handleDeletePress = () => setIsDeleteModalVisible(true);
+  const handleDisablePress = () => setIsDisableModalVisible(true);
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDisable = async () => {
     try {
-      await deleteBlock(blockDetails.block_id);
-      setIsDeleteModalVisible(false);
+      await disableBlock(blockDetails.block_id);
+      setIsDisableModalVisible(false);
       setIsSuccessModalVisible(true);
     } catch (error) {
       console.error(error.message || error);
@@ -79,7 +79,7 @@ const BlockDetails = () => {
   };
 
   return (
-    <SafeAreaView
+    <View
       style={[
         globalStyles.secondaryContainer,
         { paddingTop: 0, paddingBottom: 110 },
@@ -119,32 +119,32 @@ const BlockDetails = () => {
             }
           />
         </View>
-        {blockDetails.status !== "deleted" && (
+        {blockDetails.status !== "Disabled" && (
           <View style={styles.button}>
             <CustomButton
-              title="DELETE"
+              title="DISABLE"
               type="secondary"
-              onPress={handleDeletePress}
+              onPress={handleDisablePress}
             />
           </View>
         )}
       </View>
 
       <CustomModal
-        visible={isDeleteModalVisible}
-        title="Confirm Deletion"
-        message={`Are you sure you want to delete ${blockDetails.block_name}?`}
+        visible={isDisableModalVisible}
+        title="Confirm Disable"
+        message={`Are you sure you want to disable ${blockDetails.block_name}?`}
         type="warning"
-        onClose={() => setIsDeleteModalVisible(false)}
-        onConfirm={handleConfirmDelete}
+        onClose={() => setIsDisableModalVisible(false)}
+        onConfirm={handleConfirmDisable}
         cancelTitle="Cancel"
-        confirmTitle="Delete"
+        confirmTitle="Disable"
       />
 
       <CustomModal
         visible={isSuccessModalVisible}
         title="Success"
-        message="Block deleted successfully!"
+        message="Block disabled successfully!"
         type="success"
         onClose={handleSuccessModalClose}
         cancelTitle="CLOSE"
@@ -152,7 +152,7 @@ const BlockDetails = () => {
 
       <TabsComponent />
       <StatusBar style="light" />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -166,9 +166,11 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.medium,
   },
   title: {
-    fontSize: theme.fontSizes.huge,
-    fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.title,
+    textAlign: "center",
+    marginBottom: theme.spacing.small,
   },
   detailsWrapper: {
     flexGrow: 1,

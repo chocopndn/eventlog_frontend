@@ -307,7 +307,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.fontFamily.SquadaOne,
     fontSize: theme.fontSizes.title,
     textAlign: "center",
-    marginBottom: theme.spacing.small,
   },
   scrollviewContainer: {
     width: "100%",

@@ -9,9 +9,9 @@ import {
   RefreshControl,
 } from "react-native";
 import TabsComponent from "../../../../components/TabsComponent";
-import { SafeAreaView } from "react-native-safe-area-context";
+
 import { StatusBar } from "expo-status-bar";
-import { fetchBlocks, deleteBlock } from "../../../../services/api";
+import { fetchBlocks, disableBlock } from "../../../../services/api";
 import { router, useFocusEffect } from "expo-router";
 
 import images from "../../../../constants/images";
@@ -25,18 +25,17 @@ import theme from "../../../../constants/theme";
 export default function BlocksScreen() {
   const [blocks, setBlocks] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isDisableModalVisible, setIsDisableModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
-  const [blockToDelete, setBlockToDelete] = useState(null);
+  const [blockToDisable, setBlockToDisable] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadBlocks = async () => {
     try {
       const fetchedBlocks = await fetchBlocks();
-      setBlocks(Array.isArray(fetchedBlocks) ? fetchedBlocks : []);
-    } catch (err) {
-      console.error("Error fetching blocks:", err.message || err);
-    }
+      if (!Array.isArray(fetchedBlocks)) return;
+      setBlocks(fetchedBlocks);
+    } catch (err) {}
   };
 
   const refreshData = async () => {
@@ -44,7 +43,6 @@ export default function BlocksScreen() {
     try {
       await loadBlocks();
     } catch (error) {
-      console.error("Error refreshing data:", error.message || error);
     } finally {
       setRefreshing(false);
     }
@@ -57,52 +55,50 @@ export default function BlocksScreen() {
   );
 
   const filteredBlocks = Array.isArray(blocks)
-    ? blocks.filter((block) => {
-        const name = block.name?.toLowerCase() || "";
-        const courseName = block.course_name?.toLowerCase() || "";
-        const query = searchQuery.toLowerCase();
-        return name.includes(query) || courseName.includes(query);
-      })
+    ? blocks
+        .filter((block) => block.status !== "Archived")
+        .filter((block) => {
+          const name = block.block_name?.toLowerCase() || "";
+          const courseName = block.course_name?.toLowerCase() || "";
+          const query = searchQuery.toLowerCase();
+          return name.includes(query) || courseName.includes(query);
+        })
     : [];
 
-  const handleDeletePress = (block) => {
-    setBlockToDelete(block);
-    setIsDeleteModalVisible(true);
+  const handleDisablePress = (block) => {
+    setBlockToDisable(block);
+    setIsDisableModalVisible(true);
   };
 
-  const handleDeleteModalClose = () => {
-    setIsDeleteModalVisible(false);
-    setBlockToDelete(null);
+  const handleDisableModalClose = () => {
+    setIsDisableModalVisible(false);
+    setBlockToDisable(null);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!blockToDelete) return;
+  const handleConfirmDisable = async () => {
+    if (!blockToDisable) return;
 
     try {
-      await deleteBlock(blockToDelete.value);
+      await disableBlock(blockToDisable.block_id);
       setBlocks((prevBlocks) =>
         prevBlocks.map((block) =>
-          block.value === blockToDelete.value
-            ? { ...block, status: "deleted" }
+          block.block_id === blockToDisable.block_id
+            ? { ...block, status: "Disabled" }
             : block
         )
       );
-      setIsDeleteModalVisible(false);
+      setIsDisableModalVisible(false);
       setIsSuccessModalVisible(true);
-    } catch (error) {
-      console.error("Error deleting block:", error.message || error);
-    }
+    } catch (error) {}
   };
 
   return (
-    <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
+    <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
       <Text style={styles.headerText}>BLOCKS</Text>
       <View style={{ paddingHorizontal: theme.spacing.medium, width: "100%" }}>
         <SearchBar
           placeholder="Search blocks..."
-          onSearch={(query) => {
-            setSearchQuery(query);
-          }}
+          onSearch={(query) => setSearchQuery(query)}
         />
       </View>
       <ScrollView
@@ -116,17 +112,17 @@ export default function BlocksScreen() {
         {filteredBlocks.length > 0 ? (
           filteredBlocks.map((block) => (
             <TouchableOpacity
-              key={block.value}
+              key={block.block_id}
               style={styles.blockContainer}
-              onPress={() => {
+              onPress={() =>
                 router.push(
-                  `/academicManagement/blocks/BlockDetails?id=${block.value}`
-                );
-              }}
+                  `/academicManagement/blocks/BlockDetails?id=${block.block_id}`
+                )
+              }
             >
               <View style={styles.textContainer}>
                 <Text style={styles.name} numberOfLines={1}>
-                  {block.label}
+                  {block.block_name}
                 </Text>
                 <Text style={styles.courseName} numberOfLines={1}>
                   {block.status}
@@ -134,20 +130,20 @@ export default function BlocksScreen() {
               </View>
               <View style={styles.iconContainer}>
                 <TouchableOpacity
-                  onPress={() => {
+                  onPress={() =>
                     router.push(
-                      `/academicManagement/blocks/EditBlock?id=${block.value}`
-                    );
-                  }}
+                      `/academicManagement/blocks/EditBlock?id=${block.block_id}`
+                    )
+                  }
                 >
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => handleDeletePress(block)}
-                  disabled={block.status === "deleted"}
-                  style={{ opacity: block.status === "deleted" ? 0.5 : 1 }}
+                  onPress={() => handleDisablePress(block)}
+                  disabled={block.status === "Disabled"}
+                  style={{ opacity: block.status === "Disabled" ? 0.5 : 1 }}
                 >
-                  <Image source={images.trash} style={styles.icon} />
+                  <Image source={images.disabled} style={styles.icon} />
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -160,37 +156,33 @@ export default function BlocksScreen() {
       <View style={styles.buttonContainer}>
         <CustomButton
           title="ADD BLOCK"
-          onPress={() => {
-            router.push("/academicManagement/blocks/AddBlock");
-          }}
+          onPress={() => router.push("/academicManagement/blocks/AddBlock")}
         />
       </View>
 
       <CustomModal
-        visible={isDeleteModalVisible}
-        title="Confirm Deletion"
-        message={`Are you sure you want to delete ${blockToDelete?.label}?`}
+        visible={isDisableModalVisible}
+        title="Confirm Disable"
+        message={`Are you sure you want to disable ${blockToDisable?.block_name}?`}
         type="warning"
-        onClose={handleDeleteModalClose}
-        onConfirm={handleConfirmDelete}
+        onClose={handleDisableModalClose}
+        onConfirm={handleConfirmDisable}
         cancelTitle="Cancel"
-        confirmTitle="Delete"
+        confirmTitle="Disable"
       />
 
       <CustomModal
         visible={isSuccessModalVisible}
         title="Success"
-        message="Block deleted successfully!"
+        message="Block disabled successfully!"
         type="success"
-        onClose={() => {
-          setIsSuccessModalVisible(false);
-        }}
+        onClose={() => setIsSuccessModalVisible(false)}
         cancelTitle="CLOSE"
       />
 
       <TabsComponent />
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -198,9 +190,9 @@ const styles = StyleSheet.create({
   headerText: {
     color: theme.colors.primary,
     fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: 60,
+    fontSize: theme.fontSizes.title,
     textAlign: "center",
-    marginBottom: theme.spacing.medium,
+    marginBottom: theme.spacing.small,
   },
   blockContainer: {
     borderWidth: 2,

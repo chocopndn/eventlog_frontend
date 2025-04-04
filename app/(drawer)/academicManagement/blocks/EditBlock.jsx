@@ -6,7 +6,7 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+
 import { StatusBar } from "expo-status-bar";
 import TabsComponent from "../../../../components/TabsComponent";
 import globalStyles from "../../../../constants/globalStyles";
@@ -29,7 +29,7 @@ const EditBlock = () => {
     block_name: "",
     course: "",
     year_level: "",
-    status: "active",
+    status: "Active",
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -44,8 +44,9 @@ const EditBlock = () => {
   const [yearLevels, setYearLevels] = useState([]);
 
   const statusOptions = [
-    { label: "Active", value: "active" },
-    { label: "Deleted", value: "deleted" },
+    { label: "Active", value: "Active" },
+    { label: "Disabled", value: "Disabled" },
+    { label: "Archived", value: "Archived" },
   ];
 
   useEffect(() => {
@@ -57,11 +58,13 @@ const EditBlock = () => {
         const blockDetails = await fetchBlockById(block_id);
         if (!blockDetails) throw new Error("Block details not found");
 
+        const initialStatus = blockDetails.status || "Active";
+
         setFormData({
           block_name: blockDetails.block_name || "",
           course: blockDetails.course_id || "",
           year_level: blockDetails.year_level_id || "",
-          status: blockDetails.status || "active",
+          status: initialStatus,
         });
 
         const coursesData = await fetchCourses();
@@ -137,13 +140,13 @@ const EditBlock = () => {
 
   if (isLoading)
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
-      </SafeAreaView>
+      </View>
     );
 
   return (
-    <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
+    <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
       <CustomModal
         visible={modal.visible}
         title={modal.title}
@@ -203,7 +206,7 @@ const EditBlock = () => {
 
       <TabsComponent />
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -211,9 +214,11 @@ export default EditBlock;
 
 const styles = StyleSheet.create({
   textHeader: {
-    fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: theme.fontSizes.display,
     color: theme.colors.primary,
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.title,
+    textAlign: "center",
+    marginBottom: theme.spacing.small,
   },
   scrollviewContainer: {
     width: "100%",
