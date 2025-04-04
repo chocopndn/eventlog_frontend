@@ -13,6 +13,7 @@ import theme from "../../../../constants/theme";
 import CustomDropdown from "../../../../components/CustomDropdown";
 import CustomButton from "../../../../components/CustomButton";
 import CustomModal from "../../../../components/CustomModal";
+import FormField from "../../../../components/FormField";
 import {
   fetchDepartments,
   fetchEventNames,
@@ -24,6 +25,8 @@ const AddEvent = () => {
     event_name_id: "",
     department_ids: [],
     block_ids: [],
+    venue: "",
+    description: "",
   });
 
   const [eventNames, setEventNames] = useState([]);
@@ -267,6 +270,21 @@ const AddEvent = () => {
               multiSelect
             />
           )}
+          {/* Venue Field */}
+          <FormField
+            title="Venue"
+            placeholder="Enter venue details"
+            value={formData.venue}
+            onChangeText={(text) => handleChange("venue", text)}
+          />
+          {/* Description Field */}
+          <FormField
+            title="Description"
+            placeholder="Enter event description..."
+            value={formData.description}
+            onChangeText={(text) => handleChange("description", text)}
+            multiline={true}
+          />
           <View style={styles.buttonContainer}>
             <CustomButton title="SUBMIT" onPress={handleSubmit} />
           </View>
