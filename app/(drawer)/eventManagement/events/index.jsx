@@ -9,7 +9,7 @@ import {
   RefreshControl,
 } from "react-native";
 import TabsComponent from "../../../../components/TabsComponent";
-import { SafeAreaView } from "react-native-safe-area-context";
+
 import { StatusBar } from "expo-status-bar";
 import { fetchEvents, deleteEvent } from "../../../../services/api";
 import { router, useFocusEffect } from "expo-router";
@@ -97,11 +97,17 @@ export default function EventsList() {
   ).length;
 
   return (
-    <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
+    <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
       <Text style={styles.headerText}>EVENTS</Text>
-      <View style={{ paddingHorizontal: theme.spacing.medium, width: "100%" }}>
-        <SearchBar placeholder="Search events..." onSearch={setSearchQuery} />
-      </View>
+
+      {/* Conditionally render the SearchBar */}
+      {filteredEvents.length > 0 && (
+        <View
+          style={{ paddingHorizontal: theme.spacing.medium, width: "100%" }}
+        >
+          <SearchBar placeholder="Search events..." onSearch={setSearchQuery} />
+        </View>
+      )}
 
       {pendingEventsCount > 0 && (
         <TouchableOpacity
@@ -198,7 +204,7 @@ export default function EventsList() {
       />
       <TabsComponent />
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -206,9 +212,9 @@ const styles = StyleSheet.create({
   headerText: {
     color: theme.colors.primary,
     fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: theme.fontSizes.display,
+    fontSize: theme.fontSizes.title,
     textAlign: "center",
-    marginBottom: theme.spacing.medium,
+    marginBottom: theme.spacing.small,
   },
   pendingContainer: {
     borderWidth: 2,
