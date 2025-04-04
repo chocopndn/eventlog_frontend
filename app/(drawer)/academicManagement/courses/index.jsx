@@ -9,9 +9,8 @@ import {
   RefreshControl,
 } from "react-native";
 import TabsComponent from "../../../../components/TabsComponent";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { fetchCourses, deleteCourse } from "../../../../services/api";
+import { fetchCourses, disableCourse } from "../../../../services/api";
 import { router, useFocusEffect } from "expo-router";
 
 import images from "../../../../constants/images";
@@ -25,9 +24,9 @@ import theme from "../../../../constants/theme";
 export default function CoursesScreen() {
   const [courses, setCourses] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isDisableModalVisible, setIsDisableModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
-  const [courseToDelete, setCourseToDelete] = useState(null);
+  const [courseToDisable, setCourseToDisable] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadCourses = async () => {
@@ -67,40 +66,39 @@ export default function CoursesScreen() {
       })
     : [];
 
-  const handleDeletePress = (course) => {
-    setCourseToDelete(course);
-    setIsDeleteModalVisible(true);
-    fetchCourses();
+  const handleDisablePress = (course) => {
+    setCourseToDisable(course);
+    setIsDisableModalVisible(true);
   };
 
-  const handleDeleteModalClose = () => {
-    setIsDeleteModalVisible(false);
-    setCourseToDelete(null);
+  const handleDisableModalClose = () => {
+    setIsDisableModalVisible(false);
+    setCourseToDisable(null);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!courseToDelete) return;
+  const handleConfirmDisable = async () => {
+    if (!courseToDisable) return;
 
     try {
-      await deleteCourse(courseToDelete.course_id);
+      await disableCourse(courseToDisable.course_id);
 
       setCourses((prevCourses) =>
         prevCourses.map((course) =>
-          course.course_id === courseToDelete.course_id
-            ? { ...course, status: "deleted" }
+          course.course_id === courseToDisable.course_id
+            ? { ...course, status: "Disabled" }
             : course
         )
       );
 
-      handleDeleteModalClose();
+      handleDisableModalClose();
       setIsSuccessModalVisible(true);
     } catch (error) {
-      console.error("Error deleting course:", error);
+      console.error("Error disabling course:", error);
     }
   };
 
   return (
-    <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
+    <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
       <Text style={styles.headerText}>COURSES</Text>
       <View style={{ paddingHorizontal: theme.spacing.medium, width: "100%" }}>
         <SearchBar placeholder="Search courses..." onSearch={setSearchQuery} />
@@ -146,11 +144,11 @@ export default function CoursesScreen() {
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => handleDeletePress(course)}
-                  disabled={course.status === "deleted"}
-                  style={{ opacity: course.status === "deleted" ? 0.5 : 1 }}
+                  onPress={() => handleDisablePress(course)}
+                  disabled={course.status === "Disabled"}
+                  style={{ opacity: course.status === "Disabled" ? 0.5 : 1 }}
                 >
-                  <Image source={images.trash} style={styles.icon} />
+                  <Image source={images.disabled} style={styles.icon} />
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -168,20 +166,20 @@ export default function CoursesScreen() {
       </View>
 
       <CustomModal
-        visible={isDeleteModalVisible}
-        title="Confirm Deletion"
-        message={`Are you sure you want to delete ${courseToDelete?.course_name}?`}
+        visible={isDisableModalVisible}
+        title="Confirm Disable"
+        message={`Are you sure you want to disable ${courseToDisable?.course_name}?`}
         type="warning"
-        onClose={handleDeleteModalClose}
-        onConfirm={handleConfirmDelete}
+        onClose={handleDisableModalClose}
+        onConfirm={handleConfirmDisable}
         cancelTitle="Cancel"
-        confirmTitle="Delete"
+        confirmTitle="Disable"
       />
 
       <CustomModal
         visible={isSuccessModalVisible}
         title="Success"
-        message="Course deleted successfully!"
+        message="Course disabled successfully!"
         type="success"
         onClose={() => setIsSuccessModalVisible(false)}
         cancelTitle="CLOSE"
@@ -189,7 +187,7 @@ export default function CoursesScreen() {
 
       <TabsComponent />
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -197,9 +195,9 @@ const styles = StyleSheet.create({
   headerText: {
     color: theme.colors.primary,
     fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: theme.fontSizes.display,
+    fontSize: theme.fontSizes.title,
     textAlign: "center",
-    marginBottom: theme.spacing.medium,
+    marginBottom: theme.spacing.small,
   },
   courseContainer: {
     borderWidth: 2,

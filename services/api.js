@@ -380,7 +380,7 @@ export const editCourse = async (courseId, courseData) => {
   }
 };
 
-export const deleteCourse = async (courseId) => {
+export const disableCourse = async (courseId) => {
   try {
     const response = await axios.put(`${API_URL}/api/courses/${courseId}`);
     if (response.data.success) {

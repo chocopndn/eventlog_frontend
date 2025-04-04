@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, SafeAreaView, ScrollView } from "react-native";
+import { StyleSheet, Text, View, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
@@ -9,14 +9,15 @@ import CustomModal from "../../../../components/CustomModal";
 
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
-import { fetchCourseById, deleteCourse } from "../../../../services/api";
+import { fetchCourseById, disableCourse } from "../../../../services/api";
 import { useLocalSearchParams } from "expo-router";
 
 const CourseDetails = () => {
   const { id: course_id } = useLocalSearchParams();
   const [courseDetails, setCourseDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isDisableModalVisible, setIsDisableModalVisible] = useState(false);
+  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 
   const fetchCourseDetails = async () => {
     try {
@@ -42,37 +43,41 @@ const CourseDetails = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <Text style={styles.loadingText}>Loading...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!courseDetails) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <Text style={styles.errorText}>Course details not found.</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
-  const handleDeletePress = () => {
-    setIsDeleteModalVisible(true);
+  const handleDisablePress = () => {
+    setIsDisableModalVisible(true);
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDisable = async () => {
     try {
-      await deleteCourse(courseDetails.course_id);
-      router.back();
+      await disableCourse(courseDetails.course_id);
+
+      setCourseDetails((prevDetails) =>
+        prevDetails ? { ...prevDetails, status: "Disabled" } : null
+      );
+
+      setIsDisableModalVisible(false);
+      setIsSuccessModalVisible(true);
     } catch (error) {
-      console.error("Error deleting course:", error);
-    } finally {
-      setIsDeleteModalVisible(false);
+      console.error("Error disabling course:", error);
     }
   };
 
   return (
-    <SafeAreaView
+    <View
       style={[
         globalStyles.secondaryContainer,
         { paddingTop: 0, paddingBottom: 110 },
@@ -114,31 +119,42 @@ const CourseDetails = () => {
             }
           />
         </View>
-        {courseDetails.status === "deleted" ? null : (
+        {courseDetails.status === "Disabled" ? null : (
           <View style={styles.button}>
             <CustomButton
-              title="DELETE"
+              title="DISABLE"
               type="secondary"
-              onPress={handleDeletePress}
+              onPress={handleDisablePress}
             />
           </View>
         )}
       </View>
 
+      {/* Confirm Disable Modal */}
       <CustomModal
-        visible={isDeleteModalVisible}
-        title="Confirm Deletion"
-        message={`Are you sure you want to delete ${courseDetails.course_name}?`}
+        visible={isDisableModalVisible}
+        title="Confirm Disable"
+        message={`Are you sure you want to disable ${courseDetails.course_name}?`}
         type="warning"
-        onClose={() => setIsDeleteModalVisible(false)}
-        onConfirm={handleConfirmDelete}
+        onClose={() => setIsDisableModalVisible(false)}
+        onConfirm={handleConfirmDisable}
         cancelTitle="Cancel"
-        confirmTitle="Delete"
+        confirmTitle="Disable"
+      />
+
+      {/* Success Modal */}
+      <CustomModal
+        visible={isSuccessModalVisible}
+        title="Success"
+        message="Course disabled successfully!"
+        type="success"
+        onClose={() => setIsSuccessModalVisible(false)}
+        cancelTitle="CLOSE"
       />
 
       <TabsComponent />
       <StatusBar style="light" />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -152,9 +168,11 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.medium,
   },
   title: {
-    fontSize: theme.fontSizes.huge,
-    fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.title,
+    textAlign: "center",
+    marginBottom: theme.spacing.small,
   },
   detailsWrapper: {
     flexGrow: 1,
