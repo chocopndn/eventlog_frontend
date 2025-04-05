@@ -569,7 +569,7 @@ const AddEvent = () => {
                   ? `${Math.floor(formData.duration / 60)} hrs ${
                       formData.duration % 60
                     } mins`
-                  : "Not set"}
+                  : ""}
               </Text>
             </TouchableOpacity>
             {isDurationPickerVisible && (

@@ -16,11 +16,11 @@ const TimePickerComponent = ({
     setShowPicker(false);
 
     if (selectedTime) {
-      const formattedTime = selectedTime.toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      });
+      const hours = selectedTime.getHours().toString().padStart(2, "0");
+      const minutes = selectedTime.getMinutes().toString().padStart(2, "0");
+      const seconds = selectedTime.getSeconds().toString().padStart(2, "0");
+      const formattedTime = `${hours}:${minutes}:${seconds}`;
+
       setSelectedTime(formattedTime);
       onTimeChange?.(formattedTime);
     } else {
