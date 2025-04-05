@@ -42,11 +42,11 @@ export default function PendingEvents() {
         ? response.events
         : [];
       const filteredPendingEvents = fetchedEvents.filter(
-        (event) => event.status === "pending" && event.event_id
+        (event) => event.status === "Pending" && event.event_id
       );
       setEvents(filteredPendingEvents);
     } catch (error) {
-      console.error(error);
+      console.error("Error loading events:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -66,7 +66,7 @@ export default function PendingEvents() {
           setAdminId(storedUser.id_number);
         }
       } catch (error) {
-        console.error(error);
+        console.error("Error loading admin ID:", error);
       }
     };
     loadAdminId();
@@ -95,7 +95,7 @@ export default function PendingEvents() {
       handleCloseModal();
       setIsApproveSuccessModalVisible(true);
     } catch (error) {
-      console.error(error);
+      console.error("Error approving event:", error);
     }
   };
 
@@ -109,7 +109,7 @@ export default function PendingEvents() {
       handleCloseModal();
       setIsDeleteSuccessModalVisible(true);
     } catch (error) {
-      console.error(error);
+      console.error("Error deleting event:", error);
     }
   };
 
@@ -147,8 +147,8 @@ export default function PendingEvents() {
                 <Text style={styles.name} numberOfLines={1}>
                   {event.event_name}
                 </Text>
-                <Text style={styles.venue} numberOfLines={1}>
-                  {event.venue}
+                <Text style={styles.status} numberOfLines={1}>
+                  {event.status}
                 </Text>
               </View>
               <View style={styles.iconContainer}>
@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.large,
     flexShrink: 1,
   },
-  venue: {
+  status: {
     fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
     fontSize: theme.fontSizes.small,
