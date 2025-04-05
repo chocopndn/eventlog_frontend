@@ -9,7 +9,6 @@ import {
   RefreshControl,
 } from "react-native";
 import TabsComponent from "../../../../components/TabsComponent";
-
 import { StatusBar } from "expo-status-bar";
 import { fetchEvents, deleteEvent } from "../../../../services/api";
 import { router, useFocusEffect } from "expo-router";
@@ -31,14 +30,19 @@ export default function EventsList() {
   const loadEvents = async () => {
     try {
       const response = await fetchEvents();
-      const fetchedEvents = Array.isArray(response?.events)
+      if (!response?.events) {
+        return;
+      }
+      const fetchedEvents = Array.isArray(response.events)
         ? response.events
         : [];
       const filteredEvents = fetchedEvents.filter(
-        (event) => event.status !== "deleted"
+        (event) => event.status !== "Deleted"
       );
       setEvents(filteredEvents);
-    } catch (err) {}
+    } catch (err) {
+      console.error("Error loading events:", err);
+    }
   };
 
   const refreshData = async () => {
@@ -46,6 +50,7 @@ export default function EventsList() {
     try {
       await loadEvents();
     } catch (error) {
+      console.error("Error refreshing events data:", error);
     } finally {
       setRefreshing(false);
     }
@@ -65,6 +70,14 @@ export default function EventsList() {
       venue.includes(searchQuery.toLowerCase())
     );
   });
+
+  const approvedEvents = filteredEvents.filter(
+    (event) => event.status === "approved"
+  );
+
+  const pendingEventsCount = events.filter(
+    (event) => event.status === "Pending"
+  ).length;
 
   const handleDeletePress = (event) => {
     setEventToDelete(event);
@@ -89,19 +102,16 @@ export default function EventsList() {
       );
       handleDeleteModalClose();
       setIsSuccessModalVisible(true);
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error deleting event:", error);
+    }
   };
-
-  const pendingEventsCount = events.filter(
-    (event) => event.status === "pending"
-  ).length;
 
   return (
     <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
       <Text style={styles.headerText}>EVENTS</Text>
 
-      {/* Conditionally render the SearchBar */}
-      {filteredEvents.length > 0 && (
+      {approvedEvents.length > 0 && (
         <View
           style={{ paddingHorizontal: theme.spacing.medium, width: "100%" }}
         >
@@ -117,11 +127,12 @@ export default function EventsList() {
           <View style={styles.pendingContainer}>
             <Text style={styles.pendingText}>
               {pendingEventsCount} PENDING EVENT
-              {pendingEventsCount > 1 ? "s" : ""}
+              {pendingEventsCount > 1 ? "S" : ""}
             </Text>
           </View>
         </TouchableOpacity>
       )}
+
       <ScrollView
         style={{ flex: 1, width: "100%", marginBottom: 70 }}
         contentContainerStyle={[styles.scrollview, { paddingBottom: 80 }]}
@@ -130,8 +141,8 @@ export default function EventsList() {
           <RefreshControl refreshing={refreshing} onRefresh={refreshData} />
         }
       >
-        {filteredEvents.length > 0 ? (
-          filteredEvents.map((event) => (
+        {approvedEvents.length > 0 ? (
+          approvedEvents.map((event) => (
             <TouchableOpacity
               key={event.event_id}
               style={styles.eventContainer}
@@ -171,9 +182,9 @@ export default function EventsList() {
               </View>
             </TouchableOpacity>
           ))
-        ) : (
+        ) : pendingEventsCount === 0 ? (
           <Text style={styles.noResults}>No events found</Text>
-        )}
+        ) : null}
       </ScrollView>
 
       <View style={styles.buttonContainer}>
