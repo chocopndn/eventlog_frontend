@@ -1,14 +1,749 @@
-import { StyleSheet, Text, View } from "react-native";
-import React from "react";
+import React, { useState, useEffect } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
+import { StatusBar } from "expo-status-bar";
+import TabsComponent from "../../../../components/TabsComponent";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
+import CustomDropdown from "../../../../components/CustomDropdown";
+import CustomButton from "../../../../components/CustomButton";
+import CustomModal from "../../../../components/CustomModal";
+import FormField from "../../../../components/FormField";
+import TimePickerComponent from "../../../../components/TimePickerComponent";
+import DatePickerComponent from "../../../../components/DatePickerComponent";
+import DurationPicker from "../../../../components/DurationPicker";
+import {
+  fetchDepartments,
+  fetchEventNames,
+  fetchBlocksByDepartment,
+  fetchEventById,
+  updateEvent,
+} from "../../../../services/api";
+import { getStoredUser } from "../../../../database/queries";
+import { router, useLocalSearchParams } from "expo-router";
 
 const EditEvent = () => {
+  const { id: eventId } = useLocalSearchParams();
+  const [formData, setFormData] = useState({
+    event_name_id: "",
+    department_ids: [],
+    block_ids: [],
+    venue: "",
+    description: "",
+    am_in: null,
+    am_out: null,
+    pm_in: null,
+    pm_out: null,
+    event_date: null,
+    duration: 0,
+    created_by: "",
+  });
+  const [eventNames, setEventNames] = useState([]);
+  const [departmentOptions, setDepartmentOptions] = useState([]);
+  const [blockOptions, setBlockOptions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadingDepartments, setLoadingDepartments] = useState(true);
+  const [loadingBlocks, setLoadingBlocks] = useState(false);
+  const [errorDepartments, setErrorDepartments] = useState(null);
+  const [modal, setModal] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    type: "success",
+  });
+  const [isDurationPickerVisible, setIsDurationPickerVisible] = useState(false);
+
+  const [selectedDepartmentIds, setSelectedDepartmentIds] = useState([]);
+
+  useEffect(() => {
+    const initializeData = async () => {
+      try {
+        console.log("Fetching stored user data...");
+        const storedUserData = await getStoredUser();
+        if (!storedUserData || !storedUserData.id_number) {
+          throw new Error("Invalid or missing user ID.");
+        }
+        console.log("Stored user data fetched successfully:", storedUserData);
+        handleChange("created_by", storedUserData.id_number);
+      } catch (error) {
+        console.error("Error fetching stored user data:", error);
+        setModal({
+          visible: true,
+          title: "Error",
+          message: "Failed to load user data. Please try again.",
+          type: "error",
+        });
+      }
+    };
+
+    const fetchEventData = async () => {
+      setIsLoading(true);
+      try {
+        console.log(`Fetching event data for event ID: ${eventId}`);
+        const eventData = await fetchEventById(eventId);
+        console.log("Fetched event data:", eventData);
+        if (!eventData) {
+          throw new Error("Event not found.");
+        }
+
+        const blockIds = eventData.block_ids_list.split(",").map(Number);
+        const blockNames = eventData.block_names_list.split(",");
+        const formattedBlocks = blockIds.map((id, index) => ({
+          label: blockNames[index],
+          value: id,
+        }));
+        console.log("Formatted blocks:", formattedBlocks);
+
+        setFormData({
+          event_name_id: eventData.event_name_id,
+          department_ids: eventData.department_ids.split(",").map(Number),
+          block_ids: blockIds,
+          venue: eventData.venue,
+          description: eventData.event_description,
+          am_in: null,
+          am_out: null,
+          pm_in: null,
+          pm_out: null,
+          event_date: eventData.event_dates
+            ? new Date(eventData.event_dates)
+            : null,
+          duration: 0,
+          created_by: eventData.created_by_admin_id,
+        });
+
+        setBlockOptions(formattedBlocks);
+
+        setSelectedDepartmentIds(
+          eventData.department_ids.split(",").map(Number)
+        );
+      } catch (error) {
+        console.error("Error fetching event data:", error);
+        setModal({
+          visible: true,
+          title: "Error",
+          message: "Failed to load event details. Please try again.",
+          type: "error",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const fetchEventNamesData = async () => {
+      try {
+        console.log("Fetching event names...");
+        const eventNamesData = await fetchEventNames();
+        console.log("Fetched event names:", eventNamesData);
+        if (!Array.isArray(eventNamesData)) {
+          throw new Error("Invalid data format from API.");
+        }
+        const formattedEventNames = eventNamesData.map((name) => ({
+          label: name.label || name.name,
+          value: name.value || name.id,
+        }));
+        console.log("Formatted event names:", formattedEventNames);
+        setEventNames(formattedEventNames);
+      } catch (error) {
+        console.error("Error fetching event names:", error);
+        setModal({
+          visible: true,
+          title: "Error",
+          message: "Failed to load event names. Please try again.",
+          type: "error",
+        });
+      }
+    };
+
+    const fetchDepartmentData = async () => {
+      setLoadingDepartments(true);
+      setErrorDepartments(null);
+      try {
+        console.log("Fetching departments...");
+        const response = await fetchDepartments();
+        console.log("Fetched departments response:", response);
+        if (!response || !Array.isArray(response.departments)) {
+          throw new Error(
+            "Invalid data format from API: Expected 'departments' array."
+          );
+        }
+        const departmentsData = response.departments;
+        const formattedDepartments = departmentsData.map((dept) => ({
+          label: dept.department_name,
+          value: dept.department_id,
+        }));
+        console.log("Formatted departments:", formattedDepartments);
+        setDepartmentOptions(formattedDepartments);
+      } catch (err) {
+        console.error("Error fetching departments:", err);
+        setErrorDepartments(err);
+        setModal({
+          visible: true,
+          title: "Error",
+          message: "Failed to load departments. Please try again.",
+          type: "error",
+        });
+      } finally {
+        setLoadingDepartments(false);
+      }
+    };
+
+    initializeData();
+    fetchEventData();
+    fetchEventNamesData();
+    fetchDepartmentData();
+  }, [eventId]);
+
+  useEffect(() => {
+    const fetchBlocksData = async () => {
+      setLoadingBlocks(true);
+      try {
+        console.log(
+          "Fetching blocks for department IDs:",
+          selectedDepartmentIds
+        );
+        if (!selectedDepartmentIds || selectedDepartmentIds.length === 0) {
+          console.log("No department IDs selected. Clearing block options.");
+          setBlockOptions([]);
+          return;
+        }
+
+        const blocksResponse = await fetchBlocksByDepartment(
+          selectedDepartmentIds
+        );
+        console.log("Fetched blocks response:", blocksResponse);
+        if (!Array.isArray(blocksResponse)) {
+          throw new Error("Invalid API response: Expected an array of blocks.");
+        }
+
+        const activeBlocks = blocksResponse.filter(
+          (block) => block.status === "Active"
+        );
+        const formattedBlocks = activeBlocks.map((block) => ({
+          label: block.block_name,
+          value: block.block_id,
+        }));
+        console.log("Formatted blocks:", formattedBlocks);
+        setBlockOptions(formattedBlocks);
+      } catch (error) {
+        console.error("Error fetching blocks:", error);
+        setModal({
+          visible: true,
+          title: "Error",
+          message: "Failed to load blocks. Please try again.",
+          type: "error",
+        });
+      } finally {
+        setLoadingBlocks(false);
+      }
+    };
+
+    fetchBlocksData();
+  }, [selectedDepartmentIds]);
+
+  const handleChange = (name, value) => {
+    console.log(`Form field updated: ${name} -> ${JSON.stringify(value)}`);
+    setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
+  };
+
+  const handleSubmit = async () => {
+    try {
+      console.log("Submitting form data...");
+      console.log("Current form data:", formData);
+
+      if (!formData.event_name_id) {
+        console.warn("Validation failed: Event name is required.");
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Please select an event name.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (formData.department_ids.length === 0) {
+        console.warn("Validation failed: At least one department is required.");
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Please select at least one department.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (formData.block_ids.length === 0) {
+        console.warn("Validation failed: At least one block is required.");
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Please select at least one block.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (!formData.venue) {
+        console.warn("Validation failed: Venue is required.");
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Please enter a venue.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (!formData.description.trim()) {
+        console.warn("Validation failed: Description is required.");
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Please fill in the event description.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (!formData.event_date) {
+        console.warn("Validation failed: Event date is required.");
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Please select a valid event date.",
+          type: "error",
+        });
+        return;
+      }
+
+      const formattedDates = Array.isArray(formData.event_date)
+        ? formData.event_date.flat().filter(Boolean)
+        : [];
+      if (formattedDates.length === 0) {
+        console.warn("Validation failed: Valid event date is required.");
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Please select a valid event date.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (
+        !(
+          formData.am_in ||
+          formData.am_out ||
+          formData.pm_in ||
+          formData.pm_out
+        )
+      ) {
+        console.warn("Validation failed: At least one AM/PM time is required.");
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Please select at least one of the AM or PM times.",
+          type: "error",
+        });
+        return;
+      }
+
+      const convertToMinutes = (timeString) => {
+        const [hours, minutes] = timeString.split(":").map(Number);
+        return hours * 60 + minutes;
+      };
+
+      if (formData.am_in && formData.am_out) {
+        const amInMinutes = convertToMinutes(formData.am_in);
+        const amOutMinutes = convertToMinutes(formData.am_out);
+        const amTimeDifference = amOutMinutes - amInMinutes;
+        if (amTimeDifference < 60) {
+          console.warn(
+            "Validation failed: AM times must be at least one hour apart."
+          );
+          setModal({
+            visible: true,
+            title: "Validation Error",
+            message: "AM times must be at least one hour apart.",
+            type: "error",
+          });
+          return;
+        }
+      }
+
+      if (formData.pm_in && formData.pm_out) {
+        const pmInMinutes = convertToMinutes(formData.pm_in);
+        const pmOutMinutes = convertToMinutes(formData.pm_out);
+        const pmTimeDifference = pmOutMinutes - pmInMinutes;
+        if (pmTimeDifference < 60) {
+          console.warn(
+            "Validation failed: PM times must be at least one hour apart."
+          );
+          setModal({
+            visible: true,
+            title: "Validation Error",
+            message: "PM times must be at least one hour apart.",
+            type: "error",
+          });
+          return;
+        }
+      }
+
+      if (formData.duration < 30) {
+        console.warn(
+          "Validation failed: Event duration must be at least 30 minutes."
+        );
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Event duration must be at least 30 minutes.",
+          type: "error",
+        });
+        return;
+      }
+
+      const requestData = {
+        event_name_id: formData.event_name_id,
+        venue: formData.venue,
+        dates: formattedDates,
+        description: formData.description,
+        block_ids: formData.block_ids,
+        am_in: formData.am_in,
+        am_out: formData.am_out,
+        pm_in: formData.pm_in,
+        pm_out: formData.pm_out,
+        duration: formData.duration,
+        admin_id_number: formData.created_by,
+      };
+      console.log("Request data prepared for update:", requestData);
+
+      console.log(`Updating event with ID: ${eventId}`);
+      const response = await updateEvent(eventId, requestData);
+      console.log("Update event response:", response);
+
+      if (response?.success) {
+        console.log("Event updated successfully!");
+        setModal({
+          visible: true,
+          title: "Success",
+          message: "Event updated successfully!",
+          type: "success",
+          onPress: () => router.back(),
+        });
+        setTimeout(() => {
+          router.back();
+        }, 1500);
+      } else {
+        let errorMessage =
+          "Failed to update the event. Please double-check your information and try again.";
+        if (response?.message) {
+          errorMessage = response.message;
+        }
+        console.error("Error updating event:", errorMessage);
+        setModal({
+          visible: true,
+          title: "Error",
+          message: errorMessage,
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Error during form submission:", error);
+      let errorMessage =
+        "Failed to update the event. Please double-check your information and try again.";
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message === "Network request failed") {
+        errorMessage =
+          "There was a problem connecting to the server. Please check your internet connection and try again.";
+      }
+      setModal({
+        visible: true,
+        title: "Error",
+        message: errorMessage,
+        type: "error",
+      });
+    }
+  };
+
+  const handleModalClose = () => {
+    console.log("Closing modal...");
+    setModal({ ...modal, visible: false });
+  };
+
+  const handleDateChange = (date) => {
+    console.log(`Event date changed to: ${date}`);
+    handleChange("event_date", date);
+  };
+
+  const openDurationPicker = () => {
+    console.log("Opening duration picker...");
+    setIsDurationPickerVisible(true);
+  };
+
+  const closeDurationPicker = () => {
+    console.log("Closing duration picker...");
+    setIsDurationPickerVisible(false);
+  };
+
+  const handleDurationSelect = (durationInMinutes) => {
+    console.log(`Duration selected: ${durationInMinutes} minutes`);
+    handleChange("duration", durationInMinutes);
+    closeDurationPicker();
+  };
+
+  if (isLoading || loadingDepartments) {
+    return (
+      <View style={globalStyles.secondaryContainer}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  if (errorDepartments) {
+    return (
+      <View style={globalStyles.secondaryContainer}>
+        <Text style={{ color: "red", textAlign: "center" }}>
+          Failed to load departments. Please try again.
+        </Text>
+        <CustomButton
+          title="Retry"
+          onPress={() => {
+            setLoadingDepartments(true);
+            setErrorDepartments(null);
+            fetchDepartmentData();
+          }}
+        />
+      </View>
+    );
+  }
+
   return (
-    <View>
-      <Text>EditEvent</Text>
+    <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
+      <CustomModal
+        visible={modal.visible}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        onClose={handleModalClose}
+        cancelTitle="CLOSE"
+      />
+      <Text style={styles.textHeader}>EVENTLOG</Text>
+      <View style={styles.titleContainer}>
+        <Text style={styles.textTitle}>EDIT EVENT</Text>
+      </View>
+      <ScrollView
+        style={styles.scrollviewContainer}
+        contentContainerStyle={styles.scrollview}
+        showsVerticalScrollIndicator={false}
+      >
+        <View>
+          <CustomDropdown
+            title="Select Event Name"
+            data={eventNames}
+            placeholder="Select an event name"
+            value={formData.event_name_id}
+            onSelect={(item) => handleChange("event_name_id", item.value)}
+          />
+          <CustomDropdown
+            title="Select Departments"
+            data={departmentOptions}
+            placeholder="Select departments"
+            value={selectedDepartmentIds}
+            onSelect={(selectedItems) => {
+              const selectedValues = Array.isArray(selectedItems)
+                ? selectedItems.map((item) =>
+                    typeof item === "object" && item !== null
+                      ? item.value
+                      : item
+                  )
+                : [];
+              setSelectedDepartmentIds(selectedValues);
+              handleChange("department_ids", selectedValues);
+            }}
+            multiSelect
+          />
+          {loadingBlocks ? (
+            <ActivityIndicator size="small" color={theme.colors.primary} />
+          ) : (
+            <CustomDropdown
+              title="Select Blocks"
+              data={blockOptions}
+              placeholder="Select blocks"
+              value={formData.block_ids}
+              onSelect={(selectedItems) => {
+                const selectedValues = Array.isArray(selectedItems)
+                  ? selectedItems.map((item) =>
+                      typeof item === "object" && item !== null
+                        ? item.value
+                        : item
+                    )
+                  : [];
+                handleChange("block_ids", selectedValues);
+              }}
+              multiSelect
+            />
+          )}
+          <FormField
+            title="Venue"
+            placeholder="Enter venue details"
+            value={formData.venue}
+            onChangeText={(text) => handleChange("venue", text)}
+          />
+          <FormField
+            title="Description"
+            placeholder="Enter event description..."
+            value={formData.description}
+            onChangeText={(text) => handleChange("description", text)}
+            multiline={true}
+          />
+          <DatePickerComponent
+            title="Date of Event"
+            onDateChange={handleDateChange}
+            selectedDate={formData.event_date}
+          />
+          <View>
+            <View style={styles.timeWrapper}>
+              <View style={styles.timeContainer}>
+                <TimePickerComponent
+                  title="AM Time In"
+                  mode="single"
+                  onTimeChange={(time) => handleChange("am_in", time)}
+                  selectedValue={formData.am_in}
+                />
+              </View>
+              <View style={styles.timeContainer}>
+                {formData.am_in && (
+                  <TimePickerComponent
+                    title="AM Time Out"
+                    mode="single"
+                    onTimeChange={(time) => handleChange("am_out", time)}
+                    selectedValue={formData.am_out}
+                  />
+                )}
+              </View>
+            </View>
+          </View>
+          <View>
+            <View style={styles.timeWrapper}>
+              <View style={styles.timeContainer}>
+                <TimePickerComponent
+                  title="PM Time In"
+                  mode="single"
+                  onTimeChange={(time) => handleChange("pm_in", time)}
+                  selectedValue={formData.pm_in}
+                />
+              </View>
+              <View style={styles.timeContainer}>
+                {formData.pm_in && (
+                  <TimePickerComponent
+                    title="PM Time Out"
+                    mode="single"
+                    onTimeChange={(time) => handleChange("pm_out", time)}
+                    selectedValue={formData.pm_out}
+                  />
+                )}
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.durationButton}
+              onPress={openDurationPicker}
+            >
+              <Text style={styles.durationButtonText}>
+                Set Duration:{" "}
+                {formData.duration > 0
+                  ? `${Math.floor(formData.duration / 60)} hrs ${
+                      formData.duration % 60
+                    } mins`
+                  : ""}
+              </Text>
+            </TouchableOpacity>
+            {isDurationPickerVisible && (
+              <DurationPicker
+                visible={isDurationPickerVisible}
+                onClose={closeDurationPicker}
+                onDurationSelect={handleDurationSelect}
+                selectedDuration={formData.duration}
+                key={isDurationPickerVisible ? "visible" : "hidden"}
+              />
+            )}
+          </View>
+          <View style={styles.buttonContainer}>
+            <CustomButton title="SAVE CHANGES" onPress={handleSubmit} />
+          </View>
+        </View>
+      </ScrollView>
+      <TabsComponent />
+      <StatusBar style="auto" />
     </View>
   );
 };
 
-export default EditEvent;
+const styles = StyleSheet.create({
+  textHeader: {
+    color: theme.colors.primary,
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.title,
+    textAlign: "center",
+    marginBottom: theme.spacing.small,
+  },
+  scrollviewContainer: {
+    width: "100%",
+    marginBottom: 90,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    borderTopWidth: 0,
+  },
+  scrollview: {
+    justifyContent: "space-between",
+    flexGrow: 1,
+    padding: theme.spacing.medium,
+  },
+  titleContainer: {
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+  },
+  textTitle: {
+    fontSize: theme.fontSizes.extraLarge,
+    fontFamily: theme.fontFamily.SquadaOne,
+    color: theme.colors.primary,
+  },
+  buttonContainer: {
+    marginTop: theme.spacing.medium,
+  },
+  timeWrapper: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  timeContainer: {
+    width: "45%",
+  },
+  durationButton: {
+    padding: theme.spacing.small,
+    borderRadius: theme.borderRadius.medium,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    marginTop: theme.spacing.medium,
+    alignItems: "center",
+    justifyContent: "center",
+    height: 50,
+  },
+  durationButtonText: {
+    color: theme.colors.primary,
+    fontSize: theme.fontSizes.medium,
+    fontFamily: theme.fontFamily.Arial,
+  },
+});
 
-const styles = StyleSheet.create({});
+export default EditEvent;
