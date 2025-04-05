@@ -25,6 +25,7 @@ import {
   addEvent,
 } from "../../../../services/api";
 import { getStoredUser } from "../../../../database/queries";
+import { router } from "expo-router";
 
 const AddEvent = () => {
   const [formData, setFormData] = useState({
@@ -342,7 +343,13 @@ const AddEvent = () => {
           title: "Success",
           message: "Event added successfully!",
           type: "success",
+          onPress: () => router.back(),
         });
+
+        setTimeout(() => {
+          router.back();
+        }, 1500);
+
         setFormData({
           event_name_id: "",
           department_ids: [],
@@ -527,6 +534,7 @@ const AddEvent = () => {
                   title="AM Time In"
                   mode="single"
                   onTimeChange={(time) => handleChange("am_in", time)}
+                  selectedValue={formData.am_in}
                 />
               </View>
               <View style={styles.timeContainer}>
@@ -535,6 +543,7 @@ const AddEvent = () => {
                     title="AM Time Out"
                     mode="single"
                     onTimeChange={(time) => handleChange("am_out", time)}
+                    selectedValue={formData.am_out}
                   />
                 )}
               </View>
@@ -547,6 +556,7 @@ const AddEvent = () => {
                   title="PM Time In"
                   mode="single"
                   onTimeChange={(time) => handleChange("pm_in", time)}
+                  selectedValue={formData.pm_in}
                 />
               </View>
               <View style={styles.timeContainer}>
@@ -555,6 +565,7 @@ const AddEvent = () => {
                     title="PM Time Out"
                     mode="single"
                     onTimeChange={(time) => handleChange("pm_out", time)}
+                    selectedValue={formData.pm_out}
                   />
                 )}
               </View>

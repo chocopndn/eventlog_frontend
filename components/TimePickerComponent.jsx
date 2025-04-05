@@ -13,24 +13,40 @@ const TimePickerComponent = ({
   const [selectedTime, setSelectedTime] = useState(selectedValue || null);
 
   const handleTimeChange = (event, selectedTime) => {
-    setShowPicker(false);
+    if (event.type === "set") {
+      setShowPicker(false);
 
-    if (selectedTime) {
-      const hours = selectedTime.getHours().toString().padStart(2, "0");
-      const minutes = selectedTime.getMinutes().toString().padStart(2, "0");
-      const seconds = selectedTime.getSeconds().toString().padStart(2, "0");
-      const formattedTime = `${hours}:${minutes}:${seconds}`;
+      if (selectedTime) {
+        const hours = selectedTime.getHours();
+        const minutes = selectedTime.getMinutes().toString().padStart(2, "0");
+        const seconds = selectedTime.getSeconds().toString().padStart(2, "0");
 
-      setSelectedTime(formattedTime);
-      onTimeChange?.(formattedTime);
-    } else {
-      setSelectedTime(null);
-      onTimeChange?.(null);
+        const formattedTime = `${hours
+          .toString()
+          .padStart(2, "0")}:${minutes}:${seconds}`;
+
+        const isPM = hours >= 12;
+        const formattedHours =
+          hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
+        const ampm = isPM ? "PM" : "AM";
+        const displayTime = `${formattedHours
+          .toString()
+          .padStart(2, "0")}:${minutes} ${ampm}`;
+
+        setSelectedTime(displayTime);
+        onTimeChange?.(formattedTime);
+      }
+    } else if (event.type === "dismissed") {
+      setShowPicker(false);
     }
   };
 
-  const formattedDisplay =
-    onTimeChange === null || !selectedTime ? "Select time" : selectedTime;
+  const handleLongPress = () => {
+    setSelectedTime(null);
+    onTimeChange?.(null);
+  };
+
+  const formattedDisplay = !selectedTime ? "Select time" : selectedTime;
 
   return (
     <View>
@@ -38,6 +54,7 @@ const TimePickerComponent = ({
       <TouchableOpacity
         style={styles.container}
         onPress={() => setShowPicker(true)}
+        onLongPress={handleLongPress}
         accessibilityRole="button"
         accessibilityLabel="Open time picker"
       >
