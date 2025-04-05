@@ -22,7 +22,9 @@ import {
   fetchDepartments,
   fetchEventNames,
   fetchBlocksByDepartment,
+  addEvent,
 } from "../../../../services/api";
+import { getStoredUser } from "../../../../database/queries";
 
 const AddEvent = () => {
   const [formData, setFormData] = useState({
@@ -37,8 +39,8 @@ const AddEvent = () => {
     pm_out: null,
     event_date: null,
     duration: 0,
+    created_by: "",
   });
-
   const [eventNames, setEventNames] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
   const [blockOptions, setBlockOptions] = useState([]);
@@ -55,9 +57,32 @@ const AddEvent = () => {
   const [isDurationPickerVisible, setIsDurationPickerVisible] = useState(false);
 
   useEffect(() => {
+    const initializeData = async () => {
+      try {
+        console.log("Fetching stored user data...");
+        const storedUserData = await getStoredUser();
+        if (!storedUserData || !storedUserData.id_number) {
+          console.error("Error fetching stored user data:", storedUserData);
+          throw new Error("Invalid or missing user ID.");
+        }
+        console.log("Stored user data fetched successfully:", storedUserData);
+
+        handleChange("created_by", storedUserData.id_number);
+      } catch (error) {
+        console.error("Error fetching stored user:", error);
+        setModal({
+          visible: true,
+          title: "Error",
+          message: "Failed to load user data. Please try again.",
+          type: "error",
+        });
+      }
+    };
+
     const fetchEventNamesData = async () => {
       setIsLoading(true);
       try {
+        console.log("Fetching event names...");
         const eventNamesData = await fetchEventNames();
         if (!Array.isArray(eventNamesData)) {
           console.error(
@@ -66,6 +91,7 @@ const AddEvent = () => {
           );
           throw new Error("Invalid data format from API.");
         }
+        console.log("Event names fetched successfully:", eventNamesData);
         const formattedEventNames = eventNamesData.map((name) => ({
           label: name.label || name.name,
           value: name.value || name.id,
@@ -83,14 +109,12 @@ const AddEvent = () => {
         setIsLoading(false);
       }
     };
-    fetchEventNamesData();
-  }, []);
 
-  useEffect(() => {
     const fetchDepartmentData = async () => {
       setLoadingDepartments(true);
       setErrorDepartments(null);
       try {
+        console.log("Fetching departments...");
         const response = await fetchDepartments();
         if (!response || !Array.isArray(response.departments)) {
           console.error(
@@ -101,6 +125,7 @@ const AddEvent = () => {
             "Invalid data format from API: Expected 'departments' array."
           );
         }
+        console.log("Departments fetched successfully:", response.departments);
         const departmentsData = response.departments;
         const formattedDepartments = departmentsData.map((dept) => ({
           label: dept.department_name,
@@ -131,6 +156,9 @@ const AddEvent = () => {
         setLoadingDepartments(false);
       }
     };
+
+    initializeData();
+    fetchEventNamesData();
     fetchDepartmentData();
   }, []);
 
@@ -138,8 +166,13 @@ const AddEvent = () => {
     const fetchBlocksData = async () => {
       setLoadingBlocks(true);
       try {
+        console.log(
+          "Fetching blocks for departments:",
+          formData.department_ids
+        );
         const departmentIds = formData.department_ids;
         if (!departmentIds || departmentIds.length === 0) {
+          console.log("No departments selected. Clearing block options.");
           setBlockOptions([]);
           return;
         }
@@ -151,6 +184,7 @@ const AddEvent = () => {
           );
           throw new Error("Invalid API response: Expected an array of blocks.");
         }
+        console.log("Blocks fetched successfully:", blocksResponse);
         const activeBlocks = blocksResponse.filter(
           (block) => block.status === "Active"
         );
@@ -175,36 +209,127 @@ const AddEvent = () => {
   }, [formData.department_ids]);
 
   const handleChange = (name, value) => {
+    console.log(`Form field updated: ${name} ->`, value);
     setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
   };
 
-  const handleSubmit = () => {
-    // Implement your submit logic here
-    console.log("Form Data:", formData);
+  const handleSubmit = async () => {
+    try {
+      console.log("Submitting form data:", formData);
+
+      if (!formData.event_name_id || !formData.venue || !formData.event_date) {
+        console.warn("Validation failed: Missing required fields");
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Please fill in all required fields.",
+          type: "error",
+        });
+        return;
+      }
+
+      const formattedDates = Array.isArray(formData.event_date)
+        ? formData.event_date.flat().filter(Boolean)
+        : [];
+
+      if (formattedDates.length === 0) {
+        console.warn("Validation failed: Event date is missing or invalid.");
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Please select a valid event date.",
+          type: "error",
+        });
+        return;
+      }
+
+      const requestData = {
+        event_name_id: formData.event_name_id,
+        venue: formData.venue,
+        dates: formattedDates,
+        description: formData.description,
+        block_ids: formData.block_ids,
+        am_in: formData.am_in,
+        am_out: formData.am_out,
+        pm_in: formData.pm_in,
+        pm_out: formData.pm_out,
+        duration: formData.duration,
+        admin_id_number: formData.created_by,
+      };
+
+      console.log("Sending request to API with data:", requestData);
+      const response = await addEvent(requestData);
+
+      if (response.success) {
+        console.log("Event added successfully:", response);
+        setModal({
+          visible: true,
+          title: "Success",
+          message: "Event added successfully!",
+          type: "success",
+        });
+        setFormData({
+          event_name_id: "",
+          department_ids: [],
+          block_ids: [],
+          venue: "",
+          description: "",
+          am_in: null,
+          am_out: null,
+          pm_in: null,
+          pm_out: null,
+          event_date: null,
+          duration: 0,
+          created_by: formData.created_by,
+        });
+      } else {
+        console.error("API returned failure response:", response);
+        setModal({
+          visible: true,
+          title: "Error",
+          message: response.message || "Failed to add event. Please try again.",
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting event:", error);
+      setModal({
+        visible: true,
+        title: "Error",
+        message: "An unexpected error occurred. Please try again.",
+        type: "error",
+      });
+    }
   };
 
   const handleModalClose = () => {
+    console.log("Closing modal...");
     setModal({ ...modal, visible: false });
   };
 
   const handleDateChange = (date) => {
+    console.log("Event date changed:", date);
     handleChange("event_date", date);
   };
 
   const openDurationPicker = () => {
+    console.log("Opening duration picker...");
     setIsDurationPickerVisible(true);
   };
 
   const closeDurationPicker = () => {
+    console.log("Closing duration picker...");
     setIsDurationPickerVisible(false);
   };
 
   const handleDurationSelect = (durationInMinutes) => {
+    console.log("Duration selected:", durationInMinutes);
     handleChange("duration", durationInMinutes);
     closeDurationPicker();
   };
 
   if (isLoading || loadingDepartments) {
+    console.log("Component is loading...");
     return (
       <View style={globalStyles.secondaryContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -213,6 +338,7 @@ const AddEvent = () => {
   }
 
   if (errorDepartments) {
+    console.error("Error loading departments:", errorDepartments);
     return (
       <View style={globalStyles.secondaryContainer}>
         <Text style={{ color: "red", textAlign: "center" }}>
@@ -221,6 +347,7 @@ const AddEvent = () => {
         <CustomButton
           title="Retry"
           onPress={() => {
+            console.log("Retrying department fetch...");
             setLoadingDepartments(true);
             setErrorDepartments(null);
             fetchDepartmentData();
@@ -371,7 +498,7 @@ const AddEvent = () => {
                 onClose={closeDurationPicker}
                 onDurationSelect={handleDurationSelect}
                 selectedDuration={formData.duration}
-                key={isDurationPickerVisible ? "visible" : "hidden"} // Force remount
+                key={isDurationPickerVisible ? "visible" : "hidden"}
               />
             )}
           </View>
