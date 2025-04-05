@@ -59,17 +59,12 @@ const AddEvent = () => {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        console.log("Fetching stored user data...");
         const storedUserData = await getStoredUser();
         if (!storedUserData || !storedUserData.id_number) {
-          console.error("Error fetching stored user data:", storedUserData);
           throw new Error("Invalid or missing user ID.");
         }
-        console.log("Stored user data fetched successfully:", storedUserData);
-
         handleChange("created_by", storedUserData.id_number);
       } catch (error) {
-        console.error("Error fetching stored user:", error);
         setModal({
           visible: true,
           title: "Error",
@@ -82,23 +77,16 @@ const AddEvent = () => {
     const fetchEventNamesData = async () => {
       setIsLoading(true);
       try {
-        console.log("Fetching event names...");
         const eventNamesData = await fetchEventNames();
         if (!Array.isArray(eventNamesData)) {
-          console.error(
-            "Error fetching event names: Invalid data format",
-            eventNamesData
-          );
           throw new Error("Invalid data format from API.");
         }
-        console.log("Event names fetched successfully:", eventNamesData);
         const formattedEventNames = eventNamesData.map((name) => ({
           label: name.label || name.name,
           value: name.value || name.id,
         }));
         setEventNames(formattedEventNames);
       } catch (error) {
-        console.error("Error fetching event names:", error);
         setModal({
           visible: true,
           title: "Error",
@@ -114,18 +102,12 @@ const AddEvent = () => {
       setLoadingDepartments(true);
       setErrorDepartments(null);
       try {
-        console.log("Fetching departments...");
         const response = await fetchDepartments();
         if (!response || !Array.isArray(response.departments)) {
-          console.error(
-            "Error fetching departments: Invalid data format",
-            response
-          );
           throw new Error(
             "Invalid data format from API: Expected 'departments' array."
           );
         }
-        console.log("Departments fetched successfully:", response.departments);
         const departmentsData = response.departments;
         const formattedDepartments = departmentsData.map((dept) => ({
           label: dept.department_name,
@@ -136,15 +118,10 @@ const AddEvent = () => {
             (dept) => !dept.label || dept.value === undefined
           )
         ) {
-          console.error(
-            "Error fetching departments: Invalid department data",
-            formattedDepartments
-          );
           throw new Error("Invalid department data.");
         }
         setDepartmentOptions(formattedDepartments);
       } catch (err) {
-        console.error("Error fetching departments:", err);
         setErrorDepartments(err);
         setModal({
           visible: true,
@@ -166,25 +143,15 @@ const AddEvent = () => {
     const fetchBlocksData = async () => {
       setLoadingBlocks(true);
       try {
-        console.log(
-          "Fetching blocks for departments:",
-          formData.department_ids
-        );
         const departmentIds = formData.department_ids;
         if (!departmentIds || departmentIds.length === 0) {
-          console.log("No departments selected. Clearing block options.");
           setBlockOptions([]);
           return;
         }
         const blocksResponse = await fetchBlocksByDepartment(departmentIds);
         if (!Array.isArray(blocksResponse)) {
-          console.error(
-            "Error fetching blocks: Invalid API response",
-            blocksResponse
-          );
           throw new Error("Invalid API response: Expected an array of blocks.");
         }
-        console.log("Blocks fetched successfully:", blocksResponse);
         const activeBlocks = blocksResponse.filter(
           (block) => block.status === "Active"
         );
@@ -194,7 +161,6 @@ const AddEvent = () => {
         }));
         setBlockOptions(formattedBlocks);
       } catch (error) {
-        console.error("Error fetching blocks:", error);
         setModal({
           visible: true,
           title: "Error",
@@ -209,16 +175,12 @@ const AddEvent = () => {
   }, [formData.department_ids]);
 
   const handleChange = (name, value) => {
-    console.log(`Form field updated: ${name} ->`, value);
     setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
   };
 
   const handleSubmit = async () => {
     try {
-      console.log("Submitting form data:", formData);
-
       if (!formData.event_name_id || !formData.venue || !formData.event_date) {
-        console.warn("Validation failed: Missing required fields");
         setModal({
           visible: true,
           title: "Validation Error",
@@ -233,7 +195,6 @@ const AddEvent = () => {
         : [];
 
       if (formattedDates.length === 0) {
-        console.warn("Validation failed: Event date is missing or invalid.");
         setModal({
           visible: true,
           title: "Validation Error",
@@ -257,11 +218,9 @@ const AddEvent = () => {
         admin_id_number: formData.created_by,
       };
 
-      console.log("Sending request to API with data:", requestData);
       const response = await addEvent(requestData);
 
-      if (response.success) {
-        console.log("Event added successfully:", response);
+      if (response?.success) {
         setModal({
           visible: true,
           title: "Success",
@@ -283,53 +242,60 @@ const AddEvent = () => {
           created_by: formData.created_by,
         });
       } else {
-        console.error("API returned failure response:", response);
+        let errorMessage =
+          "Failed to add the event. Please double-check your information and try again.";
+        if (response?.message) {
+          errorMessage = response.message;
+        }
         setModal({
           visible: true,
           title: "Error",
-          message: response.message || "Failed to add event. Please try again.",
+          message: errorMessage,
           type: "error",
         });
       }
     } catch (error) {
-      console.error("Error submitting event:", error);
+      let errorMessage =
+        "Failed to add the event. Please double-check your information and try again.";
+
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message === "Network request failed") {
+        errorMessage =
+          "There was a problem connecting to the server. Please check your internet connection and try again.";
+      }
+
       setModal({
         visible: true,
         title: "Error",
-        message: "An unexpected error occurred. Please try again.",
+        message: errorMessage,
         type: "error",
       });
     }
   };
 
   const handleModalClose = () => {
-    console.log("Closing modal...");
     setModal({ ...modal, visible: false });
   };
 
   const handleDateChange = (date) => {
-    console.log("Event date changed:", date);
     handleChange("event_date", date);
   };
 
   const openDurationPicker = () => {
-    console.log("Opening duration picker...");
     setIsDurationPickerVisible(true);
   };
 
   const closeDurationPicker = () => {
-    console.log("Closing duration picker...");
     setIsDurationPickerVisible(false);
   };
 
   const handleDurationSelect = (durationInMinutes) => {
-    console.log("Duration selected:", durationInMinutes);
     handleChange("duration", durationInMinutes);
     closeDurationPicker();
   };
 
   if (isLoading || loadingDepartments) {
-    console.log("Component is loading...");
     return (
       <View style={globalStyles.secondaryContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
@@ -338,7 +304,6 @@ const AddEvent = () => {
   }
 
   if (errorDepartments) {
-    console.error("Error loading departments:", errorDepartments);
     return (
       <View style={globalStyles.secondaryContainer}>
         <Text style={{ color: "red", textAlign: "center" }}>
@@ -347,7 +312,6 @@ const AddEvent = () => {
         <CustomButton
           title="Retry"
           onPress={() => {
-            console.log("Retrying department fetch...");
             setLoadingDepartments(true);
             setErrorDepartments(null);
             fetchDepartmentData();
