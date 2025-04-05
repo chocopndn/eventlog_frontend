@@ -180,11 +180,61 @@ const AddEvent = () => {
 
   const handleSubmit = async () => {
     try {
-      if (!formData.event_name_id || !formData.venue || !formData.event_date) {
+      if (!formData.event_name_id) {
         setModal({
           visible: true,
           title: "Validation Error",
-          message: "Please fill in all required fields.",
+          message: "Please select an event name.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (formData.department_ids.length === 0) {
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Please select at least one department.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (formData.block_ids.length === 0) {
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Please select at least one block.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (!formData.venue) {
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Please enter a venue.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (!formData.description.trim()) {
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Please fill in the event description.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (!formData.event_date) {
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Please select a valid event date.",
           type: "error",
         });
         return;
@@ -202,6 +252,105 @@ const AddEvent = () => {
           type: "error",
         });
         return;
+      }
+
+      if (
+        !(
+          formData.am_in ||
+          formData.am_out ||
+          formData.pm_in ||
+          formData.pm_out
+        )
+      ) {
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Please select at least one of the AM or PM times.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (formData.am_out && !formData.am_in) {
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "AM Out requires AM In.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (formData.am_in && !formData.am_out) {
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "AM In requires AM Out.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (formData.pm_out && !formData.pm_in) {
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "PM Out requires PM In.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (formData.pm_in && !formData.pm_out) {
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "PM In requires PM Out.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (formData.duration < 30) {
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Event duration must be at least 30 minutes.",
+          type: "error",
+        });
+        return;
+      }
+
+      if (formData.am_in && formData.am_out) {
+        const amInTime = new Date(`1970-01-01T${formData.am_in}:00`);
+        const amOutTime = new Date(`1970-01-01T${formData.am_out}:00`);
+        const amTimeDifference = (amOutTime - amInTime) / 1000 / 60;
+
+        if (amTimeDifference < 60) {
+          setModal({
+            visible: true,
+            title: "Validation Error",
+            message: "AM times must be at least one hour apart.",
+            type: "error",
+          });
+          return;
+        }
+      }
+
+      if (formData.pm_in && formData.pm_out) {
+        const pmInTime = new Date(`1970-01-01T${formData.pm_in}:00`);
+        const pmOutTime = new Date(`1970-01-01T${formData.pm_out}:00`);
+        const pmTimeDifference = (pmOutTime - pmInTime) / 1000 / 60;
+
+        if (pmTimeDifference < 60) {
+          setModal({
+            visible: true,
+            title: "Validation Error",
+            message: "PM times must be at least one hour apart.",
+            type: "error",
+          });
+          return;
+        }
       }
 
       const requestData = {
