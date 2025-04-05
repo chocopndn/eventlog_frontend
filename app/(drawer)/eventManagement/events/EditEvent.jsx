@@ -31,6 +31,7 @@ import { router, useLocalSearchParams } from "expo-router";
 const EditEvent = () => {
   const { id: eventId } = useLocalSearchParams();
   const [formData, setFormData] = useState({
+    event_id: "",
     event_name_id: "",
     department_ids: [],
     block_ids: [],
@@ -64,15 +65,13 @@ const EditEvent = () => {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        console.log("Fetching stored user data...");
         const storedUserData = await getStoredUser();
         if (!storedUserData || !storedUserData.id_number) {
           throw new Error("Invalid or missing user ID.");
         }
-        console.log("Stored user data fetched successfully:", storedUserData);
+
         handleChange("created_by", storedUserData.id_number);
       } catch (error) {
-        console.error("Error fetching stored user data:", error);
         setModal({
           visible: true,
           title: "Error",
@@ -88,15 +87,12 @@ const EditEvent = () => {
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
-      console.log(`Formatted date: ${year}-${month}-${day}`);
       return `${year}-${month}-${day}`;
     };
     const fetchEventData = async () => {
       setIsLoading(true);
       try {
-        console.log(`Fetching event data for event ID: ${eventId}`);
         const eventData = await fetchEventById(eventId);
-        console.log("Fetched event data:", eventData);
         if (!eventData) {
           throw new Error("Event not found.");
         }
@@ -107,7 +103,6 @@ const EditEvent = () => {
           label: blockNames[index],
           value: id,
         }));
-        console.log("Formatted blocks:", formattedBlocks);
 
         const departmentIds = eventData.department_ids.split(",").map(Number);
 
@@ -115,19 +110,25 @@ const EditEvent = () => {
           ? eventData.event_dates.split(",")
           : [];
 
+        const amIn = eventData.am_in || null;
+        const amOut = eventData.am_out || null;
+        const pmIn = eventData.pm_in || null;
+        const pmOut = eventData.pm_out || null;
+
         setFormData({
+          event_id: eventId,
           event_name_id: eventData.event_name_id || "",
           department_ids: departmentIds,
           block_ids: blockIds,
           venue: eventData.venue || "",
           description: eventData.event_description || "",
-          am_in: null,
-          am_out: null,
-          pm_in: null,
-          pm_out: null,
+          am_in: amIn,
+
+          am_out: amOut,
+          pm_in: pmIn,
+          pm_out: pmOut,
           event_date: formattedEventDates,
-          duration:
-            typeof eventData.duration === "number" ? eventData.duration : 0,
+          duration: eventData.duration || 0,
           created_by: eventData.created_by_admin_id || "",
         });
 
@@ -148,9 +149,7 @@ const EditEvent = () => {
 
     const fetchEventNamesData = async () => {
       try {
-        console.log("Fetching event names...");
         const eventNamesData = await fetchEventNames();
-        console.log("Fetched event names:", eventNamesData);
         if (!Array.isArray(eventNamesData)) {
           throw new Error("Invalid data format from API.");
         }
@@ -158,7 +157,6 @@ const EditEvent = () => {
           label: name.label || name.name,
           value: name.value || name.id,
         }));
-        console.log("Formatted event names:", formattedEventNames);
         setEventNames(formattedEventNames);
       } catch (error) {
         console.error("Error fetching event names:", error);
@@ -175,9 +173,7 @@ const EditEvent = () => {
       setLoadingDepartments(true);
       setErrorDepartments(null);
       try {
-        console.log("Fetching departments...");
         const response = await fetchDepartments();
-        console.log("Fetched departments response:", response);
         if (!response || !Array.isArray(response.departments)) {
           throw new Error(
             "Invalid data format from API: Expected 'departments' array."
@@ -188,7 +184,7 @@ const EditEvent = () => {
           label: dept.department_name,
           value: dept.department_id,
         }));
-        console.log("Formatted departments:", formattedDepartments);
+
         setDepartmentOptions(formattedDepartments);
       } catch (err) {
         console.error("Error fetching departments:", err);
@@ -214,12 +210,7 @@ const EditEvent = () => {
     const fetchBlocksData = async () => {
       setLoadingBlocks(true);
       try {
-        console.log(
-          "Fetching blocks for department IDs:",
-          selectedDepartmentIds
-        );
         if (!selectedDepartmentIds || selectedDepartmentIds.length === 0) {
-          console.log("No department IDs selected. Clearing block options.");
           setBlockOptions([]);
           return;
         }
@@ -227,7 +218,7 @@ const EditEvent = () => {
         const blocksResponse = await fetchBlocksByDepartment(
           selectedDepartmentIds
         );
-        console.log("Fetched blocks response:", blocksResponse);
+
         if (!Array.isArray(blocksResponse)) {
           throw new Error("Invalid API response: Expected an array of blocks.");
         }
@@ -239,7 +230,7 @@ const EditEvent = () => {
           label: block.block_name,
           value: block.block_id,
         }));
-        console.log("Formatted blocks:", formattedBlocks);
+
         setBlockOptions(formattedBlocks);
       } catch (error) {
         console.error("Error fetching blocks:", error);
@@ -258,15 +249,11 @@ const EditEvent = () => {
   }, [selectedDepartmentIds]);
 
   const handleChange = (name, value) => {
-    console.log(`Form field updated: ${name} -> ${JSON.stringify(value)}`);
     setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
   };
 
   const handleSubmit = async () => {
     try {
-      console.log("Submitting form data...");
-      console.log("Current form data:", formData);
-
       if (!formData.event_name_id) {
         console.warn("Validation failed: Event name is required.");
         setModal({
@@ -420,6 +407,7 @@ const EditEvent = () => {
       }
 
       const requestData = {
+        event_id: formData.event_id,
         event_name_id: formData.event_name_id,
         venue: formData.venue,
         dates: formattedDates,
@@ -432,14 +420,10 @@ const EditEvent = () => {
         duration: formData.duration,
         admin_id_number: formData.created_by,
       };
-      console.log("Request data prepared for update:", requestData);
 
-      console.log(`Updating event with ID: ${eventId}`);
       const response = await updateEvent(eventId, requestData);
-      console.log("Update event response:", response);
 
       if (response?.success) {
-        console.log("Event updated successfully!");
         setModal({
           visible: true,
           title: "Success",
@@ -484,27 +468,22 @@ const EditEvent = () => {
   };
 
   const handleModalClose = () => {
-    console.log("Closing modal...");
     setModal({ ...modal, visible: false });
   };
 
   const handleDateChange = (date) => {
-    console.log(`Event date changed to: ${date}`);
     handleChange("event_date", date);
   };
 
   const openDurationPicker = () => {
-    console.log("Opening duration picker...");
     setIsDurationPickerVisible(true);
   };
 
   const closeDurationPicker = () => {
-    console.log("Closing duration picker...");
     setIsDurationPickerVisible(false);
   };
 
   const handleDurationSelect = (durationInMinutes) => {
-    console.log(`Duration selected: ${durationInMinutes} minutes`);
     handleChange("duration", durationInMinutes);
     closeDurationPicker();
   };
@@ -664,26 +643,6 @@ const EditEvent = () => {
             </View>
           </View>
           <View>
-            <View style={styles.timeWrapper}>
-              <View style={styles.timeContainer}>
-                <TimePickerComponent
-                  title="PM Time In"
-                  mode="single"
-                  onTimeChange={(time) => handleChange("pm_in", time)}
-                  selectedValue={formData.pm_in}
-                />
-              </View>
-              <View style={styles.timeContainer}>
-                {formData.pm_in && (
-                  <TimePickerComponent
-                    title="PM Time Out"
-                    mode="single"
-                    onTimeChange={(time) => handleChange("pm_out", time)}
-                    selectedValue={formData.pm_out}
-                  />
-                )}
-              </View>
-            </View>
             <TouchableOpacity
               style={styles.durationButton}
               onPress={openDurationPicker}
