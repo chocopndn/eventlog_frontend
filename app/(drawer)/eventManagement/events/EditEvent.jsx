@@ -667,7 +667,7 @@ const EditEvent = () => {
             )}
           </View>
           <View style={styles.buttonContainer}>
-            <CustomButton title="SAVE CHANGES" onPress={handleSubmit} />
+            <CustomButton title="UPDATE EVENT" onPress={handleSubmit} />
           </View>
         </View>
       </ScrollView>
