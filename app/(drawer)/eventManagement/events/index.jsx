@@ -72,7 +72,7 @@ export default function EventsList() {
   });
 
   const approvedEvents = filteredEvents.filter(
-    (event) => event.status === "approved"
+    (event) => event.status === "Approved"
   );
 
   const pendingEventsCount = events.filter(
