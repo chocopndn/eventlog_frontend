@@ -82,6 +82,15 @@ const EditEvent = () => {
       }
     };
 
+    const formatDateValue = (dateString) => {
+      if (!dateString) return "";
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      console.log(`Formatted date: ${year}-${month}-${day}`);
+      return `${year}-${month}-${day}`;
+    };
     const fetchEventData = async () => {
       setIsLoading(true);
       try {
@@ -100,28 +109,30 @@ const EditEvent = () => {
         }));
         console.log("Formatted blocks:", formattedBlocks);
 
+        const departmentIds = eventData.department_ids.split(",").map(Number);
+
+        const formattedEventDates = eventData.event_dates
+          ? eventData.event_dates.split(",")
+          : [];
+
         setFormData({
-          event_name_id: eventData.event_name_id,
-          department_ids: eventData.department_ids.split(",").map(Number),
+          event_name_id: eventData.event_name_id || "",
+          department_ids: departmentIds,
           block_ids: blockIds,
-          venue: eventData.venue,
-          description: eventData.event_description,
+          venue: eventData.venue || "",
+          description: eventData.event_description || "",
           am_in: null,
           am_out: null,
           pm_in: null,
           pm_out: null,
-          event_date: eventData.event_dates
-            ? new Date(eventData.event_dates)
-            : null,
-          duration: 0,
-          created_by: eventData.created_by_admin_id,
+          event_date: formattedEventDates,
+          duration:
+            typeof eventData.duration === "number" ? eventData.duration : 0,
+          created_by: eventData.created_by_admin_id || "",
         });
 
         setBlockOptions(formattedBlocks);
-
-        setSelectedDepartmentIds(
-          eventData.department_ids.split(",").map(Number)
-        );
+        setSelectedDepartmentIds(departmentIds);
       } catch (error) {
         console.error("Error fetching event data:", error);
         setModal({
@@ -606,7 +617,7 @@ const EditEvent = () => {
           <DatePickerComponent
             title="Date of Event"
             onDateChange={handleDateChange}
-            selectedDate={formData.event_date}
+            selectedValue={formData.event_date}
           />
           <View>
             <View style={styles.timeWrapper}>
@@ -625,6 +636,28 @@ const EditEvent = () => {
                     mode="single"
                     onTimeChange={(time) => handleChange("am_out", time)}
                     selectedValue={formData.am_out}
+                  />
+                )}
+              </View>
+            </View>
+          </View>
+          <View>
+            <View style={styles.timeWrapper}>
+              <View style={styles.timeContainer}>
+                <TimePickerComponent
+                  title="PM Time In"
+                  mode="single"
+                  onTimeChange={(time) => handleChange("pm_in", time)}
+                  selectedValue={formData.pm_in}
+                />
+              </View>
+              <View style={styles.timeContainer}>
+                {formData.pm_in && (
+                  <TimePickerComponent
+                    title="PM Time Out"
+                    mode="single"
+                    onTimeChange={(time) => handleChange("pm_out", time)}
+                    selectedValue={formData.pm_out}
                   />
                 )}
               </View>
