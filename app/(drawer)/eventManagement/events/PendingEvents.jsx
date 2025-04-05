@@ -8,7 +8,7 @@ import {
   Image,
   RefreshControl,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+
 import { StatusBar } from "expo-status-bar";
 import {
   fetchEvents,
@@ -115,16 +115,14 @@ export default function PendingEvents() {
 
   if (loading) {
     return (
-      <SafeAreaView
-        style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}
-      >
+      <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
         <Text style={styles.loadingText}>Loading pending events...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
+    <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
       <Text style={styles.headerText}>PENDING EVENTS</Text>
       <ScrollView
         style={{ flex: 1, width: "100%", marginBottom: 70 }}
@@ -206,7 +204,7 @@ export default function PendingEvents() {
         cancelTitle="CLOSE"
       />
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -214,9 +212,9 @@ const styles = StyleSheet.create({
   headerText: {
     color: theme.colors.primary,
     fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: 50,
+    fontSize: theme.fontSizes.title,
     textAlign: "center",
-    marginBottom: theme.spacing.medium,
+    marginBottom: theme.spacing.small,
   },
   loadingText: {
     fontFamily: theme.fontFamily.SquadaOne,
