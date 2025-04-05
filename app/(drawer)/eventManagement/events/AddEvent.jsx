@@ -271,60 +271,16 @@ const AddEvent = () => {
         return;
       }
 
-      if (formData.am_out && !formData.am_in) {
-        setModal({
-          visible: true,
-          title: "Validation Error",
-          message: "AM Out requires AM In.",
-          type: "error",
-        });
-        return;
-      }
-
-      if (formData.am_in && !formData.am_out) {
-        setModal({
-          visible: true,
-          title: "Validation Error",
-          message: "AM In requires AM Out.",
-          type: "error",
-        });
-        return;
-      }
-
-      if (formData.pm_out && !formData.pm_in) {
-        setModal({
-          visible: true,
-          title: "Validation Error",
-          message: "PM Out requires PM In.",
-          type: "error",
-        });
-        return;
-      }
-
-      if (formData.pm_in && !formData.pm_out) {
-        setModal({
-          visible: true,
-          title: "Validation Error",
-          message: "PM In requires PM Out.",
-          type: "error",
-        });
-        return;
-      }
-
-      if (formData.duration < 30) {
-        setModal({
-          visible: true,
-          title: "Validation Error",
-          message: "Event duration must be at least 30 minutes.",
-          type: "error",
-        });
-        return;
-      }
+      const convertToMinutes = (timeString) => {
+        const [hours, minutes] = timeString.split(":").map(Number);
+        return hours * 60 + minutes;
+      };
 
       if (formData.am_in && formData.am_out) {
-        const amInTime = new Date(`1970-01-01T${formData.am_in}:00`);
-        const amOutTime = new Date(`1970-01-01T${formData.am_out}:00`);
-        const amTimeDifference = (amOutTime - amInTime) / 1000 / 60;
+        const amInMinutes = convertToMinutes(formData.am_in);
+        const amOutMinutes = convertToMinutes(formData.am_out);
+
+        const amTimeDifference = amOutMinutes - amInMinutes;
 
         if (amTimeDifference < 60) {
           setModal({
@@ -338,9 +294,10 @@ const AddEvent = () => {
       }
 
       if (formData.pm_in && formData.pm_out) {
-        const pmInTime = new Date(`1970-01-01T${formData.pm_in}:00`);
-        const pmOutTime = new Date(`1970-01-01T${formData.pm_out}:00`);
-        const pmTimeDifference = (pmOutTime - pmInTime) / 1000 / 60;
+        const pmInMinutes = convertToMinutes(formData.pm_in);
+        const pmOutMinutes = convertToMinutes(formData.pm_out);
+
+        const pmTimeDifference = pmOutMinutes - pmInMinutes;
 
         if (pmTimeDifference < 60) {
           setModal({
@@ -351,6 +308,16 @@ const AddEvent = () => {
           });
           return;
         }
+      }
+
+      if (formData.duration < 30) {
+        setModal({
+          visible: true,
+          title: "Validation Error",
+          message: "Event duration must be at least 30 minutes.",
+          type: "error",
+        });
+        return;
       }
 
       const requestData = {
