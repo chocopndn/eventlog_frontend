@@ -1,5 +1,5 @@
-import { StyleSheet, Text, View, SafeAreaView, ScrollView } from "react-native";
-import React, { useEffect, useState } from "react";
+import { StyleSheet, Text, View, ScrollView } from "react-native";
+import React, { useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
 
@@ -42,17 +42,17 @@ const EventDetails = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <Text style={styles.loadingText}>Loading...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!eventDetails) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <Text style={styles.errorText}>Event details not found.</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -72,7 +72,7 @@ const EventDetails = () => {
   };
 
   const formatColumnData = (data, separator = ",") => {
-    if (!data) return "-";
+    if (!data) return <Text style={styles.columnItem}>-</Text>;
     const items = data.split(separator).map((item) => item.trim());
     return items.map((item, index) => (
       <Text key={index} style={styles.columnItem}>
@@ -82,7 +82,7 @@ const EventDetails = () => {
   };
 
   return (
-    <SafeAreaView
+    <View
       style={[
         globalStyles.secondaryContainer,
         { paddingTop: 0, paddingBottom: 110 },
@@ -207,7 +207,7 @@ const EventDetails = () => {
 
       <TabsComponent />
       <StatusBar style="light" />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -215,10 +215,11 @@ export default EventDetails;
 
 const styles = StyleSheet.create({
   headerContainer: {
-    width: "100%",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: theme.spacing.medium,
+    color: theme.colors.primary,
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.title,
+    textAlign: "center",
+    marginBottom: theme.spacing.small,
   },
   title: {
     fontSize: theme.fontSizes.huge,
