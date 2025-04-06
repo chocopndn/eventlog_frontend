@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, SafeAreaView, ScrollView } from "react-native";
+import { StyleSheet, Text, View, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
@@ -9,14 +9,14 @@ import CustomModal from "../../../../components/CustomModal";
 
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
-import { fetchEventNameById, deleteEventName } from "../../../../services/api";
+import { fetchEventNameById, disableEventName } from "../../../../services/api";
 import { useLocalSearchParams } from "expo-router";
 
 const EventNameDetails = () => {
   const { id: eventNameId } = useLocalSearchParams();
   const [eventNameDetails, setEventNameDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isDisabledModalVisible, setIsDisabledModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 
   const fetchEventNameDetails = async () => {
@@ -46,37 +46,37 @@ const EventNameDetails = () => {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <Text style={styles.loadingText}>Loading...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (!eventNameDetails) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <Text style={styles.errorText}>Event name details not found.</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
-  const handleDeletePress = () => {
-    setIsDeleteModalVisible(true);
+  const handleDisablePress = () => {
+    setIsDisabledModalVisible(true);
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDisable = async () => {
     try {
-      await deleteEventName(eventNameDetails.id);
+      await disableEventName(eventNameDetails.id);
       setIsSuccessModalVisible(true);
     } catch (error) {
       console.error(error.message || error);
     } finally {
-      setIsDeleteModalVisible(false);
+      setIsDisabledModalVisible(false);
     }
   };
 
   return (
-    <SafeAreaView
+    <View
       style={[
         globalStyles.secondaryContainer,
         { paddingTop: 0, paddingBottom: 110 },
@@ -108,43 +108,42 @@ const EventNameDetails = () => {
             }
           />
         </View>
-        {eventNameDetails.status === "deleted" ? null : (
+        {eventNameDetails.status === "Disabled" ? null : (
           <View style={styles.button}>
             <CustomButton
-              title="DELETE"
+              title="DISABLE"
               type="secondary"
-              onPress={handleDeletePress}
+              onPress={handleDisablePress}
             />
           </View>
         )}
       </View>
 
       <CustomModal
-        visible={isDeleteModalVisible}
+        visible={isDisabledModalVisible}
         title="Confirm Deletion"
-        message={`Are you sure you want to delete ${eventNameDetails.name}?`}
+        message={`Are you sure you want to disable ${eventNameDetails.name}?`}
         type="warning"
-        onClose={() => setIsDeleteModalVisible(false)}
-        onConfirm={handleConfirmDelete}
+        onClose={() => setIsDisableModalVisible(false)}
+        onConfirm={handleConfirmDisable}
         cancelTitle="Cancel"
-        confirmTitle="Delete"
+        confirmTitle="Disable"
       />
 
       <CustomModal
         visible={isSuccessModalVisible}
         title="Success"
-        message={`${eventNameDetails.name} has been deleted successfully.`}
+        message={`${eventNameDetails.name} has been disabled successfully.`}
         type="success"
         onClose={() => {
           setIsSuccessModalVisible(false);
-          router.back();
         }}
         cancelTitle="Close"
       />
 
       <TabsComponent />
       <StatusBar style="light" />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -158,9 +157,11 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.medium,
   },
   title: {
-    fontSize: theme.fontSizes.huge,
-    fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.title,
+    textAlign: "center",
+    marginBottom: theme.spacing.small,
   },
   detailsWrapper: {
     flexGrow: 1,

@@ -9,9 +9,9 @@ import {
   RefreshControl,
 } from "react-native";
 import TabsComponent from "../../../../components/TabsComponent";
-import { SafeAreaView } from "react-native-safe-area-context";
+
 import { StatusBar } from "expo-status-bar";
-import { fetchEventNames, deleteEventName } from "../../../../services/api";
+import { fetchEventNames, disableEventName } from "../../../../services/api";
 import { router, useFocusEffect } from "expo-router";
 import images from "../../../../constants/images";
 import SearchBar from "../../../../components/CustomSearch";
@@ -23,9 +23,9 @@ import theme from "../../../../constants/theme";
 export default function EventNamesScreen() {
   const [eventNames, setEventNames] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isDisableModalVisible, setIsDisableModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
-  const [eventNameToDelete, setEventNameToDelete] = useState(null);
+  const [eventNameToDisable, setEventNameToDisable] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadEventNames = async () => {
@@ -58,35 +58,35 @@ export default function EventNamesScreen() {
       })
     : [];
 
-  const handleDeletePress = (eventName) => {
+  const handleDisablePress = (eventName) => {
     if (!eventName || !eventName.label) return;
-    setEventNameToDelete(eventName);
-    setIsDeleteModalVisible(true);
+    setEventNameToDisable(eventName);
+    setIsDisableModalVisible(true);
   };
 
-  const handleDeleteModalClose = () => {
-    setIsDeleteModalVisible(false);
-    setEventNameToDelete(null);
+  const handleDisableModalClose = () => {
+    setIsDisableModalVisible(false);
+    setEventNameToDisable(null);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!eventNameToDelete) return;
+  const handleConfirmDisable = async () => {
+    if (!eventNameToDisable) return;
     try {
-      await deleteEventName(eventNameToDelete.value);
+      await disableEventName(eventNameToDisable.value);
       setEventNames((prevEventNames) =>
         prevEventNames.map((eventName) =>
-          eventName.value === eventNameToDelete.value
-            ? { ...eventName, status: "deleted" }
+          eventName.value === eventNameToDisable.value
+            ? { ...eventName, status: "Disabled" }
             : eventName
         )
       );
-      handleDeleteModalClose();
+      handleDisableModalClose();
       setIsSuccessModalVisible(true);
     } catch (error) {}
   };
 
   return (
-    <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
+    <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
       <Text style={styles.headerText}>EVENT NAMES</Text>
       <View style={{ paddingHorizontal: theme.spacing.medium, width: "100%" }}>
         <SearchBar
@@ -134,11 +134,13 @@ export default function EventNamesScreen() {
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => handleDeletePress(eventName)}
-                  disabled={eventName.status === "deleted"}
-                  style={{ opacity: eventName.status === "deleted" ? 0.5 : 1 }}
+                  onPress={() => handleDisablePress(eventName)}
+                  disabled={eventName.status === "Disabled"}
+                  style={{
+                    opacity: eventName.status === "Disabled" ? 0.5 : 1,
+                  }}
                 >
-                  <Image source={images.trash} style={styles.icon} />
+                  <Image source={images.disabled} style={styles.icon} />
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -158,20 +160,20 @@ export default function EventNamesScreen() {
       </View>
 
       <CustomModal
-        visible={isDeleteModalVisible}
-        title="Confirm Deletion"
-        message={`Are you sure you want to delete ${eventNameToDelete?.label}?`}
+        visible={isDisableModalVisible}
+        title="Confirm Disable"
+        message={`Are you sure you want to disable ${eventNameToDisable?.label}?`}
         type="warning"
-        onClose={handleDeleteModalClose}
-        onConfirm={handleConfirmDelete}
+        onClose={handleDisableModalClose}
+        onConfirm={handleConfirmDisable}
         cancelTitle="Cancel"
-        confirmTitle="Delete"
+        confirmTitle="Disable"
       />
 
       <CustomModal
         visible={isSuccessModalVisible}
         title="Success"
-        message="Event name deleted successfully!"
+        message="Event name disabled successfully!"
         type="success"
         onClose={() => setIsSuccessModalVisible(false)}
         cancelTitle="CLOSE"
@@ -179,7 +181,7 @@ export default function EventNamesScreen() {
 
       <TabsComponent />
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -187,9 +189,9 @@ const styles = StyleSheet.create({
   headerText: {
     color: theme.colors.primary,
     fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: 65,
+    fontSize: theme.fontSizes.title,
     textAlign: "center",
-    marginBottom: theme.spacing.medium,
+    marginBottom: theme.spacing.small,
   },
   eventNameContainer: {
     borderWidth: 2,

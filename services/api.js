@@ -515,10 +515,10 @@ export const fetchEvents = async () => {
   }
 };
 
-export const deleteEvent = async (eventId) => {
+export const disableEventName = async (eventId) => {
   try {
-    const response = await axios.delete(
-      `${API_URL}/api/events/admin/delete/${eventId}`
+    const response = await axios.put(
+      `${API_URL}/api/event-names/disable/${eventId}`
     );
     if (response.data.success) {
       return response.data;

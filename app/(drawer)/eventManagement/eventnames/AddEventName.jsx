@@ -1,6 +1,5 @@
 import { StyleSheet, Text, View, ScrollView } from "react-native";
 import React, { useState } from "react";
-import { SafeAreaView } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import TabsComponent from "../../../../components/TabsComponent";
 import globalStyles from "../../../../constants/globalStyles";
@@ -58,7 +57,7 @@ const AddEventName = () => {
   };
 
   return (
-    <SafeAreaView style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
+    <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
       <CustomModal
         visible={modal.visible}
         title={modal.title}
@@ -92,7 +91,7 @@ const AddEventName = () => {
 
       <TabsComponent />
       <StatusBar style="auto" />
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -100,9 +99,11 @@ export default AddEventName;
 
 const styles = StyleSheet.create({
   textHeader: {
-    fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: theme.fontSizes.display,
     color: theme.colors.primary,
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.title,
+    textAlign: "center",
+    marginBottom: theme.spacing.small,
   },
   scrollviewContainer: {
     width: "100%",
