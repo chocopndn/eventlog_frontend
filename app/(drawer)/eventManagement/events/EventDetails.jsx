@@ -1,15 +1,18 @@
 import { StyleSheet, Text, View, ScrollView } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { router, useFocusEffect } from "expo-router";
-
 import TabsComponent from "../../../../components/TabsComponent";
 import CustomButton from "../../../../components/CustomButton";
 import CustomModal from "../../../../components/CustomModal";
-
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
-import { fetchEventById, deleteEvent } from "../../../../services/api";
+import {
+  fetchEventById,
+  deleteEvent,
+  approveEvent,
+} from "../../../../services/api";
+import { getStoredUser } from "../../../../database/queries";
 import { useLocalSearchParams } from "expo-router";
 
 const EventDetails = () => {
@@ -17,17 +20,28 @@ const EventDetails = () => {
   const [eventDetails, setEventDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isApproveModalVisible, setIsApproveModalVisible] = useState(false);
+  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [storedUser, setStoredUser] = useState(null);
+
+  useEffect(() => {
+    const fetchStoredUser = async () => {
+      try {
+        const user = await getStoredUser();
+        setStoredUser(user);
+      } catch (error) {}
+    };
+    fetchStoredUser();
+  }, []);
 
   const fetchEventDetails = async () => {
     try {
       if (!eventId) throw new Error("Invalid event ID");
-
       const eventData = await fetchEventById(eventId);
       if (!eventData) throw new Error("Event details not found");
-
       setEventDetails(eventData);
     } catch (error) {
-      console.error(error.message || error);
     } finally {
       setIsLoading(false);
     }
@@ -63,12 +77,35 @@ const EventDetails = () => {
   const handleConfirmDelete = async () => {
     try {
       await deleteEvent(eventDetails.event_id);
-      router.back();
-    } catch (error) {
-      console.error(error.message || error);
-    } finally {
       setIsDeleteModalVisible(false);
-    }
+      setSuccessMessage(
+        `${eventDetails.event_name} has been successfully deleted.`
+      );
+      setIsSuccessModalVisible(true);
+      setTimeout(() => {
+        setIsSuccessModalVisible(false);
+        router.back();
+      }, 2000);
+    } catch (error) {}
+  };
+
+  const handleApprovePress = () => {
+    setIsApproveModalVisible(true);
+  };
+
+  const handleConfirmApprove = async () => {
+    try {
+      await approveEvent(eventDetails.event_id, storedUser.id_number);
+      setIsApproveModalVisible(false);
+      setSuccessMessage(
+        `${eventDetails.event_name} has been successfully approved.`
+      );
+      setIsSuccessModalVisible(true);
+      setTimeout(() => {
+        setIsSuccessModalVisible(false);
+        router.back();
+      }, 2000);
+    } catch (error) {}
   };
 
   const formatColumnData = (data, separator = ",") => {
@@ -91,109 +128,114 @@ const EventDetails = () => {
       <View style={styles.headerContainer}>
         <Text style={styles.title}>Event Details</Text>
       </View>
-
       <ScrollView contentContainerStyle={styles.detailsWrapper}>
         <View style={styles.detailsContainer}>
           <Text style={styles.detailTitle}>Event Name:</Text>
           <Text style={styles.detail}>{eventDetails.event_name || "-"}</Text>
         </View>
-
         <View style={styles.detailsContainer}>
           <Text style={styles.detailTitle}>Description:</Text>
           <Text style={styles.detail}>{eventDetails.description || "-"}</Text>
         </View>
-
         <View style={styles.detailsContainer}>
           <Text style={styles.detailTitle}>Venue:</Text>
           <Text style={styles.detail}>{eventDetails.venue || "-"}</Text>
         </View>
-
         <View style={styles.detailsContainer}>
           <Text style={styles.detailTitle}>Created By:</Text>
-          <Text style={styles.detail}>
-            {eventDetails.created_by_admin_name || "-"}
-          </Text>
+          <Text style={styles.detail}>{eventDetails.created_by || "-"}</Text>
         </View>
-
-        {eventDetails.status !== "pending" && (
+        {eventDetails.status !== "Pending" && (
           <View style={styles.detailsContainer}>
             <Text style={styles.detailTitle}>Approved By:</Text>
-            <Text style={styles.detail}>
-              {eventDetails.approved_by_admin_name || "-"}
-            </Text>
+            <Text style={styles.detail}>{eventDetails.approved_by || "-"}</Text>
           </View>
         )}
-
         <View style={styles.detailsContainer}>
           <Text style={styles.detailTitle}>Event Dates:</Text>
           <View style={styles.columnContainer}>
             {formatColumnData(eventDetails.event_dates)}
           </View>
         </View>
-
         <View style={styles.detailsContainer}>
           <Text style={styles.detailTitle}>Event Blocks:</Text>
           <View style={styles.columnContainer}>
             {formatColumnData(eventDetails.block_names)}
           </View>
         </View>
-
-        <View style={styles.detailsContainer}>
-          <Text style={styles.detailTitle}>AM In:</Text>
-          <Text style={styles.detail}>{eventDetails.am_in || "-"}</Text>
-        </View>
-
-        <View style={styles.detailsContainer}>
-          <Text style={styles.detailTitle}>AM Out:</Text>
-          <Text style={styles.detail}>{eventDetails.am_out || "-"}</Text>
-        </View>
-
-        <View style={styles.detailsContainer}>
-          <Text style={styles.detailTitle}>PM In:</Text>
-          <Text style={styles.detail}>{eventDetails.pm_in || "-"}</Text>
-        </View>
-
-        <View style={styles.detailsContainer}>
-          <Text style={styles.detailTitle}>PM Out:</Text>
-          <Text style={styles.detail}>{eventDetails.pm_out || "-"}</Text>
-        </View>
-
+        {eventDetails.am_in && (
+          <View style={styles.detailsContainer}>
+            <Text style={styles.detailTitle}>AM In:</Text>
+            <Text style={styles.detail}>{eventDetails.am_in}</Text>
+          </View>
+        )}
+        {eventDetails.am_out && (
+          <View style={styles.detailsContainer}>
+            <Text style={styles.detailTitle}>AM Out:</Text>
+            <Text style={styles.detail}>{eventDetails.am_out}</Text>
+          </View>
+        )}
+        {eventDetails.pm_in && (
+          <View style={styles.detailsContainer}>
+            <Text style={styles.detailTitle}>PM In:</Text>
+            <Text style={styles.detail}>{eventDetails.pm_in}</Text>
+          </View>
+        )}
+        {eventDetails.pm_out && (
+          <View style={styles.detailsContainer}>
+            <Text style={styles.detailTitle}>PM Out:</Text>
+            <Text style={styles.detail}>{eventDetails.pm_out}</Text>
+          </View>
+        )}
         <View style={styles.detailsContainer}>
           <Text style={styles.detailTitle}>Scan Personnel:</Text>
           <Text style={styles.detail}>
             {eventDetails.scan_personnel || "-"}
           </Text>
         </View>
-
         <View style={styles.detailsContainer}>
           <Text style={styles.detailTitle}>Status:</Text>
           <Text style={styles.detail}>{eventDetails.status || "-"}</Text>
         </View>
       </ScrollView>
-
       <View style={styles.buttonContainer}>
-        <View style={styles.button}>
-          <CustomButton
-            title="EDIT"
-            onPress={() =>
-              router.push(
-                `/eventManagement/events/EditEvent?id=${eventDetails.event_id}`
-              )
-            }
-          />
-        </View>
-
-        {eventDetails.status !== "deleted" && (
+        {eventDetails.status === "Pending" && storedUser?.role_id === 4 ? (
+          <View style={styles.button}>
+            <CustomButton title="APPROVE" onPress={handleApprovePress} />
+          </View>
+        ) : (
           <View style={styles.button}>
             <CustomButton
-              title="DELETE"
-              type="secondary"
-              onPress={handleDeletePress}
+              title="EDIT"
+              onPress={() =>
+                router.push(
+                  `/eventManagement/events/EditEvent?id=${eventDetails.event_id}`
+                )
+              }
             />
           </View>
         )}
+        {eventDetails.status !== "Archived" &&
+          eventDetails.status !== "deleted" && (
+            <View style={styles.button}>
+              <CustomButton
+                title="DELETE"
+                type="secondary"
+                onPress={handleDeletePress}
+              />
+            </View>
+          )}
       </View>
-
+      <CustomModal
+        visible={isApproveModalVisible}
+        title="Confirm Approval"
+        message={`Are you sure you want to approve ${eventDetails.event_name}?`}
+        type="warning"
+        onClose={() => setIsApproveModalVisible(false)}
+        onConfirm={handleConfirmApprove}
+        cancelTitle="Cancel"
+        confirmTitle="Approve"
+      />
       <CustomModal
         visible={isDeleteModalVisible}
         title="Confirm Deletion"
@@ -204,7 +246,14 @@ const EventDetails = () => {
         cancelTitle="Cancel"
         confirmTitle="Delete"
       />
-
+      <CustomModal
+        visible={isSuccessModalVisible}
+        title="Success"
+        message={successMessage}
+        type="success"
+        onClose={() => setIsSuccessModalVisible(false)}
+        hideButtons={true}
+      />
       <TabsComponent />
       <StatusBar style="light" />
     </View>
