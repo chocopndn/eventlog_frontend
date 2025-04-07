@@ -130,33 +130,28 @@ const Home = () => {
     return `${formattedHours}:${minutes.toString().padStart(2, "0")} ${ampm}`;
   };
 
-  const formatEventDates = (datesArray) => {
-    if (!Array.isArray(datesArray) || datesArray.length === 0) return "N/A";
-    if (datesArray.length === 1) {
-      return new Date(datesArray[0]).toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    }
-    let groups = {};
-    datesArray.forEach((date) => {
-      let d = new Date(date);
-      if (isNaN(d.getTime())) return;
-      let month = d.toLocaleString("en-US", { month: "long" });
-      let day = d.getDate();
-      let year = d.getFullYear();
-      let key = `${month} ${year}`;
-      if (!groups[key]) groups[key] = [];
-      groups[key].push(day);
-    });
-    return Object.entries(groups)
-      .map(
-        ([monthYear, days]) =>
-          `${monthYear.split(" ")[0]} ${days.join(", ")} ${
-            monthYear.split(" ")[1]
-          }`
-      )
+  const formatEventDates = (dates) => {
+    const datesString = Array.isArray(dates) ? dates.join(",") : dates;
+    if (!datesString || typeof datesString !== "string") return "N/A";
+    const datesArray = datesString.split(",");
+    if (datesArray.length === 0) return "N/A";
+    const parsedDates = datesArray
+      .map((dateStr) => new Date(dateStr))
+      .filter((d) => !isNaN(d));
+    if (parsedDates.length === 0) return "N/A";
+    const grouped = parsedDates.reduce((acc, date) => {
+      const key = `${date.getFullYear()}-${date.getMonth()}`;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(date.getDate());
+      acc[key].month = date.toLocaleString("en-US", { month: "long" });
+      acc[key].year = date.getFullYear();
+      return acc;
+    }, {});
+    return Object.values(grouped)
+      .map((group) => {
+        const days = group.sort((a, b) => a - b).join(", ");
+        return `${group.month} ${days}, ${group.year}`;
+      })
       .join(" & ");
   };
 
