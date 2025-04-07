@@ -138,7 +138,9 @@ export default function PendingEvents() {
               key={event.event_id}
               style={styles.eventContainer}
               onPress={() =>
-                router.push(`/events/EventDetails?id=${event.event_id}`)
+                router.push(
+                  `/eventManagement/events/EventDetails?id=${event.event_id}`
+                )
               }
             >
               <View style={styles.textContainer}>
