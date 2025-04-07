@@ -373,7 +373,7 @@ export const disableCourse = async (courseId) => {
     if (response.data.success) {
       return response.data;
     }
-    throw new Error(response.data.message || "Failed to delete course");
+    throw new Error(response.data.message || "Failed to disable course");
   } catch (error) {
     throw error;
   }
@@ -610,6 +610,20 @@ export const addEvent = async (eventData) => {
     }
 
     throw new Error("Failed to add event");
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteEvent = async (id) => {
+  try {
+    const response = await axios.delete(
+      `${API_URL}/api/events/admin/delete/${id}`
+    );
+    if (response.data.success) {
+      return true;
+    }
+    throw new Error("Failed to delete name");
   } catch (error) {
     throw error;
   }
