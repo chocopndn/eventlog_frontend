@@ -59,7 +59,6 @@ const EditEvent = () => {
     type: "success",
   });
   const [isDurationPickerVisible, setIsDurationPickerVisible] = useState(false);
-
   const [selectedDepartmentIds, setSelectedDepartmentIds] = useState([]);
 
   useEffect(() => {
@@ -69,7 +68,6 @@ const EditEvent = () => {
         if (!storedUserData || !storedUserData.id_number) {
           throw new Error("Invalid or missing user ID.");
         }
-
         handleChange("created_by", storedUserData.id_number);
       } catch (error) {
         setModal({
@@ -89,6 +87,7 @@ const EditEvent = () => {
       const day = String(date.getDate()).padStart(2, "0");
       return `${year}-${month}-${day}`;
     };
+
     const fetchEventData = async () => {
       setIsLoading(true);
       try {
@@ -97,23 +96,24 @@ const EditEvent = () => {
           throw new Error("Event not found.");
         }
 
-        const blockIds = eventData.block_ids_list.split(",").map(Number);
-        const blockNames = eventData.block_names_list.split(",");
+        const blockIds = eventData.block_ids
+          ? eventData.block_ids.split(",").map(Number)
+          : [];
+        const blockNames = eventData.block_names_list
+          ? eventData.block_names_list.split(",")
+          : [];
         const formattedBlocks = blockIds.map((id, index) => ({
-          label: blockNames[index],
+          label: blockNames[index] || `Unnamed Block (${id})`,
           value: id,
         }));
 
-        const departmentIds = eventData.department_ids.split(",").map(Number);
+        const departmentIds = eventData.department_ids
+          ? eventData.department_ids.split(",").map(Number)
+          : [];
 
         const formattedEventDates = eventData.event_dates
           ? eventData.event_dates.split(",")
           : [];
-
-        const amIn = eventData.am_in || null;
-        const amOut = eventData.am_out || null;
-        const pmIn = eventData.pm_in || null;
-        const pmOut = eventData.pm_out || null;
 
         setFormData({
           event_id: eventId,
@@ -121,17 +121,15 @@ const EditEvent = () => {
           department_ids: departmentIds,
           block_ids: blockIds,
           venue: eventData.venue || "",
-          description: eventData.event_description || "",
-          am_in: amIn,
-
-          am_out: amOut,
-          pm_in: pmIn,
-          pm_out: pmOut,
+          description: eventData.description || "",
+          am_in: eventData.am_in || null,
+          am_out: eventData.am_out || null,
+          pm_in: eventData.pm_in || null,
+          pm_out: eventData.pm_out || null,
           event_date: formattedEventDates,
           duration: eventData.duration || 0,
           created_by: eventData.created_by_admin_id || "",
         });
-
         setBlockOptions(formattedBlocks);
         setSelectedDepartmentIds(departmentIds);
       } catch (error) {
@@ -159,7 +157,6 @@ const EditEvent = () => {
         }));
         setEventNames(formattedEventNames);
       } catch (error) {
-        console.error("Error fetching event names:", error);
         setModal({
           visible: true,
           title: "Error",
@@ -184,10 +181,8 @@ const EditEvent = () => {
           label: dept.department_name,
           value: dept.department_id,
         }));
-
         setDepartmentOptions(formattedDepartments);
       } catch (err) {
-        console.error("Error fetching departments:", err);
         setErrorDepartments(err);
         setModal({
           visible: true,
@@ -214,15 +209,12 @@ const EditEvent = () => {
           setBlockOptions([]);
           return;
         }
-
         const blocksResponse = await fetchBlocksByDepartment(
           selectedDepartmentIds
         );
-
         if (!Array.isArray(blocksResponse)) {
           throw new Error("Invalid API response: Expected an array of blocks.");
         }
-
         const activeBlocks = blocksResponse.filter(
           (block) => block.status === "Active"
         );
@@ -230,10 +222,8 @@ const EditEvent = () => {
           label: block.block_name,
           value: block.block_id,
         }));
-
         setBlockOptions(formattedBlocks);
       } catch (error) {
-        console.error("Error fetching blocks:", error);
         setModal({
           visible: true,
           title: "Error",
@@ -244,7 +234,6 @@ const EditEvent = () => {
         setLoadingBlocks(false);
       }
     };
-
     fetchBlocksData();
   }, [selectedDepartmentIds]);
 
@@ -254,6 +243,8 @@ const EditEvent = () => {
 
   const handleSubmit = async () => {
     try {
+      console.log("Submitting form data:", formData);
+
       if (!formData.event_name_id) {
         console.warn("Validation failed: Event name is required.");
         setModal({
@@ -264,7 +255,6 @@ const EditEvent = () => {
         });
         return;
       }
-
       if (formData.department_ids.length === 0) {
         console.warn("Validation failed: At least one department is required.");
         setModal({
@@ -275,7 +265,6 @@ const EditEvent = () => {
         });
         return;
       }
-
       if (formData.block_ids.length === 0) {
         console.warn("Validation failed: At least one block is required.");
         setModal({
@@ -286,7 +275,6 @@ const EditEvent = () => {
         });
         return;
       }
-
       if (!formData.venue) {
         console.warn("Validation failed: Venue is required.");
         setModal({
@@ -297,7 +285,6 @@ const EditEvent = () => {
         });
         return;
       }
-
       if (!formData.description.trim()) {
         console.warn("Validation failed: Description is required.");
         setModal({
@@ -308,7 +295,6 @@ const EditEvent = () => {
         });
         return;
       }
-
       if (!formData.event_date) {
         console.warn("Validation failed: Event date is required.");
         setModal({
@@ -319,7 +305,6 @@ const EditEvent = () => {
         });
         return;
       }
-
       const formattedDates = Array.isArray(formData.event_date)
         ? formData.event_date.flat().filter(Boolean)
         : [];
@@ -333,7 +318,6 @@ const EditEvent = () => {
         });
         return;
       }
-
       if (
         !(
           formData.am_in ||
@@ -421,9 +405,10 @@ const EditEvent = () => {
         admin_id_number: formData.created_by,
       };
 
+      console.log("Sending update request with data:", requestData);
       const response = await updateEvent(eventId, requestData);
-
       if (response?.success) {
+        console.log("Event updated successfully.");
         setModal({
           visible: true,
           title: "Success",
@@ -458,6 +443,7 @@ const EditEvent = () => {
         errorMessage =
           "There was a problem connecting to the server. Please check your internet connection and try again.";
       }
+      console.error("Submission error details:", errorMessage);
       setModal({
         visible: true,
         title: "Error",
@@ -468,22 +454,27 @@ const EditEvent = () => {
   };
 
   const handleModalClose = () => {
+    console.log("Closing modal...");
     setModal({ ...modal, visible: false });
   };
 
   const handleDateChange = (date) => {
+    console.log("Date changed:", date);
     handleChange("event_date", date);
   };
 
   const openDurationPicker = () => {
+    console.log("Opening duration picker...");
     setIsDurationPickerVisible(true);
   };
 
   const closeDurationPicker = () => {
+    console.log("Closing duration picker...");
     setIsDurationPickerVisible(false);
   };
 
   const handleDurationSelect = (durationInMinutes) => {
+    console.log("Duration selected:", durationInMinutes);
     handleChange("duration", durationInMinutes);
     closeDurationPicker();
   };
@@ -524,10 +515,12 @@ const EditEvent = () => {
         onClose={handleModalClose}
         cancelTitle="CLOSE"
       />
+
       <Text style={styles.textHeader}>EVENTLOG</Text>
       <View style={styles.titleContainer}>
         <Text style={styles.textTitle}>EDIT EVENT</Text>
       </View>
+
       <ScrollView
         style={styles.scrollviewContainer}
         contentContainerStyle={styles.scrollview}
@@ -541,6 +534,7 @@ const EditEvent = () => {
             value={formData.event_name_id}
             onSelect={(item) => handleChange("event_name_id", item.value)}
           />
+
           <CustomDropdown
             title="Select Departments"
             data={departmentOptions}
@@ -559,6 +553,7 @@ const EditEvent = () => {
             }}
             multiSelect
           />
+
           {loadingBlocks ? (
             <ActivityIndicator size="small" color={theme.colors.primary} />
           ) : (
@@ -580,12 +575,14 @@ const EditEvent = () => {
               multiSelect
             />
           )}
+
           <FormField
             title="Venue"
             placeholder="Enter venue details"
             value={formData.venue}
             onChangeText={(text) => handleChange("venue", text)}
           />
+
           <FormField
             title="Description"
             placeholder="Enter event description..."
@@ -593,11 +590,13 @@ const EditEvent = () => {
             onChangeText={(text) => handleChange("description", text)}
             multiline={true}
           />
+
           <DatePickerComponent
             title="Date of Event"
             onDateChange={handleDateChange}
             selectedValue={formData.event_date}
           />
+
           <View>
             <View style={styles.timeWrapper}>
               <View style={styles.timeContainer}>
@@ -620,6 +619,7 @@ const EditEvent = () => {
               </View>
             </View>
           </View>
+
           <View>
             <View style={styles.timeWrapper}>
               <View style={styles.timeContainer}>
@@ -642,6 +642,7 @@ const EditEvent = () => {
               </View>
             </View>
           </View>
+
           <View>
             <TouchableOpacity
               style={styles.durationButton}
@@ -666,11 +667,13 @@ const EditEvent = () => {
               />
             )}
           </View>
+
           <View style={styles.buttonContainer}>
             <CustomButton title="UPDATE EVENT" onPress={handleSubmit} />
           </View>
         </View>
       </ScrollView>
+
       <TabsComponent />
       <StatusBar style="auto" />
     </View>
