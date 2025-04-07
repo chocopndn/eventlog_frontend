@@ -174,8 +174,6 @@ export const disableBlock = async (blockId) => {
     if (response.data.success) return response.data.message;
     throw new Error("Failed to delete block");
   } catch (error) {
-    console.log(error.message);
-
     throw error;
   }
 };
@@ -230,9 +228,9 @@ export const fetchApprovedOngoing = async () => {
   }
 };
 
-export const fetchUserUpcomingEvents = async (blockId) => {
+export const fetchUpcomingEvents = async (blockId) => {
   try {
-    const response = await axios.post(`${API_URL}/api/events/user/upcoming`, {
+    const response = await axios.post(`${API_URL}/api/events/upcoming`, {
       block_id: blockId,
     });
 

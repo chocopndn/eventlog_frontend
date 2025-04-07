@@ -137,6 +137,9 @@ export const storeEvent = async (event, allApiEventIds = []) => {
     const db = await initDB();
     if (!db) return;
 
+    if (!event || typeof event !== "object") return;
+    if (!Array.isArray(allApiEventIds)) return;
+
     if (event.status !== "Approved") return;
 
     if (!allApiEventIds || allApiEventIds.length === 0) {
@@ -149,8 +152,9 @@ export const storeEvent = async (event, allApiEventIds = []) => {
     const storedEventIds = storedEvents.map((e) => e.id);
 
     const idsToDelete = storedEventIds.filter(
-      (id) => !allApiEventIds.includes(id)
+      (id) => !allApiEventIds.includes(id.toString())
     );
+
     if (idsToDelete.length > 0) {
       await db.runAsync(
         `DELETE FROM event_dates WHERE event_id IN (${idsToDelete.join(",")})`
@@ -216,30 +220,40 @@ export const storeEvent = async (event, allApiEventIds = []) => {
       );
     }
 
-    if (
-      typeof event.event_dates === "string" &&
-      event.event_dates.trim() !== ""
-    ) {
-      const eventDatesArray = event.event_dates
-        .split(",")
-        .map((date) => date.trim());
+    if (event.event_dates) {
+      let eventDatesArray = [];
 
-      const existingDates = await db.getAllAsync(
-        "SELECT event_date FROM event_dates WHERE event_id = ?",
-        [event.event_id]
-      );
-      const existingDateSet = new Set(existingDates.map((e) => e.event_date));
+      if (
+        typeof event.event_dates === "string" &&
+        event.event_dates.trim() !== ""
+      ) {
+        eventDatesArray = event.event_dates
+          .split(",")
+          .map((date) => date.trim());
+      } else if (Array.isArray(event.event_dates)) {
+        eventDatesArray = event.event_dates;
+      }
 
-      for (const eventDate of eventDatesArray) {
-        if (!existingDateSet.has(eventDate)) {
-          await db.runAsync(
-            "INSERT INTO event_dates (event_id, event_date) VALUES (?, ?)",
-            [event.event_id, eventDate]
-          );
+      if (eventDatesArray.length > 0) {
+        const existingDates = await db.getAllAsync(
+          "SELECT event_date FROM event_dates WHERE event_id = ?",
+          [event.event_id]
+        );
+        const existingDateSet = new Set(existingDates.map((e) => e.event_date));
+
+        for (const eventDate of eventDatesArray) {
+          if (!existingDateSet.has(eventDate)) {
+            await db.runAsync(
+              "INSERT INTO event_dates (event_id, event_date) VALUES (?, ?)",
+              [event.event_id, eventDate]
+            );
+          }
         }
       }
     }
-  } catch (error) {}
+  } catch (error) {
+    console.error("Error storing event:", error.message);
+  }
 };
 
 export const getStoredEvents = async () => {

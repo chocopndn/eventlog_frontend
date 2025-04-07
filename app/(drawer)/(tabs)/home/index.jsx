@@ -3,7 +3,6 @@ import {
   StyleSheet,
   Text,
   View,
-  Dimensions,
   ScrollView,
   TouchableOpacity,
   RefreshControl,
@@ -18,19 +17,15 @@ import {
   getStoredUser,
   storeEvent,
   getStoredEvents,
+  clearEventsTable,
 } from "../../../../database/queries";
-import {
-  fetchApprovedOngoing,
-  fetchUserUpcomingEvents,
-} from "../../../../services/api";
+import { fetchUpcomingEvents } from "../../../../services/api";
 import CustomModal from "../../../../components/CustomModal";
-
-const screenWidth = Dimensions.get("window").width;
+import NetInfo from "@react-native-community/netinfo";
 
 const Home = () => {
-  const [roleId, setRoleId] = useState(null);
-  const [events, setEvents] = useState([]);
   const [blockId, setBlockId] = useState(null);
+  const [events, setEvents] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
@@ -41,15 +36,15 @@ const Home = () => {
       try {
         const user = await getStoredUser();
         if (!user) return;
-        setRoleId(user?.role_id);
-        setBlockId(user?.block_id);
-      } catch (error) {}
+        setBlockId(user?.block_id || null);
+      } catch (error) {
+        console.error("Error fetching user data:", error.message);
+      }
     };
     fetchUserData();
   }, []);
 
   const fetchEvent = async () => {
-    if (roleId === null) return;
     setRefreshing(true);
     let timeoutTriggered = false;
     const timeout = setTimeout(() => {
@@ -62,14 +57,7 @@ const Home = () => {
     }, 7000);
 
     try {
-      let response;
-      if (roleId === 3 || roleId === 4) {
-        response = await fetchApprovedOngoing();
-      } else if (blockId !== null) {
-        response = await fetchUserUpcomingEvents(blockId);
-      } else {
-        return;
-      }
+      const response = await fetchUpcomingEvents(blockId);
 
       if (!response?.success) {
         throw new Error(
@@ -88,13 +76,20 @@ const Home = () => {
         response.events.map(async (event) => {
           try {
             await storeEvent(event, allApiEventIds);
-          } catch (error) {}
+          } catch (error) {
+            console.error(
+              "Error storing event:",
+              event.event_id,
+              error.message
+            );
+          }
         })
       );
 
       const storedEvents = await getStoredEvents();
       setEvents(storedEvents || []);
     } catch (error) {
+      console.error("Error fetching events:", error.message);
       const netState = await NetInfo.fetch();
       if (netState.isConnected === false) {
         setModalTitle("No Internet Connection");
@@ -104,6 +99,7 @@ const Home = () => {
         setModalMessage("An unexpected error occurred while fetching events.");
       }
       setModalVisible(true);
+
       const storedEvents = await getStoredEvents();
       setEvents(storedEvents || []);
     } finally {
@@ -113,10 +109,8 @@ const Home = () => {
   };
 
   useEffect(() => {
-    if (roleId !== null && (roleId === 3 || roleId === 4 || blockId !== null)) {
-      fetchEvent();
-    }
-  }, [roleId, blockId]);
+    fetchEvent();
+  }, [blockId]);
 
   const onRefresh = async () => {
     await fetchEvent();
