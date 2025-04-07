@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -30,9 +30,7 @@ export default function EventsList() {
   const loadEvents = async () => {
     try {
       const response = await fetchEvents();
-      if (!response?.events) {
-        return;
-      }
+      if (!response?.events) return;
       const fetchedEvents = Array.isArray(response.events)
         ? response.events
         : [];
@@ -40,9 +38,7 @@ export default function EventsList() {
         (event) => event.status !== "Deleted"
       );
       setEvents(filteredEvents);
-    } catch (err) {
-      console.error("Error loading events:", err);
-    }
+    } catch (err) {}
   };
 
   const refreshData = async () => {
@@ -50,7 +46,6 @@ export default function EventsList() {
     try {
       await loadEvents();
     } catch (error) {
-      console.error("Error refreshing events data:", error);
     } finally {
       setRefreshing(false);
     }
@@ -71,8 +66,8 @@ export default function EventsList() {
     );
   });
 
-  const approvedEvents = filteredEvents.filter(
-    (event) => event.status === "Approved"
+  const approvedOrArchivedEvents = filteredEvents.filter(
+    (event) => event.status === "Approved" || event.status === "Archived"
   );
 
   const pendingEventsCount = events.filter(
@@ -102,16 +97,14 @@ export default function EventsList() {
       );
       handleDeleteModalClose();
       setIsSuccessModalVisible(true);
-    } catch (error) {
-      console.error("Error deleting event:", error);
-    }
+    } catch (error) {}
   };
 
   return (
     <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
       <Text style={styles.headerText}>EVENTS</Text>
 
-      {approvedEvents.length > 0 && (
+      {approvedOrArchivedEvents.length > 0 && (
         <View
           style={{ paddingHorizontal: theme.spacing.medium, width: "100%" }}
         >
@@ -141,8 +134,8 @@ export default function EventsList() {
           <RefreshControl refreshing={refreshing} onRefresh={refreshData} />
         }
       >
-        {approvedEvents.length > 0 ? (
-          approvedEvents.map((event) => (
+        {approvedOrArchivedEvents.length > 0 ? (
+          approvedOrArchivedEvents.map((event) => (
             <TouchableOpacity
               key={event.event_id}
               style={styles.eventContainer}
@@ -156,26 +149,24 @@ export default function EventsList() {
                 <Text style={styles.name} numberOfLines={1}>
                   {event.event_name}
                 </Text>
-                <Text style={styles.venue} numberOfLines={1}>
-                  {event.venue}
+                <Text style={styles.status} numberOfLines={1}>
+                  {event.status}
                 </Text>
               </View>
               <View style={styles.iconContainer}>
                 <TouchableOpacity
-                  onPress={() => {
-                    if (event.event_id) {
-                      router.push(
-                        `/eventManagement/events/EditEvent?id=${event.event_id}`
-                      );
-                    }
-                  }}
+                  onPress={() =>
+                    router.push(
+                      `/eventManagement/events/EditEvent?id=${event.event_id}`
+                    )
+                  }
                 >
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => handleDeletePress(event)}
-                  disabled={event.status === "deleted"}
-                  style={{ opacity: event.status === "deleted" ? 0.5 : 1 }}
+                  disabled={event.status === "Archived"}
+                  style={{ opacity: event.status === "Archived" ? 0.5 : 1 }}
                 >
                   <Image source={images.trash} style={styles.icon} />
                 </TouchableOpacity>
@@ -277,7 +268,7 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.large,
     flexShrink: 1,
   },
-  venue: {
+  status: {
     fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
     fontSize: theme.fontSizes.small,
