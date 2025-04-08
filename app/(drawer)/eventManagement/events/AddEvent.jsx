@@ -79,10 +79,16 @@ const AddEvent = () => {
       setIsLoading(true);
       try {
         const eventNamesData = await fetchEventNames();
+
         if (!Array.isArray(eventNamesData)) {
           throw new Error("Invalid data format from API.");
         }
-        const formattedEventNames = eventNamesData.map((name) => ({
+
+        const activeEventNamesData = eventNamesData.filter(
+          (name) => name.status === "Active"
+        );
+
+        const formattedEventNames = activeEventNamesData.map((name) => ({
           label: name.label || name.name,
           value: name.value || name.id,
         }));
@@ -104,16 +110,24 @@ const AddEvent = () => {
       setErrorDepartments(null);
       try {
         const response = await fetchDepartments();
+
         if (!response || !Array.isArray(response.departments)) {
           throw new Error(
             "Invalid data format from API: Expected 'departments' array."
           );
         }
+
         const departmentsData = response.departments;
-        const formattedDepartments = departmentsData.map((dept) => ({
+
+        const activeDepartmentsData = departmentsData.filter(
+          (dept) => dept.status === "Active"
+        );
+
+        const formattedDepartments = activeDepartmentsData.map((dept) => ({
           label: dept.department_name,
           value: dept.department_id,
         }));
+
         if (
           formattedDepartments.some(
             (dept) => !dept.label || dept.value === undefined
@@ -121,6 +135,7 @@ const AddEvent = () => {
         ) {
           throw new Error("Invalid department data.");
         }
+
         setDepartmentOptions(formattedDepartments);
       } catch (err) {
         setErrorDepartments(err);
