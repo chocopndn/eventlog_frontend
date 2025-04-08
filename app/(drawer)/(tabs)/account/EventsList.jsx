@@ -99,7 +99,7 @@ const EventsList = () => {
   };
 
   const handleEventPress = (eventId) => {
-    router.push(`/(tabs)/account/${eventId}`);
+    router.replace(`/account/EditEvent?id=${eventId}`);
   };
 
   const filteredEvents = events.filter((event) =>
