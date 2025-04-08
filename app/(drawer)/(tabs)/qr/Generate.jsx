@@ -35,14 +35,24 @@ const Generate = () => {
   return (
     <View style={globalStyles.secondaryContainer}>
       <View style={styles.qrCodeContainer}>
-        <QRCode
-          value={`${user?.first_name} ${user?.last_name} + ${user?.id_number} + ${selectedEvent?.event_id}`}
-          backgroundColor={theme.colors.secondary}
-          size={200}
-        />
+        {selectedEvent && (
+          <QRCode
+            value={`${user?.id_number} + ${selectedEvent?.event_id}`}
+            backgroundColor={theme.colors.secondary}
+            size={200}
+          />
+        )}
         <View style={styles.logoContainer}>
-          <View style={styles.logoBackground}>
-            <Image source={images.logo} style={styles.logo} />
+          <View
+            style={[
+              styles.logoBackground,
+              !selectedEvent && styles.logoBackgroundNoEvent,
+            ]}
+          >
+            <Image
+              source={images.logo}
+              style={!selectedEvent ? styles.logoLarger : styles.logo}
+            />
           </View>
         </View>
       </View>
@@ -129,6 +139,15 @@ const styles = StyleSheet.create({
   logo: {
     width: 50,
     height: 50,
+    resizeMode: "contain",
+  },
+  logoBackgroundNoEvent: {
+    backgroundColor: theme.colors.primary,
+    padding: 4,
+  },
+  logoLarger: {
+    width: 90,
+    height: 90,
     resizeMode: "contain",
   },
   dropdownContainer: {
