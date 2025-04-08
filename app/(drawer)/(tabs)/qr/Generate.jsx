@@ -71,6 +71,7 @@ const Generate = () => {
             label: event.event_name,
             value: event.event_id,
           }))}
+          value={selectedEvent?.event_id || null}
           onSelect={(selectedItem) => {
             if (
               !selectedItem ||
