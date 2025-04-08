@@ -9,7 +9,7 @@ const HomeLayout = () => {
       <Stack.Screen
         name="Welcome"
         options={{
-          title: "",
+          title: "Welcome",
           headerStyle: { backgroundColor: theme.colors.primary },
           headerTintColor: theme.colors.secondary,
         }}

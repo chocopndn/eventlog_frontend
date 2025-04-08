@@ -251,4 +251,9 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.medium,
     fontFamily: theme.fontFamily.Arial,
   },
+  headerContainer: {
+    marginTop: 20,
+    marginBottom: 10,
+    paddingHorizontal: theme.spacing.medium,
+  },
 });
