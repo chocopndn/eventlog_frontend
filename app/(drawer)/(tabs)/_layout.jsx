@@ -10,6 +10,7 @@ import theme from "../../../constants/theme";
 
 const TabsLayout = () => {
   const [roleId, setRoleId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchRoleId = async () => {
@@ -17,7 +18,9 @@ const TabsLayout = () => {
         const fetchedRoleId = await getRoleID();
         setRoleId(fetchedRoleId);
       } catch (error) {
-        console.error("Error fetching role ID:", error);
+        console.error(error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -25,19 +28,24 @@ const TabsLayout = () => {
   }, []);
 
   const getQRRoute = () => {
+    if (roleId === null) return "/qr";
     if (roleId === 1) return "/qr/Generate";
-    if (roleId === 2) return null;
+    if (roleId === 2) return "/(tabs)/qr";
     if (roleId === 3 || roleId === 4) return "/qr/Scan";
     return "/(tabs)/qr";
   };
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
   return (
     <Tabs>
-      <TabSlot
-        screenOptions={{
-          headerLeft: () => <DrawerToggleButton tintColor="#000" />,
-        }}
-      />
+      <TabSlot />
 
       <TabList style={styles.tabList}>
         <TabTrigger name="Home" href="/(tabs)/home">
@@ -65,7 +73,7 @@ const TabsLayout = () => {
           </View>
         </TabTrigger>
 
-        <TabTrigger name="account" href="/(tabs)/account">
+        <TabTrigger name="Account" href="/(tabs)/account">
           <View style={styles.tabItem}>
             <Image source={images.user} style={styles.tabIcon} />
             <Text style={styles.tabText}>Account</Text>
@@ -77,6 +85,17 @@ const TabsLayout = () => {
 };
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: theme.colors.primary,
+  },
+  loadingText: {
+    fontSize: theme.fontSizes.medium,
+    fontFamily: theme.fontFamily.Arial,
+    color: theme.colors.secondary,
+  },
   tabList: {
     flexDirection: "row",
     justifyContent: "space-around",

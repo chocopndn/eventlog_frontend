@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native";
 import { StatusBar } from "expo-status-bar";
@@ -8,36 +8,70 @@ import { getStoredUser } from "../../../../database/queries";
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 
+import CustomButton from "../../../../components/CustomButton";
+
 const QRCode = () => {
-  const [userRole, setUserRole] = useState(null);
+  const [roleId, setRoleId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUserRoleAndRedirect = async () => {
+    const fetchUserRole = async () => {
       try {
         const user = await getStoredUser();
-        const role = user?.role_id || null;
-        setUserRole(role);
-
-        if (role === 1) {
-          router.replace("/qr/Generate");
-        } else if (role === 2) {
-          console.log("No navigation for role_id 2");
-        } else if (role === 3 || role === 4) {
-          router.replace("/qr/Scan");
+        if (user && user.role_id) {
+          setRoleId(user.role_id);
         }
       } catch (error) {
-        console.error("Error fetching user role:", error);
+        console.error(error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchUserRoleAndRedirect();
+    fetchUserRole();
   }, []);
+
+  useEffect(() => {
+    if (roleId === 1) {
+      router.replace("/qr/Generate");
+    } else if (roleId === 3 || roleId === 4) {
+      router.push("/qr/Scan");
+    }
+  }, [roleId]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={globalStyles.secondaryContainer}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={globalStyles.secondaryContainer}>
-      <View style={styles.loadingContainer}>
-        <Text style={styles.loadingText}>Loading...</Text>
-      </View>
+      {roleId === 2 && (
+        <View style={styles.buttonWrapper}>
+          <View>
+            <CustomButton
+              onPress={() => {
+                router.push("/qr/Generate");
+              }}
+              title="Generate"
+            />
+          </View>
+          <View style={styles.scanContainer}>
+            <CustomButton
+              onPress={() => {
+                router.push("/qr/Scan");
+              }}
+              title="Scan"
+              type="secondary"
+            />
+          </View>
+        </View>
+      )}
       <StatusBar style="auto" />
     </SafeAreaView>
   );
@@ -55,5 +89,13 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.medium,
     fontFamily: theme.fontFamily.Arial,
     color: theme.colors.primary,
+  },
+  buttonWrapper: {
+    width: "70%",
+    alignSelf: "center",
+    marginTop: theme.spacing.large,
+  },
+  scanContainer: {
+    marginTop: theme.spacing.medium,
   },
 });
