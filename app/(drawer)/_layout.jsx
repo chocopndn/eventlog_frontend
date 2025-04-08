@@ -6,6 +6,7 @@ import { DrawerToggleButton } from "@react-navigation/drawer";
 import { getRoleID } from "../../database/queries";
 import { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { clearAllTablesData } from "../../database/queries";
 
 import images from "../../constants/images";
 import theme from "../../constants/theme";
@@ -39,6 +40,7 @@ const CustomDrawerContent = (props) => {
     try {
       await AsyncStorage.removeItem("userToken");
       await AsyncStorage.removeItem("id_number");
+      await clearAllTablesData();
       router.replace("/login");
     } catch (error) {
       console.error("Error logging out:", error);
