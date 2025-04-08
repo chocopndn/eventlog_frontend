@@ -9,16 +9,13 @@ import {
   RefreshControl,
 } from "react-native";
 import TabsComponent from "../../../../components/TabsComponent";
-
 import { StatusBar } from "expo-status-bar";
 import { fetchDepartments, disableDepartment } from "../../../../services/api";
 import { router, useFocusEffect } from "expo-router";
-
 import images from "../../../../constants/images";
 import SearchBar from "../../../../components/CustomSearch";
 import CustomModal from "../../../../components/CustomModal";
 import CustomButton from "../../../../components/CustomButton";
-
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 
@@ -32,10 +29,11 @@ export default function DepartmentsScreen() {
 
   const loadDepartments = async () => {
     try {
-      const fetchedDepartments = await fetchDepartments();
-      setDepartments(
-        Array.isArray(fetchedDepartments) ? fetchedDepartments : []
-      );
+      const response = await fetchDepartments();
+      if (!response || !Array.isArray(response.departments)) {
+        throw new Error("Invalid data format: Expected 'departments' array.");
+      }
+      setDepartments(response.departments);
     } catch (err) {}
   };
 
@@ -64,7 +62,11 @@ export default function DepartmentsScreen() {
       })
     : [];
 
-  const handleDisablePress = (department) => {
+  const handleDisablePress = (departmentId) => {
+    const department = departments.find(
+      (dept) => dept.department_id === departmentId
+    );
+    if (!department) return;
     setDepartmentToDisable(department);
     setIsDisableModalVisible(true);
   };
@@ -76,18 +78,15 @@ export default function DepartmentsScreen() {
 
   const handleConfirmDisable = async () => {
     if (!departmentToDisable) return;
-
     try {
-      await disableDepartment(departmentToDisable.value);
-
+      await disableDepartment(departmentToDisable.department_id);
       setDepartments((prevDepartments) =>
         prevDepartments.map((dept) =>
-          dept.value === departmentToDisable.value
+          dept.department_id === departmentToDisable.department_id
             ? { ...dept, status: "Disabled" }
             : dept
         )
       );
-
       handleDisableModalClose();
       setIsSuccessModalVisible(true);
     } catch (error) {}
@@ -113,11 +112,11 @@ export default function DepartmentsScreen() {
         {filteredDepartments.length > 0 ? (
           filteredDepartments.map((department) => (
             <TouchableOpacity
-              key={department.value}
+              key={department.department_id}
               style={styles.departmentContainer}
               onPress={() =>
                 router.push(
-                  `/academicManagement/departments/DepartmentDetails?id=${department.value}`
+                  `/academicManagement/departments/DepartmentDetails?id=${department.department_id}`
                 )
               }
             >
@@ -131,18 +130,16 @@ export default function DepartmentsScreen() {
               </View>
               <View style={styles.iconContainer}>
                 <TouchableOpacity
-                  onPress={() => {
-                    if (department.value) {
-                      router.push(
-                        `/academicManagement/departments/EditDepartment?id=${department.value}`
-                      );
-                    }
-                  }}
+                  onPress={() =>
+                    router.push(
+                      `/academicManagement/departments/EditDepartment?id=${department.department_id}`
+                    )
+                  }
                 >
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => handleDisablePress(department)}
+                  onPress={() => handleDisablePress(department.department_id)}
                   disabled={department.status === "Disabled"}
                   style={{
                     opacity: department.status === "Disabled" ? 0.5 : 1,
@@ -170,7 +167,7 @@ export default function DepartmentsScreen() {
       <CustomModal
         visible={isDisableModalVisible}
         title="Confirm Disable"
-        message={`Are you sure you want to disable ${departmentToDisable?.label}?`}
+        message={`Are you sure you want to disable ${departmentToDisable?.department_name}?`}
         type="warning"
         onClose={handleDisableModalClose}
         onConfirm={handleConfirmDisable}
