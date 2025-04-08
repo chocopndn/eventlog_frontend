@@ -1,7 +1,6 @@
 import { Tabs, TabList, TabTrigger, TabSlot } from "expo-router/ui";
 import { View, Image, Text, StyleSheet } from "react-native";
 import React, { useEffect, useState } from "react";
-import { DrawerToggleButton } from "@react-navigation/drawer";
 
 import { getRoleID } from "../../../database/queries";
 
@@ -43,10 +42,32 @@ const TabsLayout = () => {
     );
   }
 
-  return (
+  return roleId === 4 ? (
     <Tabs>
       <TabSlot />
+      <TabList style={styles.tabList}>
+        <TabTrigger name="Home" href="/(tabs)/home">
+          <View style={styles.tabItem}>
+            <Image source={images.home} style={styles.tabIcon} />
+            <Text style={styles.tabText}>Home</Text>
+          </View>
+        </TabTrigger>
 
+        <View style={styles.logoContainer}>
+          <Image source={images.logo} style={styles.logoImage} />
+        </View>
+
+        <TabTrigger name="QR Code" href={getQRRoute()}>
+          <View style={styles.tabItem}>
+            <Image source={images.scanner} style={styles.tabIcon} />
+            <Text style={styles.tabText}>QR Code</Text>
+          </View>
+        </TabTrigger>
+      </TabList>
+    </Tabs>
+  ) : (
+    <Tabs>
+      <TabSlot />
       <TabList style={styles.tabList}>
         <TabTrigger name="Home" href="/(tabs)/home">
           <View style={styles.tabItem}>
