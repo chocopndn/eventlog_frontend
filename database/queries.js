@@ -50,6 +50,7 @@ export const storeUser = async (user) => {
         user.department_name,
         user.course_id,
         user.course_name,
+        user.course_code,
         user.year_level_id,
         user.year_level_name,
       ]);
@@ -120,7 +121,7 @@ export const getStoredUser = async () => {
       }
 
       const result = await dbInstance.getFirstAsync(
-        "SELECT id_number, first_name, middle_name, last_name, suffix, email, role_id, role_name, block_id, block_name, department_id, department_name, department_code, course_id, course_name, year_level_id, year_level_name FROM users WHERE id_number = ?",
+        "SELECT id_number, first_name, middle_name, last_name, suffix, email, role_id, role_name, block_id, block_name, department_id, department_name, department_code, course_id, course_name, year_level_id, year_level_name, course_code FROM users WHERE id_number = ?",
         [idNumber]
       );
 
