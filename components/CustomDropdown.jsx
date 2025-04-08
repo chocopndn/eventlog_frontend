@@ -36,14 +36,14 @@ const CustomDropdown = ({
     }
   }, [value, data, multiSelect]);
 
-  const handleChange = (selectedItems) => {
+  const handleChange = (selectedItem) => {
     if (multiSelect) {
       const selectAllValue = "select_all";
       const allValuesExceptSelectAll = data
         .filter((item) => item.value !== selectAllValue)
         .map((item) => item.value);
 
-      if (selectedItems.includes(selectAllValue) && data.length > 0) {
+      if (selectedItem.includes(selectAllValue) && data.length > 0) {
         if (value.length === data.length) {
           setValue([]);
           onSelect?.([]);
@@ -52,12 +52,17 @@ const CustomDropdown = ({
           onSelect?.(allValuesExceptSelectAll);
         }
       } else {
-        setValue(selectedItems.filter((item) => item !== selectAllValue));
-        onSelect?.(selectedItems.filter((item) => item !== selectAllValue));
+        setValue(selectedItem.filter((item) => item !== selectAllValue));
+        onSelect?.(selectedItem.filter((item) => item !== selectAllValue));
       }
     } else {
-      setValue(selectedItems);
-      onSelect?.(selectedItems);
+      if (value === selectedItem) {
+        setValue(null);
+        onSelect?.(null);
+      } else {
+        setValue(selectedItem);
+        onSelect?.(selectedItem);
+      }
     }
   };
 
