@@ -64,6 +64,9 @@ const Generate = () => {
           placeholder="SELECT EVENT"
           placeholderFontSize={theme.fontSizes.large}
           placeholderColor={theme.colors.primary}
+          selectedEventColor={theme.colors.primary}
+          selectedEventFont={theme.fontFamily.SquadaOne}
+          selectedEventFontSize={theme.fontSizes.large}
           data={events.map((event) => ({
             label: event.event_name,
             value: event.event_id,
