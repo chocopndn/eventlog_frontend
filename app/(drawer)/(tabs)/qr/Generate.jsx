@@ -1,19 +1,42 @@
 import { StyleSheet, View, Image, Text } from "react-native";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import QRCode from "react-native-qrcode-svg";
 import CustomDropdown from "../../../../components/CustomDropdown";
+import { getStoredUser, getStoredEvents } from "../../../../database/queries";
 
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import images from "../../../../constants/images";
 
 const Generate = () => {
+  const [user, setUser] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const userData = await getStoredUser();
+        const eventsData = await getStoredEvents();
+        setUser(userData);
+        setEvents(eventsData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleEventSelect = (event) => {
+    setSelectedEvent(event);
+  };
+
   return (
     <View style={globalStyles.secondaryContainer}>
       <View style={styles.qrCodeContainer}>
         <QRCode
-          value="{firstname+lastname} + idnumber + eventid"
+          value={`${user?.first_name} ${user?.last_name} + ${user?.id_number} + ${selectedEvent?.event_id}`}
           backgroundColor={theme.colors.secondary}
           size={200}
         />
@@ -23,6 +46,7 @@ const Generate = () => {
           </View>
         </View>
       </View>
+
       <View style={styles.dropdownContainer}>
         <CustomDropdown
           display="sharp"
@@ -30,20 +54,38 @@ const Generate = () => {
           placeholder="SELECT EVENT"
           placeholderFontSize={theme.fontSizes.large}
           placeholderColor={theme.colors.primary}
+          data={events.map((event) => ({
+            label: event.event_name,
+            value: event.event_id,
+          }))}
+          onSelect={(selectedItem) =>
+            handleEventSelect(
+              events.find((event) => event.event_id === selectedItem.value)
+            )
+          }
         />
       </View>
-      <View style={styles.userDetailsContainer}>
-        <Text style={styles.userDetails}>Mina, Dhanrev S.</Text>
-        <Text style={styles.userDetails}>ID: 19015236</Text>
-        <Text style={styles.userDetails}>Course: BSIT</Text>
-        <Text style={styles.userDetails}>Block: 3A NON</Text>
-      </View>
+
+      {user && (
+        <View style={styles.userDetailsContainer}>
+          <Text style={styles.userDetails}>
+            {`${user.first_name} ${user.middle_name} ${user.last_name}${
+              user.suffix ? ` ${user.suffix}` : ""
+            }`}
+          </Text>
+          <Text style={styles.userDetails}>ID: {user.id_number}</Text>
+          <Text style={styles.userDetails}>Course: {user.course_code}</Text>
+          <Text style={styles.userDetails}>Block: {user.block_name}</Text>
+        </View>
+      )}
+
       <View style={styles.noteContainer}>
         <Text style={styles.note}>
           NOTE: The instructors/Officers in-charged will scan your QR Code.
           Approach them immediately.
         </Text>
       </View>
+
       <StatusBar style="light" />
     </View>
   );
