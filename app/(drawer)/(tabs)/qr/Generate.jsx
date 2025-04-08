@@ -71,11 +71,19 @@ const Generate = () => {
             label: event.event_name,
             value: event.event_id,
           }))}
-          onSelect={(selectedItem) =>
-            handleEventSelect(
-              events.find((event) => event.event_id === selectedItem.value)
-            )
-          }
+          onSelect={(selectedItem) => {
+            if (
+              !selectedItem ||
+              selectedItem.value === selectedEvent?.event_id
+            ) {
+              handleEventSelect(null);
+            } else {
+              const selectedEventObject = events.find(
+                (event) => event.event_id === selectedItem.value
+              );
+              handleEventSelect(selectedEventObject);
+            }
+          }}
         />
       </View>
 
