@@ -199,32 +199,35 @@ const EventDetails = () => {
         </View>
       </ScrollView>
       <View style={styles.buttonContainer}>
-        {eventDetails.status === "Pending" && storedUser?.role_id === 4 ? (
-          <View style={styles.button}>
-            <CustomButton title="APPROVE" onPress={handleApprovePress} />
-          </View>
-        ) : (
-          <View style={styles.button}>
-            <CustomButton
-              title="EDIT"
-              onPress={() =>
-                router.push(
-                  `/eventManagement/events/EditEvent?id=${eventDetails.event_id}`
-                )
-              }
-            />
-          </View>
+        {eventDetails.status !== "Archived" && (
+          <>
+            {eventDetails.status === "Pending" && storedUser?.role_id === 4 ? (
+              <View style={styles.button}>
+                <CustomButton title="APPROVE" onPress={handleApprovePress} />
+              </View>
+            ) : (
+              <View style={styles.button}>
+                <CustomButton
+                  title="EDIT"
+                  onPress={() =>
+                    router.push(
+                      `/eventManagement/events/EditEvent?id=${eventDetails.event_id}`
+                    )
+                  }
+                />
+              </View>
+            )}
+            {eventDetails.status !== "deleted" && (
+              <View style={styles.button}>
+                <CustomButton
+                  title="DELETE"
+                  type="secondary"
+                  onPress={handleDeletePress}
+                />
+              </View>
+            )}
+          </>
         )}
-        {eventDetails.status !== "Archived" &&
-          eventDetails.status !== "deleted" && (
-            <View style={styles.button}>
-              <CustomButton
-                title="DELETE"
-                type="secondary"
-                onPress={handleDeletePress}
-              />
-            </View>
-          )}
       </View>
       <CustomModal
         visible={isApproveModalVisible}
