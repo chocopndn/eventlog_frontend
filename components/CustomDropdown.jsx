@@ -15,6 +15,9 @@ const CustomDropdown = ({
   fontFamily = "Arial",
   placeholderFontSize = theme.fontSizes.medium,
   placeholderColor = "#888",
+  selectedEventColor = theme.colors.primary,
+  selectedEventFont = "Arial",
+  selectedEventFontSize = theme.fontSizes.medium,
 }) => {
   const [value, setValue] = useState(initialValue || (multiSelect ? [] : null));
   const [selectAllLabel, setSelectAllLabel] = useState("Select All");
@@ -119,7 +122,9 @@ const CustomDropdown = ({
           placeholderStyle={getPlaceholderStyle()}
           selectedTextStyle={{
             ...styles.selectedTextStyle,
-            fontFamily,
+            fontFamily: selectedEventFont,
+            color: selectedEventColor,
+            fontSize: selectedEventFontSize,
           }}
           itemTextStyle={{ ...styles.itemTextStyle, fontFamily }}
           itemContainerStyle={styles.itemContainerStyle}
@@ -141,7 +146,9 @@ const CustomDropdown = ({
           placeholderStyle={getPlaceholderStyle()}
           selectedTextStyle={{
             ...styles.selectedTextStyle,
-            fontFamily,
+            fontFamily: selectedEventFont,
+            color: selectedEventColor,
+            fontSize: selectedEventFontSize,
           }}
           itemTextStyle={{ ...styles.itemTextStyle, fontFamily }}
           itemContainerStyle={styles.itemContainerStyle}
