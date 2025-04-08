@@ -24,7 +24,14 @@ const TabsLayout = () => {
     fetchRoleId();
   }, []);
 
-  return roleId !== 4 ? (
+  const getQRRoute = () => {
+    if (roleId === 1) return "/qr/Generate";
+    if (roleId === 2) return null;
+    if (roleId === 3 || roleId === 4) return "/qr/Scan";
+    return "/(tabs)/qr";
+  };
+
+  return (
     <Tabs>
       <TabSlot
         screenOptions={{
@@ -40,7 +47,7 @@ const TabsLayout = () => {
           </View>
         </TabTrigger>
 
-        <TabTrigger name="index" href="/(tabs)/qr">
+        <TabTrigger name="QR Code" href={getQRRoute()}>
           <View style={styles.tabItem}>
             <Image source={images.scanner} style={styles.tabIcon} />
             <Text style={styles.tabText}>QR Code</Text>
@@ -62,34 +69,6 @@ const TabsLayout = () => {
           <View style={styles.tabItem}>
             <Image source={images.user} style={styles.tabIcon} />
             <Text style={styles.tabText}>Account</Text>
-          </View>
-        </TabTrigger>
-      </TabList>
-    </Tabs>
-  ) : (
-    <Tabs>
-      <TabSlot
-        screenOptions={{
-          headerLeft: () => <DrawerToggleButton tintColor="#000" />,
-        }}
-      />
-
-      <TabList style={styles.tabList}>
-        <TabTrigger name="Home" href="/(tabs)/home">
-          <View style={styles.tabItem}>
-            <Image source={images.home} style={styles.tabIcon} />
-            <Text style={styles.tabText}>Home</Text>
-          </View>
-        </TabTrigger>
-
-        <View style={styles.logoContainer}>
-          <Image source={images.logo} style={styles.logoImage} />
-        </View>
-
-        <TabTrigger name="index" href="/(tabs)/qr">
-          <View style={styles.tabItem}>
-            <Image source={images.scanner} style={styles.tabIcon} />
-            <Text style={styles.tabText}>QR Code</Text>
           </View>
         </TabTrigger>
       </TabList>

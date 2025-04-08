@@ -1,35 +1,42 @@
-import { StyleSheet, Text, View } from "react-native";
-import React from "react";
+import { StyleSheet, View, Text } from "react-native";
+import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
+import { getStoredUser } from "../../../../database/queries";
 
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 
-import CustomButton from "../../../../components/CustomButton";
-
 const QRCode = () => {
+  const [userRole, setUserRole] = useState(null);
+
+  useEffect(() => {
+    const fetchUserRoleAndRedirect = async () => {
+      try {
+        const user = await getStoredUser();
+        const role = user?.role_id || null;
+        setUserRole(role);
+
+        if (role === 1) {
+          router.replace("/qr/Generate");
+        } else if (role === 2) {
+          console.log("No navigation for role_id 2");
+        } else if (role === 3 || role === 4) {
+          router.replace("/qr/Scan");
+        }
+      } catch (error) {
+        console.error("Error fetching user role:", error);
+      }
+    };
+
+    fetchUserRoleAndRedirect();
+  }, []);
+
   return (
     <SafeAreaView style={globalStyles.secondaryContainer}>
-      <View style={styles.buttonWrapper}>
-        <View>
-          <CustomButton
-            onPress={() => {
-              router.push("/qr/Generate");
-            }}
-            title="Generate"
-          />
-        </View>
-        <View style={styles.scanContainer}>
-          <CustomButton
-            onPress={() => {
-              router.push("/qr/Scan");
-            }}
-            title="Scan"
-            type="secondary"
-          />
-        </View>
+      <View style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Loading...</Text>
       </View>
       <StatusBar style="auto" />
     </SafeAreaView>
@@ -39,10 +46,14 @@ const QRCode = () => {
 export default QRCode;
 
 const styles = StyleSheet.create({
-  buttonWrapper: {
-    width: "70%",
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  scanContainer: {
-    marginTop: theme.spacing.medium,
+  loadingText: {
+    fontSize: theme.fontSizes.medium,
+    fontFamily: theme.fontFamily.Arial,
+    color: theme.colors.primary,
   },
 });
