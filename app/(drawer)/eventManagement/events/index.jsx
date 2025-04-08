@@ -160,9 +160,12 @@ export default function EventsList() {
                       `/eventManagement/events/EditEvent?id=${event.event_id}`
                     )
                   }
+                  disabled={event.status === "Archived"}
+                  style={{ opacity: event.status === "Archived" ? 0.5 : 1 }}
                 >
                   <Image source={images.edit} style={styles.icon} />
                 </TouchableOpacity>
+
                 <TouchableOpacity
                   onPress={() => handleDeletePress(event)}
                   disabled={event.status === "Archived"}
