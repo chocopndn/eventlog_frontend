@@ -32,6 +32,7 @@ const initDB = async () => {
             department_code INTEGER NULL,
             course_id INTEGER NULL,
             course_name TEXT NULL,
+            course_code TEXT NULL,
             year_level_id INTEGER NULL,
             year_level_name TEXT NULL
           );
