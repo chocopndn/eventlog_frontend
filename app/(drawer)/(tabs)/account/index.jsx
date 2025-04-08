@@ -49,10 +49,15 @@ const Account = () => {
               <Text style={styles.details}>{user?.block_name || "N/A"}</Text>
             </View>
           )}
-          <View style={[styles.detailsContainer, { borderBottomWidth: 0 }]}>
-            <Text style={styles.detailsTitle}>Department: </Text>
-            <Text style={styles.details}>{user?.department_code || "N/A"}</Text>
-          </View>
+
+          {user?.department_code && (
+            <View style={[styles.detailsContainer, { borderBottomWidth: 0 }]}>
+              <Text style={styles.detailsTitle}>Department: </Text>
+              <Text style={styles.details}>
+                {user?.department_code || "N/A"}
+              </Text>
+            </View>
+          )}
           <View style={styles.detailsContainer}>
             <Text style={styles.detailsTitle}>Email: </Text>
             <Text style={styles.details}>{user?.email || "N/A"}</Text>
@@ -199,8 +204,6 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: "80%",
-    alignSelf: "center",
-    minHeight: 100,
   },
   logout: {
     marginTop: theme.spacing.medium,
