@@ -9,9 +9,12 @@ const CustomDropdown = ({
   onSelect,
   value: initialValue,
   title,
-  display,
+  display = "rounded",
   titleColor = "primary",
   multiSelect = false,
+  fontFamily = "Arial",
+  placeholderFontSize = theme.fontSizes.medium,
+  placeholderColor = "#888",
 }) => {
   const [value, setValue] = useState(initialValue || (multiSelect ? [] : null));
   const [selectAllLabel, setSelectAllLabel] = useState("Select All");
@@ -71,7 +74,7 @@ const CustomDropdown = ({
   const getTitleStyle = () => {
     const color =
       titleColor === "primary" ? theme.colors.primary : theme.colors.secondary;
-    return { ...styles.title, color };
+    return { ...styles.title, color, fontFamily };
   };
 
   const customPlaceholder = () => {
@@ -84,11 +87,13 @@ const CustomDropdown = ({
   const getPlaceholderStyle = () => {
     return {
       ...styles.placeholderStyle,
+      fontSize: placeholderFontSize,
       color: (
         multiSelect ? Array.isArray(value) && value.length > 0 : value !== null
       )
         ? theme.colors.primary
-        : "#888",
+        : placeholderColor,
+      fontFamily,
     };
   };
 
@@ -112,8 +117,11 @@ const CustomDropdown = ({
           placeholder={customPlaceholder()}
           style={getDropdownStyle()}
           placeholderStyle={getPlaceholderStyle()}
-          selectedTextStyle={styles.selectedTextStyle}
-          itemTextStyle={styles.itemTextStyle}
+          selectedTextStyle={{
+            ...styles.selectedTextStyle,
+            fontFamily,
+          }}
+          itemTextStyle={{ ...styles.itemTextStyle, fontFamily }}
           itemContainerStyle={styles.itemContainerStyle}
           inputSearchStyle={styles.inputSearchStyle}
           searchPlaceholderTextColor={theme.colors.gray}
@@ -133,9 +141,9 @@ const CustomDropdown = ({
           placeholderStyle={getPlaceholderStyle()}
           selectedTextStyle={{
             ...styles.selectedTextStyle,
-            color: theme.colors.primary,
+            fontFamily,
           }}
-          itemTextStyle={styles.itemTextStyle}
+          itemTextStyle={{ ...styles.itemTextStyle, fontFamily }}
           itemContainerStyle={styles.itemContainerStyle}
         />
       )}
@@ -150,7 +158,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: theme.fontSizes.medium,
     marginBottom: theme.spacing.small,
-    fontFamily: "Arial",
   },
   placeholderStyle: {
     fontSize: theme.fontSizes.medium,
