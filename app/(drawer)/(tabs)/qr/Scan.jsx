@@ -125,42 +125,59 @@ const Scan = () => {
 
       // Step 7: Compare current time with attendance slots
       let isValidTime = false;
+      let attendanceType = null;
 
       if (am_in && amInWindowEnd) {
-        isValidTime =
+        if (
           moment(currentTime, "HH:mm:ss").isBetween(
             moment(am_in, "HH:mm:ss"),
             moment(amInWindowEnd, "HH:mm:ss")
-          ) || isValidTime;
+          )
+        ) {
+          isValidTime = true;
+          attendanceType = "AM_IN";
+        }
       }
 
       if (am_out && amOutWindowEnd) {
-        isValidTime =
+        if (
           moment(currentTime, "HH:mm:ss").isBetween(
             moment(am_out, "HH:mm:ss"),
             moment(amOutWindowEnd, "HH:mm:ss")
-          ) || isValidTime;
+          )
+        ) {
+          isValidTime = true;
+          attendanceType = "AM_OUT";
+        }
       }
 
       if (pm_in && pmInWindowEnd) {
-        isValidTime =
+        if (
           moment(currentTime, "HH:mm:ss").isBetween(
             moment(pm_in, "HH:mm:ss"),
             moment(pmInWindowEnd, "HH:mm:ss")
-          ) || isValidTime;
+          )
+        ) {
+          isValidTime = true;
+          attendanceType = "PM_IN";
+        }
       }
 
       if (pm_out && pmOutWindowEnd) {
-        isValidTime =
+        if (
           moment(currentTime, "HH:mm:ss").isBetween(
             moment(pm_out, "HH:mm:ss"),
             moment(pmOutWindowEnd, "HH:mm:ss")
-          ) || isValidTime;
+          )
+        ) {
+          isValidTime = true;
+          attendanceType = "PM_OUT";
+        }
       }
 
       if (isValidTime) {
         console.log(
-          `[attendance] Student ID: ${studentId} is within valid attendance slots.`
+          `[attendance] Student ID: ${studentId} is within valid attendance slots. Type: ${attendanceType}`
         );
       } else {
         console.log("[attendance] Outside valid attendance slots.");
