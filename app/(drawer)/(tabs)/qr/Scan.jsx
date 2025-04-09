@@ -1,49 +1,34 @@
 import { StyleSheet, Text, View } from "react-native";
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
-import { Camera } from "expo-camera";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import CustomButton from "../../../../components/CustomButton";
 
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 
 const Scan = () => {
-  const [hasPermission, setHasPermission] = useState(null);
+  const [permission, requestPermission] = useCameraPermissions();
   const [facing] = useState("back");
-  const [permissionRequested, setPermissionRequested] = useState(false);
 
   useEffect(() => {
-    const getPermissions = async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === "granted");
-    };
-
-    if (permissionRequested) {
-      getPermissions();
+    if (permission?.status === "denied") {
+      requestPermission();
     }
-  }, [permissionRequested]);
+  }, [permission, requestPermission]);
 
-  if (hasPermission === null) {
+  if (permission?.status === null) {
     return (
       <View style={globalStyles.secondaryContainer}>
         <Text style={styles.message}>
           Please enable camera access to scan QR codes and track attendance.
         </Text>
-        <View style={styles.buttonContainer}>
-          <CustomButton
-            title="Grant Permission"
-            onPress={() => {
-              setPermissionRequested(true);
-              setHasPermission(false);
-            }}
-          />
-        </View>
         <StatusBar style="light" />
       </View>
     );
   }
 
-  if (!hasPermission) {
+  if (permission?.status === "denied") {
     return (
       <View style={globalStyles.secondaryContainer}>
         <View style={styles.messageContainer}>
@@ -62,7 +47,7 @@ const Scan = () => {
 
   return (
     <View style={globalStyles.secondaryContainer}>
-      <Camera style={styles.camera} type={facing} />
+      <CameraView style={styles.camera} type={facing} />
       <StatusBar style="light" />
     </View>
   );
@@ -92,7 +77,11 @@ const styles = StyleSheet.create({
     fontFamily: theme.fontFamily.Arial,
   },
   camera: {
-    flex: 1,
+    position: "absolute",
+    width: 230,
+    height: 230,
+    borderRadius: 30,
+    overflow: "hidden",
   },
   buttonContainer: {
     width: "80%",
