@@ -53,33 +53,28 @@ const Scan = () => {
       const fullDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
       console.log(`[attendance] Full date and time: ${fullDateTime}`);
 
-      // Step 1: Validate if the data is Base64 encoded
       if (!isBase64(data)) {
         throw new Error("Invalid QR Code format");
       }
 
-      // Step 2: Decrypt the QR code data
       const bytes = CryptoJS.AES.decrypt(data, QR_SECRET_KEY);
       const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
 
-      // Step 3: Validate the decrypted text format
       if (!decryptedText || !decryptedText.startsWith("eventlog")) {
         throw new Error("Decrypted data is not EventLog-specific");
       }
 
-      // Step 4: Parse the decrypted text
       const parts = decryptedText.split("-");
       if (parts.length !== 3 || parts[0] !== "eventlog") {
         throw new Error("Invalid EventLog format");
       }
-      const eventDateId = parseInt(parts[1], 10); // Extract event_date_id
-      const studentId = parseInt(parts[2], 10); // Extract student_id_number
+      const eventDateId = parseInt(parts[1], 10);
+      const studentId = parseInt(parts[2], 10);
 
       if (isNaN(eventDateId) || isNaN(studentId)) {
         throw new Error("Invalid event_date_id or student_id_number");
       }
 
-      // Step 5: Verify event_date_id against the database
       console.log(
         `[attendance] Fetching event data for event_date_id: ${eventDateId}`
       );
@@ -89,7 +84,6 @@ const Scan = () => {
         throw new Error("No events found for the given event_date_id");
       }
 
-      // Filter the events to find the one matching the event_date_id
       const event = events.find((e) => e.event_date_ids.includes(eventDateId));
 
       if (!event) {
@@ -98,7 +92,6 @@ const Scan = () => {
 
       console.log(`[attendance] Retrieved event data:`, event);
 
-      // Step 6: Calculate scanning windows using duration
       const { am_in, am_out, pm_in, pm_out, duration } = event;
 
       const calculateWindow = (time) => {
@@ -112,7 +105,6 @@ const Scan = () => {
       const pmInWindowEnd = calculateWindow(pm_in);
       const pmOutWindowEnd = calculateWindow(pm_out);
 
-      // Log the current date, time, and expected attendance slots
       const currentDate = moment().format("YYYY-MM-DD");
       const currentTime = moment().format("HH:mm:ss");
 
@@ -123,7 +115,6 @@ const Scan = () => {
       console.log(`[attendance] PM_IN Window: ${pm_in} - ${pmInWindowEnd}`);
       console.log(`[attendance] PM_OUT Window: ${pm_out} - ${pmOutWindowEnd}`);
 
-      // Step 7: Compare current time with attendance slots
       let isValidTime = false;
       let attendanceType = null;
 
@@ -179,12 +170,22 @@ const Scan = () => {
         console.log(
           `[attendance] Student ID: ${studentId} is within valid attendance slots. Type: ${attendanceType}`
         );
+
+        const attendanceData = {
+          event_date_id: eventDateId,
+          student_id_number: studentId,
+          type: attendanceType,
+        };
+
+        console.log(
+          `[attendance] Attendance data to send to API:`,
+          attendanceData
+        );
+
+        setSuccessModalVisible(true);
       } else {
         console.log("[attendance] Outside valid attendance slots.");
       }
-
-      // Success case
-      setSuccessModalVisible(true);
     } catch (error) {
       console.error(
         `[attendance] Error during QR Code scanning: ${error.message}`
