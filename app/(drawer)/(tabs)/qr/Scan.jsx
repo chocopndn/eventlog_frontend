@@ -2,17 +2,19 @@ import { StyleSheet, Text, View } from "react-native";
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import CryptoJS from "crypto-js";
 
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import CustomModal from "../../../../components/CustomModal";
+import { QR_SECRET_KEY } from "../../../../config/config";
 
 const Scan = () => {
   const [permission, requestPermission] = useCameraPermissions();
   const [facing] = useState("back");
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [scannedData, setScannedData] = useState("");
+  const [decryptedData, setDecryptedData] = useState("");
 
   useEffect(() => {
     if (permission?.status === "denied") {
@@ -44,10 +46,21 @@ const Scan = () => {
     );
   }
 
-  const handleBarcodeScanned = ({ type, data }) => {
-    console.log(`Scanned Barcode - Type: ${type}, Data: ${data}`);
-    setScannedData(data);
-    setModalVisible(true);
+  const handleBarcodeScanned = ({ data }) => {
+    try {
+      const bytes = CryptoJS.AES.decrypt(data, QR_SECRET_KEY);
+      const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
+
+      if (!decryptedText) {
+        throw new Error("Invalid or corrupted data");
+      }
+
+      setDecryptedData(decryptedText);
+      setModalVisible(true);
+    } catch (error) {
+      setDecryptedData("Failed to decrypt data");
+      setModalVisible(true);
+    }
   };
 
   return (
@@ -64,11 +77,10 @@ const Scan = () => {
         />
       </View>
 
-      {/* Custom Modal */}
       <CustomModal
         visible={modalVisible}
         title="QR Code Scanned"
-        message={`Data: ${scannedData}`}
+        message={`Decrypted Data: ${decryptedData}`}
         type="success"
         onClose={() => setModalVisible(false)}
         onCancel={() => setModalVisible(false)}
