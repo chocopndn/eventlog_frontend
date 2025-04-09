@@ -35,7 +35,7 @@ const QRCode = () => {
     if (roleId === 1) {
       router.replace("/qr/Generate");
     } else if (roleId === 3 || roleId === 4) {
-      router.push("/qr/Scan");
+      router.replace("/qr/Scan");
     }
   }, [roleId]);
 
