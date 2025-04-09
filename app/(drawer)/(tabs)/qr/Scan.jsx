@@ -53,28 +53,33 @@ const Scan = () => {
       const fullDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
       console.log(`[attendance] Full date and time: ${fullDateTime}`);
 
+      // Step 1: Validate if the data is Base64 encoded
       if (!isBase64(data)) {
         throw new Error("Invalid QR Code format");
       }
 
+      // Step 2: Decrypt the QR code data
       const bytes = CryptoJS.AES.decrypt(data, QR_SECRET_KEY);
       const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
 
+      // Step 3: Validate the decrypted text format
       if (!decryptedText || !decryptedText.startsWith("eventlog")) {
         throw new Error("Decrypted data is not EventLog-specific");
       }
 
+      // Step 4: Parse the decrypted text
       const parts = decryptedText.split("-");
       if (parts.length !== 3 || parts[0] !== "eventlog") {
         throw new Error("Invalid EventLog format");
       }
-      const eventDateId = parseInt(parts[1], 10);
-      const studentId = parseInt(parts[2], 10);
+      const eventDateId = parseInt(parts[1], 10); // Extract event_date_id
+      const studentId = parseInt(parts[2], 10); // Extract student_id_number
 
       if (isNaN(eventDateId) || isNaN(studentId)) {
         throw new Error("Invalid event_date_id or student_id_number");
       }
 
+      // Step 5: Verify event_date_id against the database
       console.log(
         `[attendance] Fetching event data for event_date_id: ${eventDateId}`
       );
@@ -84,6 +89,7 @@ const Scan = () => {
         throw new Error("No events found for the given event_date_id");
       }
 
+      // Filter the events to find the one matching the event_date_id
       const event = events.find((e) => e.event_date_ids.includes(eventDateId));
 
       if (!event) {
@@ -92,37 +98,63 @@ const Scan = () => {
 
       console.log(`[attendance] Retrieved event data:`, event);
 
-      const { am_in, am_out, pm_in, pm_out } = event;
+      // Step 6: Calculate scanning windows using duration
+      const { am_in, am_out, pm_in, pm_out, duration } = event;
 
-      if ((!am_in || !am_out) && (!pm_in || !pm_out)) {
-        throw new Error(
-          "Attendance slots are missing or undefined in the database"
-        );
-      }
+      const calculateWindow = (time) => {
+        return time
+          ? moment(time, "HH:mm:ss").add(duration, "minutes").format("HH:mm:ss")
+          : null;
+      };
 
+      const amInWindowEnd = calculateWindow(am_in);
+      const amOutWindowEnd = calculateWindow(am_out);
+      const pmInWindowEnd = calculateWindow(pm_in);
+      const pmOutWindowEnd = calculateWindow(pm_out);
+
+      // Log the current date, time, and expected attendance slots
       const currentDate = moment().format("YYYY-MM-DD");
       const currentTime = moment().format("HH:mm:ss");
 
       console.log(`[attendance] Date now: ${currentDate}`);
       console.log(`[attendance] Time now: ${currentTime}`);
-      console.log(`[attendance] Expected AM_IN: ${am_in}, AM_OUT: ${am_out}`);
-      console.log(`[attendance] Expected PM_IN: ${pm_in}, PM_OUT: ${pm_out}`);
+      console.log(`[attendance] AM_IN Window: ${am_in} - ${amInWindowEnd}`);
+      console.log(`[attendance] AM_OUT Window: ${am_out} - ${amOutWindowEnd}`);
+      console.log(`[attendance] PM_IN Window: ${pm_in} - ${pmInWindowEnd}`);
+      console.log(`[attendance] PM_OUT Window: ${pm_out} - ${pmOutWindowEnd}`);
 
+      // Step 7: Compare current time with attendance slots
       let isValidTime = false;
 
-      if (am_in && am_out) {
+      if (am_in && amInWindowEnd) {
         isValidTime =
           moment(currentTime, "HH:mm:ss").isBetween(
             moment(am_in, "HH:mm:ss"),
-            moment(am_out, "HH:mm:ss")
+            moment(amInWindowEnd, "HH:mm:ss")
           ) || isValidTime;
       }
 
-      if (pm_in && pm_out) {
+      if (am_out && amOutWindowEnd) {
+        isValidTime =
+          moment(currentTime, "HH:mm:ss").isBetween(
+            moment(am_out, "HH:mm:ss"),
+            moment(amOutWindowEnd, "HH:mm:ss")
+          ) || isValidTime;
+      }
+
+      if (pm_in && pmInWindowEnd) {
         isValidTime =
           moment(currentTime, "HH:mm:ss").isBetween(
             moment(pm_in, "HH:mm:ss"),
-            moment(pm_out, "HH:mm:ss")
+            moment(pmInWindowEnd, "HH:mm:ss")
+          ) || isValidTime;
+      }
+
+      if (pm_out && pmOutWindowEnd) {
+        isValidTime =
+          moment(currentTime, "HH:mm:ss").isBetween(
+            moment(pm_out, "HH:mm:ss"),
+            moment(pmOutWindowEnd, "HH:mm:ss")
           ) || isValidTime;
       }
 
@@ -134,6 +166,7 @@ const Scan = () => {
         console.log("[attendance] Outside valid attendance slots.");
       }
 
+      // Success case
       setSuccessModalVisible(true);
     } catch (error) {
       console.error(
