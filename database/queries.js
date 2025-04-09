@@ -72,6 +72,7 @@ export const clearAllTablesData = async () => {
         DELETE FROM users;
         DELETE FROM events;
         DELETE FROM event_dates;
+        DELETE FROM attendance;
       `);
     } catch (error) {
       console.error("Error clearing all tables data:", error);
@@ -435,6 +436,38 @@ export const logAttendance = async (attendanceData) => {
       }
     } catch (error) {
       throw error;
+    }
+  }
+};
+
+export const isAlreadyLogged = async (
+  event_date_id,
+  student_id_number,
+  type
+) => {
+  if (Platform.OS !== "web") {
+    try {
+      const dbInstance = await initDB();
+      if (!dbInstance) return false;
+
+      const typeColumn = type.toLowerCase();
+
+      const existingRecord = await dbInstance.getFirstAsync(
+        "SELECT * FROM attendance WHERE event_date_id = ? AND student_id_number = ?",
+        [event_date_id, student_id_number]
+      );
+
+      if (existingRecord && existingRecord[typeColumn]) {
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error(
+        "[IS ALREADY LOGGED] Error checking attendance:",
+        error.message
+      );
+      return false;
     }
   }
 };

@@ -59,7 +59,7 @@ const Scan = () => {
       const fullDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
 
       if (!isBase64(data)) {
-        throw new Error("Invalid QR Code format");
+        throw new Error("Please scan eventlog QR Code only.");
       }
 
       const bytes = CryptoJS.AES.decrypt(data, QR_SECRET_KEY);
@@ -71,26 +71,26 @@ const Scan = () => {
 
       const parts = decryptedText.split("-");
       if (parts.length !== 3 || parts[0] !== "eventlog") {
-        throw new Error("Invalid EventLog format");
+        throw new Error("Please scan eventlog QR Code only.");
       }
 
       const eventDateId = parseInt(parts[1], 10);
       const studentId = parseInt(parts[2], 10);
 
       if (isNaN(eventDateId) || isNaN(studentId)) {
-        throw new Error("Invalid event_date_id or student_id_number");
+        throw new Error("Please scan eventlog QR Code only.");
       }
 
       const events = await getStoredEvents(eventDateId);
 
       if (!Array.isArray(events) || events.length === 0) {
-        throw new Error("No events found for the given event_date_id");
+        throw new Error("No events found for the given date.");
       }
 
       const event = events.find((e) => e.event_date_ids.includes(eventDateId));
 
       if (!event) {
-        throw new Error("Event not found for the given event_date_id");
+        throw new Error("Event not found for the given date.");
       }
 
       const { am_in, am_out, pm_in, pm_out, duration, event_name } = event;
