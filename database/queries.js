@@ -211,8 +211,9 @@ export const storeEvent = async (event, allApiEventIds = []) => {
         ]
       );
 
-      if (event.event_dates) {
+      if (event.event_dates && event.event_date_ids) {
         let eventDatesArray = [];
+        let eventDateIdsArray = [];
 
         if (
           typeof event.event_dates === "string" &&
@@ -225,23 +226,44 @@ export const storeEvent = async (event, allApiEventIds = []) => {
           eventDatesArray = event.event_dates;
         }
 
-        if (eventDatesArray.length > 0) {
+        if (
+          typeof event.event_date_ids === "string" &&
+          event.event_date_ids.trim() !== ""
+        ) {
+          eventDateIdsArray = JSON.parse(event.event_date_ids);
+        } else if (Array.isArray(event.event_date_ids)) {
+          eventDateIdsArray = event.event_date_ids;
+        }
+
+        if (eventDatesArray.length === eventDateIdsArray.length) {
           const existingDates = await db.getAllAsync(
-            "SELECT event_date FROM event_dates WHERE event_id = ?",
+            "SELECT id, event_date FROM event_dates WHERE event_id = ?",
             [event.event_id]
           );
-          const existingDateSet = new Set(
-            existingDates.map((e) => e.event_date)
+          const existingDateMap = new Map(
+            existingDates.map((e) => [e.event_date, e.id])
           );
 
-          for (const eventDate of eventDatesArray) {
-            if (!existingDateSet.has(eventDate)) {
+          for (let i = 0; i < eventDatesArray.length; i++) {
+            const eventDate = eventDatesArray[i];
+            const eventDateId = eventDateIdsArray[i];
+
+            if (existingDateMap.has(eventDate)) {
               await db.runAsync(
-                "INSERT INTO event_dates (event_id, event_date) VALUES (?, ?)",
-                [event.event_id, eventDate]
+                "UPDATE event_dates SET id = ? WHERE event_id = ? AND event_date = ?",
+                [eventDateId, event.event_id, eventDate]
+              );
+            } else {
+              await db.runAsync(
+                "INSERT INTO event_dates (id, event_id, event_date) VALUES (?, ?, ?)",
+                [eventDateId, event.event_id, eventDate]
               );
             }
           }
+        } else {
+          console.error(
+            "Mismatch between event_dates and event_date_ids lengths"
+          );
         }
       }
 
@@ -293,28 +315,41 @@ export const getStoredEvents = async () => {
 
     if (eventIds.length) {
       const eventDatesQuery = `
-        SELECT event_id, event_date
+        SELECT event_id, event_date, id AS event_date_id
         FROM event_dates
         WHERE event_id IN (${eventIds.join(",")})
       `;
       const eventDates = await db.getAllAsync(eventDatesQuery);
 
       const eventDatesMap = {};
-      for (const { event_id, event_date } of eventDates) {
-        if (!eventDatesMap[event_id]) eventDatesMap[event_id] = [];
-        eventDatesMap[event_id].push(event_date);
+      for (const { event_id, event_date, event_date_id } of eventDates) {
+        if (!eventDatesMap[event_id]) {
+          eventDatesMap[event_id] = {
+            event_dates: [],
+            event_date_ids: [],
+          };
+        }
+        eventDatesMap[event_id].event_dates.push(event_date);
+        eventDatesMap[event_id].event_date_ids.push(event_date_id);
       }
 
       for (const event of events) {
-        event.event_dates = eventDatesMap[event.event_id] || [];
+        const eventData = eventDatesMap[event.event_id] || {
+          event_dates: [],
+          event_date_ids: [],
+        };
+        event.event_dates = eventData.event_dates;
+        event.event_date_ids = eventData.event_date_ids;
       }
     }
 
     return events;
   } catch (error) {
+    console.error("[GET STORED EVENTS] Error fetching events:", error.message);
     return [];
   }
 };
+
 export const clearEventsTable = async () => {
   try {
     const db = await initDB();
