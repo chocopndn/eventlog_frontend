@@ -68,7 +68,7 @@ const Generate = () => {
           <QRCode
             value={
               encryptQRValue(
-                `${getEventDateId(selectedEvent)}-${user?.id_number}`
+                `eventlog-${getEventDateId(selectedEvent)}-${user?.id_number}`
               ) || "INVALID"
             }
             backgroundColor={theme.colors.secondary}
