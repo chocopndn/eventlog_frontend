@@ -145,48 +145,59 @@ export const storeEvent = async (event, allApiEventIds = []) => {
 
     if (event.status !== "Approved") return;
 
-    while (isTransactionInProgress) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+    if (!allApiEventIds || allApiEventIds.length === 0) {
+      await db.runAsync("DELETE FROM event_dates");
+      await db.runAsync("DELETE FROM events");
+      return;
     }
 
-    isTransactionInProgress = true;
-    await db.runAsync("BEGIN TRANSACTION");
+    const storedEvents = await db.getAllAsync("SELECT id FROM events");
+    const storedEventIds = storedEvents.map((e) => e.id);
 
-    try {
-      if (!allApiEventIds || allApiEventIds.length === 0) {
-        await db.runAsync("DELETE FROM event_dates");
-        await db.runAsync("DELETE FROM events");
-        await db.runAsync("COMMIT");
-        isTransactionInProgress = false;
-        return;
-      }
+    const idsToDelete = storedEventIds.filter(
+      (id) => !allApiEventIds.includes(id.toString())
+    );
 
-      const storedEvents = await db.getAllAsync("SELECT id FROM events");
-      const storedEventIds = storedEvents.map((e) => e.id.toString());
-      const idsToDelete = storedEventIds.filter(
-        (id) => !allApiEventIds.includes(id)
+    if (idsToDelete.length > 0) {
+      await db.runAsync(
+        `DELETE FROM event_dates WHERE event_id IN (${idsToDelete.join(",")})`
       );
-
-      if (idsToDelete.length > 0) {
-        await db.runAsync(
-          `DELETE FROM event_dates WHERE event_id IN (${idsToDelete.join(",")})`
-        );
-        await db.runAsync(
-          `DELETE FROM events WHERE id IN (${idsToDelete.join(",")})`
-        );
-      }
-
-      const existingEvent = await db.getFirstAsync(
-        "SELECT id FROM events WHERE id = ?",
-        [event.event_id]
+      await db.runAsync(
+        `DELETE FROM events WHERE id IN (${idsToDelete.join(",")})`
       );
+    }
 
-      if (existingEvent) {
-        await db.runAsync("COMMIT");
-        isTransactionInProgress = false;
-        return;
-      }
+    const existingEvent = await db.getFirstAsync(
+      "SELECT id FROM events WHERE id = ?",
+      [event.event_id]
+    );
 
+    if (existingEvent) {
+      await db.runAsync(
+        `UPDATE events SET 
+          event_name = ?, venue = ?, description = ?, created_by_id = ?, created_by = ?, 
+          status = ?, am_in = ?, am_out = ?, pm_in = ?, pm_out = ?, scan_personnel = ?, 
+          approved_by = ?, approved_by_id = ?, duration = ?
+        WHERE id = ?`,
+        [
+          event.event_name,
+          event.venue,
+          event.description,
+          event.created_by_id,
+          event.created_by,
+          event.status,
+          event.am_in,
+          event.am_out,
+          event.pm_in,
+          event.pm_out,
+          event.scan_personnel,
+          event.approved_by,
+          event.approved_by_id,
+          event.duration,
+          event.event_id,
+        ]
+      );
+    } else {
       await db.runAsync(
         `INSERT INTO events 
           (id, event_name, venue, description, created_by_id, created_by, status, 
@@ -210,69 +221,62 @@ export const storeEvent = async (event, allApiEventIds = []) => {
           event.duration,
         ]
       );
+    }
 
-      if (event.event_dates && event.event_date_ids) {
-        let eventDatesArray = [];
-        let eventDateIdsArray = [];
+    if (event.event_dates && event.event_date_ids) {
+      let eventDatesArray = [];
+      let eventDateIdsArray = [];
 
-        if (
-          typeof event.event_dates === "string" &&
-          event.event_dates.trim() !== ""
-        ) {
-          eventDatesArray = event.event_dates
-            .split(",")
-            .map((date) => date.trim());
-        } else if (Array.isArray(event.event_dates)) {
-          eventDatesArray = event.event_dates;
-        }
-
-        if (
-          typeof event.event_date_ids === "string" &&
-          event.event_date_ids.trim() !== ""
-        ) {
-          eventDateIdsArray = JSON.parse(event.event_date_ids);
-        } else if (Array.isArray(event.event_date_ids)) {
-          eventDateIdsArray = event.event_date_ids;
-        }
-
-        if (eventDatesArray.length === eventDateIdsArray.length) {
-          const existingDates = await db.getAllAsync(
-            "SELECT id, event_date FROM event_dates WHERE event_id = ?",
-            [event.event_id]
-          );
-          const existingDateMap = new Map(
-            existingDates.map((e) => [e.event_date, e.id])
-          );
-
-          for (let i = 0; i < eventDatesArray.length; i++) {
-            const eventDate = eventDatesArray[i];
-            const eventDateId = eventDateIdsArray[i];
-
-            if (existingDateMap.has(eventDate)) {
-              await db.runAsync(
-                "UPDATE event_dates SET id = ? WHERE event_id = ? AND event_date = ?",
-                [eventDateId, event.event_id, eventDate]
-              );
-            } else {
-              await db.runAsync(
-                "INSERT INTO event_dates (id, event_id, event_date) VALUES (?, ?, ?)",
-                [eventDateId, event.event_id, eventDate]
-              );
-            }
-          }
-        } else {
-          console.error(
-            "Mismatch between event_dates and event_date_ids lengths"
-          );
-        }
+      if (
+        typeof event.event_dates === "string" &&
+        event.event_dates.trim() !== ""
+      ) {
+        eventDatesArray = event.event_dates
+          .split(",")
+          .map((date) => date.trim());
+      } else if (Array.isArray(event.event_dates)) {
+        eventDatesArray = event.event_dates;
       }
 
-      await db.runAsync("COMMIT");
-      isTransactionInProgress = false;
-    } catch (transactionError) {
-      await db.runAsync("ROLLBACK");
-      isTransactionInProgress = false;
-      throw transactionError;
+      if (
+        typeof event.event_date_ids === "string" &&
+        event.event_date_ids.trim() !== ""
+      ) {
+        eventDateIdsArray = JSON.parse(event.event_date_ids);
+      } else if (Array.isArray(event.event_date_ids)) {
+        eventDateIdsArray = event.event_date_ids;
+      }
+
+      if (eventDatesArray.length === eventDateIdsArray.length) {
+        const existingDates = await db.getAllAsync(
+          "SELECT id, event_date FROM event_dates WHERE event_id = ?",
+          [event.event_id]
+        );
+        const existingDateMap = new Map(
+          existingDates.map((e) => [e.event_date, e.id])
+        );
+
+        for (let i = 0; i < eventDatesArray.length; i++) {
+          const eventDate = eventDatesArray[i];
+          const eventDateId = eventDateIdsArray[i];
+
+          if (existingDateMap.has(eventDate)) {
+            await db.runAsync(
+              "UPDATE event_dates SET id = ? WHERE event_id = ? AND event_date = ?",
+              [eventDateId, event.event_id, eventDate]
+            );
+          } else {
+            await db.runAsync(
+              "INSERT INTO event_dates (id, event_id, event_date) VALUES (?, ?, ?)",
+              [eventDateId, event.event_id, eventDate]
+            );
+          }
+        }
+      } else {
+        console.error(
+          "Mismatch between event_dates and event_date_ids lengths"
+        );
+      }
     }
   } catch (error) {
     console.error("Error storing event:", error.message);
@@ -289,7 +293,6 @@ export const getStoredEvents = async () => {
     const eventsQuery = `
       SELECT
         event.id AS event_id,
-        event.event_name_id,
         event.event_name,
         event.venue,
         event.description,
