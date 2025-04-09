@@ -2,7 +2,6 @@ import { StyleSheet, Text, View } from "react-native";
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { CameraView, useCameraPermissions } from "expo-camera";
-import CustomButton from "../../../../components/CustomButton";
 
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
