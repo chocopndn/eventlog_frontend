@@ -24,11 +24,11 @@ const initDB = async () => {
             suffix TEXT,
             email TEXT UNIQUE,
             role_id INTEGER NOT NULL,
-            role_name INTEGER NOT NULL,
+            role_name TEXT NOT NULL,
             block_id INTEGER NULL,
-            block_name INTEGER NULL,
+            block_name TEXT NULL,
             department_id INTEGER NULL,
-            department_name INTEGER NULL,
+            department_name TEXT NULL,
             department_code INTEGER NULL,
             course_id INTEGER NULL,
             course_name TEXT NULL,
@@ -64,6 +64,17 @@ const initDB = async () => {
             event_id INTEGER NOT NULL,  
             event_date DATE NOT NULL,
             FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE
+          );
+        `);
+
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS attendance (
+            event_date_id INTEGER PRIMARY KEY,
+            student_id_number INTEGER NOT NULL,  
+            am_in BOOLEAN,
+            am_out BOOLEAN,
+            pm_in BOOLEAN,
+            pm_out BOOLEAN
           );
         `);
 
