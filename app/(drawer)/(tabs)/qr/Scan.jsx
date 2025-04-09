@@ -18,23 +18,13 @@ const Scan = () => {
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
 
-  const logWithDateAndTime = (message) => {
-    const currentDate = moment().format("YYYY-MM-DD");
-    const currentTime = moment().format("HH:mm:ss");
-    console.log(`date now: ${currentDate}`);
-    console.log(`time now: ${currentTime}`);
-    console.log(`Message: ${message}`);
-  };
-
   useEffect(() => {
     if (permission?.status === "denied") {
-      logWithDateAndTime("Camera permission denied. Requesting permission...");
       requestPermission();
     }
   }, [permission, requestPermission]);
 
   if (permission === undefined) {
-    logWithDateAndTime("Camera permissions are still loading...");
     return (
       <View style={globalStyles.secondaryContainer}>
         <Text style={styles.message}>Loading camera permissions...</Text>
@@ -44,7 +34,6 @@ const Scan = () => {
   }
 
   if (permission?.status !== "granted") {
-    logWithDateAndTime("Camera permission not granted by the user.");
     return (
       <View style={globalStyles.secondaryContainer}>
         <Text style={styles.message}>
@@ -61,26 +50,20 @@ const Scan = () => {
 
   const handleBarcodeScanned = async ({ data }) => {
     try {
-      logWithDateAndTime("QR Code scanned. Starting validation process...");
+      const fullDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
+      console.log(`[attendance] Full date and time: ${fullDateTime}`);
 
-      logWithDateAndTime("Checking if the scanned data is Base64 encoded...");
       if (!isBase64(data)) {
         throw new Error("Invalid QR Code format");
       }
-      logWithDateAndTime("Data is valid Base64.");
 
-      logWithDateAndTime("Decrypting the scanned data...");
       const bytes = CryptoJS.AES.decrypt(data, QR_SECRET_KEY);
       const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
-      logWithDateAndTime(`Decrypted text: ${decryptedText}`);
 
-      logWithDateAndTime("Validating decrypted text format...");
       if (!decryptedText || !decryptedText.startsWith("eventlog")) {
         throw new Error("Decrypted data is not EventLog-specific");
       }
-      logWithDateAndTime("Decrypted text is EventLog-specific.");
 
-      logWithDateAndTime("Parsing decrypted text into components...");
       const parts = decryptedText.split("-");
       if (parts.length !== 3 || parts[0] !== "eventlog") {
         throw new Error("Invalid EventLog format");
@@ -88,30 +71,74 @@ const Scan = () => {
       const eventDateId = parseInt(parts[1], 10);
       const studentId = parseInt(parts[2], 10);
 
-      logWithDateAndTime(
-        `Parsed event_date_id: ${eventDateId}, student_id_number: ${studentId}`
-      );
-
       if (isNaN(eventDateId) || isNaN(studentId)) {
         throw new Error("Invalid event_date_id or student_id_number");
       }
-      logWithDateAndTime("Parsed components are valid numbers.");
 
-      logWithDateAndTime("Checking if event_date_id exists in the database...");
-      const eventExists = await getStoredEvents(eventDateId);
-      if (!eventExists) {
-        throw new Error("Event date ID does not exist in the database");
+      console.log(
+        `[attendance] Fetching event data for event_date_id: ${eventDateId}`
+      );
+      const events = await getStoredEvents(eventDateId);
+
+      if (!Array.isArray(events) || events.length === 0) {
+        throw new Error("No events found for the given event_date_id");
       }
-      logWithDateAndTime(
-        "Event date ID verified successfully in the database."
-      );
 
-      logWithDateAndTime(
-        "QR Code scanning successful. Showing success modal..."
-      );
+      const event = events.find((e) => e.event_date_ids.includes(eventDateId));
+
+      if (!event) {
+        throw new Error("Event not found for the given event_date_id");
+      }
+
+      console.log(`[attendance] Retrieved event data:`, event);
+
+      const { am_in, am_out, pm_in, pm_out } = event;
+
+      if ((!am_in || !am_out) && (!pm_in || !pm_out)) {
+        throw new Error(
+          "Attendance slots are missing or undefined in the database"
+        );
+      }
+
+      const currentDate = moment().format("YYYY-MM-DD");
+      const currentTime = moment().format("HH:mm:ss");
+
+      console.log(`[attendance] Date now: ${currentDate}`);
+      console.log(`[attendance] Time now: ${currentTime}`);
+      console.log(`[attendance] Expected AM_IN: ${am_in}, AM_OUT: ${am_out}`);
+      console.log(`[attendance] Expected PM_IN: ${pm_in}, PM_OUT: ${pm_out}`);
+
+      let isValidTime = false;
+
+      if (am_in && am_out) {
+        isValidTime =
+          moment(currentTime, "HH:mm:ss").isBetween(
+            moment(am_in, "HH:mm:ss"),
+            moment(am_out, "HH:mm:ss")
+          ) || isValidTime;
+      }
+
+      if (pm_in && pm_out) {
+        isValidTime =
+          moment(currentTime, "HH:mm:ss").isBetween(
+            moment(pm_in, "HH:mm:ss"),
+            moment(pm_out, "HH:mm:ss")
+          ) || isValidTime;
+      }
+
+      if (isValidTime) {
+        console.log(
+          `[attendance] Student ID: ${studentId} is within valid attendance slots.`
+        );
+      } else {
+        console.log("[attendance] Outside valid attendance slots.");
+      }
+
       setSuccessModalVisible(true);
     } catch (error) {
-      logWithDateAndTime(`Error during QR Code scanning: ${error.message}`);
+      console.error(
+        `[attendance] Error during QR Code scanning: ${error.message}`
+      );
       setErrorModalVisible(true);
     }
   };
