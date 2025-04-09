@@ -9,7 +9,7 @@ import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import CustomModal from "../../../../components/CustomModal";
 import { QR_SECRET_KEY } from "../../../../config/config";
-import { getStoredEvents } from "../../../../database/queries";
+import { getStoredEvents, logAttendance } from "../../../../database/queries";
 
 const Scan = () => {
   const [permission, requestPermission] = useCameraPermissions();
@@ -177,10 +177,9 @@ const Scan = () => {
           type: attendanceType,
         };
 
-        console.log(
-          `[attendance] Attendance data to send to API:`,
-          attendanceData
-        );
+        console.log(`[attendance] Attendance data to log:`, attendanceData);
+
+        await logAttendance(attendanceData);
 
         setSuccessModalVisible(true);
       } else {
