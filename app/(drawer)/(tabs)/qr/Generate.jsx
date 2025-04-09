@@ -35,17 +35,44 @@ const Generate = () => {
   };
 
   const encryptQRValue = (value) => {
+    if (!value) return null;
     return CryptoES.AES.encrypt(value, QR_SECRET_KEY).toString();
+  };
+
+  const getEventDateId = (event) => {
+    if (
+      !event ||
+      !Array.isArray(event.event_dates) ||
+      !Array.isArray(event.event_date_ids)
+    ) {
+      return null;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < event.event_dates.length; i++) {
+      const eventDate = new Date(event.event_dates[i]);
+      eventDate.setHours(0, 0, 0, 0);
+
+      if (eventDate.getTime() === today.getTime()) {
+        return event.event_date_ids[i];
+      }
+    }
+
+    return event.event_date_ids[0];
   };
 
   return (
     <View style={globalStyles.secondaryContainer}>
       <View style={styles.qrCodeContainer}>
-        {selectedEvent && (
+        {selectedEvent && user && (
           <QRCode
-            value={encryptQRValue(
-              `${selectedEvent.event_date_ids?.[0]}-${user?.id_number}`
-            )}
+            value={
+              encryptQRValue(
+                `${getEventDateId(selectedEvent)}-${user?.id_number}`
+              ) || "INVALID"
+            }
             backgroundColor={theme.colors.secondary}
             size={200}
           />
