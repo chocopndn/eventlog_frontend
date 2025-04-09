@@ -50,10 +50,10 @@ const initDB = async () => {
             created_by TEXT NOT NULL,  
             approved_by_id INTEGER,
             approved_by TEXT,  
-            am_in TIME,
-            am_out TIME,
-            pm_in TIME,
-            pm_out TIME,
+            am_in TIME DEFAULT 0,
+            am_out TIME DEFAULT 0,
+            pm_in TIME DEFAULT 0,
+            pm_out TIME DEFAULT 0,
             duration INTEGER
           );
         `);
