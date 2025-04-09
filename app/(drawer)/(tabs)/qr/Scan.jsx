@@ -46,7 +46,10 @@ const Scan = () => {
 
   return (
     <View style={globalStyles.secondaryContainer}>
-      <CameraView style={styles.camera} type={facing} />
+      <Text style={styles.note}>Find a QR Code to scan</Text>
+      <View style={styles.cameraContainer}>
+        <CameraView style={styles.camera} type={facing} />
+      </View>
       <StatusBar style="light" />
     </View>
   );
@@ -76,13 +79,25 @@ const styles = StyleSheet.create({
     fontFamily: theme.fontFamily.Arial,
   },
   camera: {
-    position: "absolute",
-    width: 230,
-    height: 230,
-    borderRadius: 30,
+    width: "100%",
+    height: "100%",
+    borderRadius: 35,
+  },
+  cameraContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 10,
+    borderColor: theme.colors.primary,
+    borderRadius: 50,
+    width: "80%",
+    height: "45%",
     overflow: "hidden",
   },
-  buttonContainer: {
-    width: "80%",
+  note: {
+    color: theme.colors.primary,
+    fontSize: theme.fontSizes.huge,
+    textAlign: "center",
+    marginBottom: theme.spacing.medium,
+    fontFamily: theme.fontFamily.SquadaOne,
   },
 });
