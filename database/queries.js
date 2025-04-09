@@ -152,18 +152,24 @@ export const storeEvent = async (event, allApiEventIds = []) => {
     }
 
     const storedEvents = await db.getAllAsync("SELECT id FROM events");
-    const storedEventIds = storedEvents.map((e) => e.id);
+    const storedEventIds = storedEvents.map((e) => e.id.toString());
 
     const idsToDelete = storedEventIds.filter(
-      (id) => !allApiEventIds.includes(id.toString())
+      (id) => !allApiEventIds.includes(id)
     );
 
     if (idsToDelete.length > 0) {
       await db.runAsync(
-        `DELETE FROM event_dates WHERE event_id IN (${idsToDelete.join(",")})`
+        `DELETE FROM event_dates WHERE event_id IN (${idsToDelete
+          .map(() => "?")
+          .join(",")})`,
+        idsToDelete
       );
       await db.runAsync(
-        `DELETE FROM events WHERE id IN (${idsToDelete.join(",")})`
+        `DELETE FROM events WHERE id IN (${idsToDelete
+          .map(() => "?")
+          .join(",")})`,
+        idsToDelete
       );
     }
 
@@ -267,7 +273,7 @@ export const storeEvent = async (event, allApiEventIds = []) => {
             );
           } else {
             await db.runAsync(
-              "INSERT INTO event_dates (id, event_id, event_date) VALUES (?, ?, ?)",
+              "INSERT OR IGNORE INTO event_dates (id, event_id, event_date) VALUES (?, ?, ?)",
               [eventDateId, event.event_id, eventDate]
             );
           }
