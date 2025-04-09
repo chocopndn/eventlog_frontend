@@ -16,6 +16,7 @@
     "@react-navigation/drawer": "^7.3.0",
     "axios": "^1.8.4",
     "crypto-es": "^2.1.0",
+    "crypto-js": "^4.2.0",
     "expo": "~52.0.40",
     "expo-camera": "~16.0.18",
     "expo-checkbox": "~4.0.1",
