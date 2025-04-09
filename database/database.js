@@ -41,7 +41,6 @@ const initDB = async () => {
         await db.execAsync(`
           CREATE TABLE IF NOT EXISTS events (
             id INTEGER PRIMARY KEY,
-            event_name_id INTEGER,
             event_name TEXT NOT NULL,
             venue TEXT NOT NULL,
             description TEXT,
