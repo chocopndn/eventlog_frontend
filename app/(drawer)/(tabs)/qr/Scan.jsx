@@ -8,7 +8,11 @@ import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import CustomModal from "../../../../components/CustomModal";
 import { QR_SECRET_KEY } from "../../../../config/config";
-import { getStoredEvents, logAttendance } from "../../../../database/queries";
+import {
+  getStoredEvents,
+  logAttendance,
+  isAlreadyLogged,
+} from "../../../../database/queries";
 
 const Scan = () => {
   const [permission, requestPermission] = useCameraPermissions();
@@ -159,6 +163,29 @@ const Scan = () => {
           student_id_number: studentId,
           type: attendanceType,
         };
+
+        const typeDescriptions = {
+          AM_IN: "Morning Time In",
+          AM_OUT: "Morning Time Out",
+          PM_IN: "Afternoon Time In",
+          PM_OUT: "Afternoon Time Out",
+        };
+
+        const friendlyTypeDescription = typeDescriptions[attendanceData.type];
+
+        const alreadyLogged = await isAlreadyLogged(
+          attendanceData.event_date_id,
+          attendanceData.student_id_number,
+          attendanceData.type
+        );
+
+        if (alreadyLogged) {
+          setErrorMessage(
+            `Attendance for ${friendlyTypeDescription} has already been logged.`
+          );
+          setErrorModalVisible(true);
+          return;
+        }
 
         try {
           await logAttendance(attendanceData);
