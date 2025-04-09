@@ -4,6 +4,8 @@ import { StatusBar } from "expo-status-bar";
 import QRCode from "react-native-qrcode-svg";
 import CustomDropdown from "../../../../components/CustomDropdown";
 import { getStoredUser, getStoredEvents } from "../../../../database/queries";
+import CryptoES from "crypto-es";
+import { QR_SECRET_KEY } from "../../../../config/config";
 
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
@@ -32,12 +34,18 @@ const Generate = () => {
     setSelectedEvent(event);
   };
 
+  const encryptQRValue = (value) => {
+    return CryptoES.AES.encrypt(value, QR_SECRET_KEY).toString();
+  };
+
   return (
     <View style={globalStyles.secondaryContainer}>
       <View style={styles.qrCodeContainer}>
         {selectedEvent && (
           <QRCode
-            value={`${selectedEvent.event_date_ids?.[0]} ${user?.id_number}`}
+            value={encryptQRValue(
+              `${selectedEvent.event_date_ids?.[0]}-${user?.id_number}`
+            )}
             backgroundColor={theme.colors.secondary}
             size={200}
           />
