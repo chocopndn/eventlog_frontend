@@ -20,6 +20,9 @@ const Scan = () => {
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [confirmationModalVisible, setConfirmationModalVisible] =
+    useState(false);
+  const [pendingAttendanceData, setPendingAttendanceData] = useState(null);
 
   useEffect(() => {
     if (permission?.status === "denied") {
@@ -90,7 +93,7 @@ const Scan = () => {
         throw new Error("Event not found for the given event_date_id");
       }
 
-      const { am_in, am_out, pm_in, pm_out, duration } = event;
+      const { am_in, am_out, pm_in, pm_out, duration, event_name } = event;
 
       const calculateWindow = (time) => {
         return time
@@ -162,6 +165,7 @@ const Scan = () => {
           event_date_id: eventDateId,
           student_id_number: studentId,
           type: attendanceType,
+          event_name: event_name,
         };
 
         const typeDescriptions = {
@@ -187,17 +191,8 @@ const Scan = () => {
           return;
         }
 
-        try {
-          await logAttendance(attendanceData);
-          setSuccessModalVisible(true);
-        } catch (error) {
-          if (error.message.includes("has already been logged")) {
-            setErrorMessage(error.message);
-            setErrorModalVisible(true);
-          } else {
-            setErrorModalVisible(true);
-          }
-        }
+        setPendingAttendanceData(attendanceData);
+        setConfirmationModalVisible(true);
       } else {
         setErrorMessage("Outside valid attendance slots.");
         setErrorModalVisible(true);
@@ -208,6 +203,28 @@ const Scan = () => {
     }
   };
 
+  const confirmAttendance = async () => {
+    try {
+      await logAttendance(pendingAttendanceData);
+      setSuccessModalVisible(true);
+    } catch (error) {
+      if (error.message.includes("has already been logged")) {
+        setErrorMessage(error.message);
+        setErrorModalVisible(true);
+      } else {
+        setErrorModalVisible(true);
+      }
+    } finally {
+      setConfirmationModalVisible(false);
+      setPendingAttendanceData(null);
+    }
+  };
+
+  const cancelAttendance = () => {
+    setConfirmationModalVisible(false);
+    setPendingAttendanceData(null);
+  };
+
   const isBase64 = (str) => {
     try {
       return btoa(atob(str)) === str;
@@ -216,7 +233,8 @@ const Scan = () => {
     }
   };
 
-  const isModalVisible = successModalVisible || errorModalVisible;
+  const isModalVisible =
+    successModalVisible || errorModalVisible || confirmationModalVisible;
 
   return (
     <View style={globalStyles.secondaryContainer}>
@@ -239,8 +257,7 @@ const Scan = () => {
         type="success"
         onClose={() => setSuccessModalVisible(false)}
         onCancel={() => setSuccessModalVisible(false)}
-        confirmTitle="OK"
-        onConfirm={() => setSuccessModalVisible(false)}
+        cancelTitle="CLOSE"
       />
 
       <CustomModal
@@ -251,6 +268,19 @@ const Scan = () => {
         onClose={() => setErrorModalVisible(false)}
         onCancel={() => setErrorModalVisible(false)}
         cancelTitle="CLOSE"
+      />
+
+      {/* Confirmation Modal */}
+      <CustomModal
+        visible={confirmationModalVisible}
+        title="Confirm Attendance"
+        message={`Are you sure you want to log attendance for:\n\nStudent ID: ${pendingAttendanceData?.student_id_number}\nEvent Name: ${pendingAttendanceData?.event_name}`}
+        type="warning"
+        onClose={() => cancelAttendance()}
+        onCancel={() => cancelAttendance()}
+        confirmTitle="Yes"
+        onConfirm={() => confirmAttendance()}
+        cancelTitle="No"
       />
 
       <StatusBar style="light" />
