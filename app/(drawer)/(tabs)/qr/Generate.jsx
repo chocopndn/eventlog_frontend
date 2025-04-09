@@ -22,7 +22,7 @@ const Generate = () => {
         setUser(userData);
         setEvents(eventsData);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("[GENERATE] Error fetching data:", error.message);
       }
     };
     fetchData();
@@ -37,7 +37,7 @@ const Generate = () => {
       <View style={styles.qrCodeContainer}>
         {selectedEvent && (
           <QRCode
-            value={`${user?.id_number} + ${selectedEvent?.event_id}`}
+            value={`${selectedEvent.event_date_ids?.[0]} ${user?.id_number}`}
             backgroundColor={theme.colors.secondary}
             size={200}
           />
