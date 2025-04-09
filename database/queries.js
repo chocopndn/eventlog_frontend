@@ -373,3 +373,71 @@ export const clearEventsTable = async () => {
     console.error("[CLEAR EVENTS TABLE] Error clearing tables:", error);
   }
 };
+
+export const logAttendance = async (attendanceData) => {
+  if (Platform.OS !== "web") {
+    try {
+      const dbInstance = await initDB();
+      if (!dbInstance) return;
+
+      await dbInstance.runAsync(`
+        CREATE TABLE IF NOT EXISTS attendance (
+          event_date_id INTEGER PRIMARY KEY,
+          student_id_number INTEGER NOT NULL,
+          am_in BOOLEAN DEFAULT FALSE,
+          am_out BOOLEAN DEFAULT FALSE,
+          pm_in BOOLEAN DEFAULT FALSE,
+          pm_out BOOLEAN DEFAULT FALSE
+        )
+      `);
+
+      const existingRecord = await dbInstance.getFirstAsync(
+        "SELECT * FROM attendance WHERE event_date_id = ? AND student_id_number = ?",
+        [attendanceData.event_date_id, attendanceData.student_id_number]
+      );
+
+      const typeColumn = attendanceData.type.toLowerCase();
+
+      const typeDescriptions = {
+        AM_IN: "Morning Time In",
+        AM_OUT: "Morning Time Out",
+        PM_IN: "Afternoon Time In",
+        PM_OUT: "Afternoon Time Out",
+      };
+
+      const typeDescription = typeDescriptions[attendanceData.type];
+
+      if (existingRecord) {
+        if (existingRecord[typeColumn]) {
+          throw new Error(
+            `Attendance for ${typeDescription} has already been logged.`
+          );
+        }
+
+        let updateQuery = `
+          UPDATE attendance
+          SET ${typeColumn} = TRUE
+          WHERE event_date_id = ? AND student_id_number = ?
+        `;
+        await dbInstance.runAsync(updateQuery, [
+          attendanceData.event_date_id,
+          attendanceData.student_id_number,
+        ]);
+      } else {
+        let insertQuery = `
+          INSERT INTO attendance (event_date_id, student_id_number, ${typeColumn})
+          VALUES (?, ?, TRUE)
+        `;
+        await dbInstance.runAsync(insertQuery, [
+          attendanceData.event_date_id,
+          attendanceData.student_id_number,
+        ]);
+      }
+    } catch (error) {
+      console.error(
+        `[LOG ATTENDANCE] Error logging attendance: ${error.message}`
+      );
+      throw error;
+    }
+  }
+};
