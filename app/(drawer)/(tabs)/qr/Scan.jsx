@@ -3,11 +3,13 @@ import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import CryptoJS from "crypto-js";
+import moment from "moment";
 
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import CustomModal from "../../../../components/CustomModal";
 import { QR_SECRET_KEY } from "../../../../config/config";
+import { getStoredEvents } from "../../../../database/queries";
 
 const Scan = () => {
   const [permission, requestPermission] = useCameraPermissions();
@@ -16,13 +18,23 @@ const Scan = () => {
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
 
+  const logWithDateAndTime = (message) => {
+    const currentDate = moment().format("YYYY-MM-DD");
+    const currentTime = moment().format("HH:mm:ss");
+    console.log(`date now: ${currentDate}`);
+    console.log(`time now: ${currentTime}`);
+    console.log(`Message: ${message}`);
+  };
+
   useEffect(() => {
     if (permission?.status === "denied") {
+      logWithDateAndTime("Camera permission denied. Requesting permission...");
       requestPermission();
     }
   }, [permission, requestPermission]);
 
   if (permission === undefined) {
+    logWithDateAndTime("Camera permissions are still loading...");
     return (
       <View style={globalStyles.secondaryContainer}>
         <Text style={styles.message}>Loading camera permissions...</Text>
@@ -32,6 +44,7 @@ const Scan = () => {
   }
 
   if (permission?.status !== "granted") {
+    logWithDateAndTime("Camera permission not granted by the user.");
     return (
       <View style={globalStyles.secondaryContainer}>
         <Text style={styles.message}>
@@ -46,21 +59,59 @@ const Scan = () => {
     );
   }
 
-  const handleBarcodeScanned = ({ data }) => {
+  const handleBarcodeScanned = async ({ data }) => {
     try {
-      if (!isBase64(data)) {
-        throw new Error();
-      }
+      logWithDateAndTime("QR Code scanned. Starting validation process...");
 
+      logWithDateAndTime("Checking if the scanned data is Base64 encoded...");
+      if (!isBase64(data)) {
+        throw new Error("Invalid QR Code format");
+      }
+      logWithDateAndTime("Data is valid Base64.");
+
+      logWithDateAndTime("Decrypting the scanned data...");
       const bytes = CryptoJS.AES.decrypt(data, QR_SECRET_KEY);
       const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
+      logWithDateAndTime(`Decrypted text: ${decryptedText}`);
 
-      if (!decryptedText || !decryptedText.includes("eventlog")) {
-        throw new Error();
+      logWithDateAndTime("Validating decrypted text format...");
+      if (!decryptedText || !decryptedText.startsWith("eventlog")) {
+        throw new Error("Decrypted data is not EventLog-specific");
       }
+      logWithDateAndTime("Decrypted text is EventLog-specific.");
 
+      logWithDateAndTime("Parsing decrypted text into components...");
+      const parts = decryptedText.split("-");
+      if (parts.length !== 3 || parts[0] !== "eventlog") {
+        throw new Error("Invalid EventLog format");
+      }
+      const eventDateId = parseInt(parts[1], 10);
+      const studentId = parseInt(parts[2], 10);
+
+      logWithDateAndTime(
+        `Parsed event_date_id: ${eventDateId}, student_id_number: ${studentId}`
+      );
+
+      if (isNaN(eventDateId) || isNaN(studentId)) {
+        throw new Error("Invalid event_date_id or student_id_number");
+      }
+      logWithDateAndTime("Parsed components are valid numbers.");
+
+      logWithDateAndTime("Checking if event_date_id exists in the database...");
+      const eventExists = await getStoredEvents(eventDateId);
+      if (!eventExists) {
+        throw new Error("Event date ID does not exist in the database");
+      }
+      logWithDateAndTime(
+        "Event date ID verified successfully in the database."
+      );
+
+      logWithDateAndTime(
+        "QR Code scanning successful. Showing success modal..."
+      );
       setSuccessModalVisible(true);
-    } catch {
+    } catch (error) {
+      logWithDateAndTime(`Error during QR Code scanning: ${error.message}`);
       setErrorModalVisible(true);
     }
   };
