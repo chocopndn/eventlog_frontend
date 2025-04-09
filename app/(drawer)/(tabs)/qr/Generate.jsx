@@ -23,9 +23,7 @@ const Generate = () => {
         const eventsData = await getStoredEvents();
         setUser(userData);
         setEvents(eventsData);
-      } catch (error) {
-        console.error("[GENERATE] Error fetching data:", error.message);
-      }
+      } catch (error) {}
     };
     fetchData();
   }, []);
