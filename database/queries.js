@@ -434,9 +434,6 @@ export const logAttendance = async (attendanceData) => {
         ]);
       }
     } catch (error) {
-      console.error(
-        `[LOG ATTENDANCE] Error logging attendance: ${error.message}`
-      );
       throw error;
     }
   }
