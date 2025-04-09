@@ -20,7 +20,6 @@ import printer from "../assets/icons/printer.png";
 import warning from "../assets/icons/exclamation-triangle.png";
 import error from "../assets/icons/exclamation-circle.png";
 import success from "../assets/icons/check-circle.png";
-import qrscan from "../assets/icons/qr-scan.png";
 import xlogo from "../assets/icons/x.png";
 import admin from "../assets/icons/admin.png";
 import course from "../assets/icons/course.png";
@@ -62,7 +61,6 @@ export default {
   warning,
   error,
   success,
-  qrscan,
   xlogo,
   admin,
   course,
