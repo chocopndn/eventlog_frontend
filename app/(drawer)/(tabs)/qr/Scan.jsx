@@ -13,8 +13,8 @@ const Scan = () => {
   const [permission, requestPermission] = useCameraPermissions();
   const [facing] = useState("back");
 
-  const [modalVisible, setModalVisible] = useState(false);
-  const [decryptedData, setDecryptedData] = useState("");
+  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [errorModalVisible, setErrorModalVisible] = useState(false);
 
   useEffect(() => {
     if (permission?.status === "denied") {
@@ -48,20 +48,32 @@ const Scan = () => {
 
   const handleBarcodeScanned = ({ data }) => {
     try {
+      if (!isBase64(data)) {
+        throw new Error();
+      }
+
       const bytes = CryptoJS.AES.decrypt(data, QR_SECRET_KEY);
       const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
 
-      if (!decryptedText) {
-        throw new Error("Invalid or corrupted data");
+      if (!decryptedText || !decryptedText.includes("eventlog")) {
+        throw new Error();
       }
 
-      setDecryptedData(decryptedText);
-      setModalVisible(true);
-    } catch (error) {
-      setDecryptedData("Failed to decrypt data");
-      setModalVisible(true);
+      setSuccessModalVisible(true);
+    } catch {
+      setErrorModalVisible(true);
     }
   };
+
+  const isBase64 = (str) => {
+    try {
+      return btoa(atob(str)) === str;
+    } catch {
+      return false;
+    }
+  };
+
+  const isModalVisible = successModalVisible || errorModalVisible;
 
   return (
     <View style={globalStyles.secondaryContainer}>
@@ -73,19 +85,29 @@ const Scan = () => {
           barcodeScannerSettings={{
             barcodeTypes: ["qr"],
           }}
-          onBarcodeScanned={handleBarcodeScanned}
+          onBarcodeScanned={isModalVisible ? null : handleBarcodeScanned}
         />
       </View>
 
       <CustomModal
-        visible={modalVisible}
+        visible={successModalVisible}
         title="QR Code Scanned"
-        message={`Decrypted Data: ${decryptedData}`}
+        message="EventLog QR Code successfully scanned!"
         type="success"
-        onClose={() => setModalVisible(false)}
-        onCancel={() => setModalVisible(false)}
+        onClose={() => setSuccessModalVisible(false)}
+        onCancel={() => setSuccessModalVisible(false)}
         confirmTitle="OK"
-        onConfirm={() => setModalVisible(false)}
+        onConfirm={() => setSuccessModalVisible(false)}
+      />
+
+      <CustomModal
+        visible={errorModalVisible}
+        title="Error"
+        message="Please scan EventLog-specific QR Code only."
+        type="error"
+        onClose={() => setErrorModalVisible(false)}
+        onCancel={() => setErrorModalVisible(false)}
+        cancelTitle="CLOSE"
       />
 
       <StatusBar style="light" />
