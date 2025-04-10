@@ -25,8 +25,10 @@ import theme from "../../../../constants/theme";
 
 const Records = () => {
   const [roleId, setRoleId] = useState(null);
-  const [ongoingEvents, setOngoingEvents] = useState([]);
-  const [pastEvents, setPastEvents] = useState([]);
+  const [allEvents, setAllEvents] = useState([]);
+  const [filteredOngoingEvents, setFilteredOngoingEvents] = useState([]);
+  const [filteredPastEvents, setFilteredPastEvents] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchRoleId = async () => {
@@ -96,29 +98,53 @@ const Records = () => {
           }
         });
 
-        setOngoingEvents(ongoing);
-        setPastEvents(past);
+        setAllEvents(ongoing.concat(past));
+        setFilteredOngoingEvents(ongoing);
+        setFilteredPastEvents(past);
       } catch (error) {}
     };
 
     fetchDataAndSaveToSQLite();
   }, []);
 
+  useEffect(() => {
+    const filteredEvents = allEvents.filter((event) =>
+      event.event_name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const currentDate = moment().format("YYYY-MM-DD");
+    const ongoing = filteredEvents.filter((event) =>
+      event.event_dates.some((date) => moment(date).isSameOrAfter(currentDate))
+    );
+    const past = filteredEvents.filter(
+      (event) =>
+        !event.event_dates.some((date) =>
+          moment(date).isSameOrAfter(currentDate)
+        )
+    );
+
+    setFilteredOngoingEvents(ongoing);
+    setFilteredPastEvents(past);
+  }, [searchTerm]);
+
   if (roleId === 1 || roleId === 2) {
     return (
       <SafeAreaView style={globalStyles.secondaryContainer}>
         <View style={styles.searchContainer}>
-          <CustomSearch placeholder="Search records" />
+          <CustomSearch
+            placeholder="Search records"
+            onSearch={(text) => setSearchTerm(text)}
+          />
         </View>
         <ScrollView
           style={{ flex: 1, width: "100%", marginBottom: 20 }}
           contentContainerStyle={styles.scrollview}
           showsVerticalScrollIndicator={false}
         >
-          {ongoingEvents.length > 0 && (
+          {filteredOngoingEvents.length > 0 && (
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>Ongoing Events</Text>
-              {ongoingEvents.map((event, index) => (
+              {filteredOngoingEvents.map((event, index) => (
                 <TouchableOpacity key={index} style={styles.eventContainer}>
                   <Text style={styles.eventTitle}>{event.event_name}</Text>
                   <Text style={styles.eventDate}>
@@ -132,10 +158,10 @@ const Records = () => {
             </View>
           )}
 
-          {pastEvents.length > 0 && (
+          {filteredPastEvents.length > 0 && (
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>Past Events</Text>
-              {pastEvents.map((event, index) => (
+              {filteredPastEvents.map((event, index) => (
                 <TouchableOpacity key={index} style={styles.eventContainer}>
                   <Text style={styles.eventTitle}>{event.event_name}</Text>
                   <Text style={styles.eventDate}>
@@ -149,11 +175,12 @@ const Records = () => {
             </View>
           )}
 
-          {ongoingEvents.length === 0 && pastEvents.length === 0 && (
-            <View style={styles.noEventsContainer}>
-              <Text style={styles.noEventsText}>No events available.</Text>
-            </View>
-          )}
+          {filteredOngoingEvents.length === 0 &&
+            filteredPastEvents.length === 0 && (
+              <View style={styles.noEventsContainer}>
+                <Text style={styles.noEventsText}>No events available.</Text>
+              </View>
+            )}
         </ScrollView>
       </SafeAreaView>
     );
