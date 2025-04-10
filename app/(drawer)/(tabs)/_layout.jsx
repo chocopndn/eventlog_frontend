@@ -87,7 +87,7 @@ const TabsLayout = () => {
           <Image source={images.logo} style={styles.logoImage} />
         </View>
 
-        <TabTrigger name="Records" href="/(tabs)/Records">
+        <TabTrigger name="records" href="/(tabs)/records">
           <View style={styles.tabItem}>
             <Image source={images.calendar} style={styles.tabIcon} />
             <Text style={styles.tabText}>Records</Text>
