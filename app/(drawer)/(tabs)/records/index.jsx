@@ -23,6 +23,8 @@ import CustomSearch from "../../../../components/CustomSearch";
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 
+import { router } from "expo-router";
+
 const Records = () => {
   const [roleId, setRoleId] = useState(null);
   const [allEvents, setAllEvents] = useState([]);
@@ -145,7 +147,13 @@ const Records = () => {
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>Ongoing Events</Text>
               {filteredOngoingEvents.map((event, index) => (
-                <TouchableOpacity key={index} style={styles.eventContainer}>
+                <TouchableOpacity
+                  key={index}
+                  style={styles.eventContainer}
+                  onPress={() =>
+                    router.push(`/records/Attendance?eventId=${event.event_id}`)
+                  }
+                >
                   <Text style={styles.eventTitle}>{event.event_name}</Text>
                   <Text style={styles.eventDate}>
                     {Array.isArray(event.event_dates) &&
@@ -162,7 +170,13 @@ const Records = () => {
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>Past Events</Text>
               {filteredPastEvents.map((event, index) => (
-                <TouchableOpacity key={index} style={styles.eventContainer}>
+                <TouchableOpacity
+                  key={index}
+                  style={styles.eventContainer}
+                  onPress={() =>
+                    router.push(`/records/Attendance?eventId=${event.event_id}`)
+                  }
+                >
                   <Text style={styles.eventTitle}>{event.event_name}</Text>
                   <Text style={styles.eventDate}>
                     {Array.isArray(event.event_dates) &&
