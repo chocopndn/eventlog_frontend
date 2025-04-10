@@ -40,64 +40,29 @@ const Records = () => {
   useEffect(() => {
     const fetchDataAndSaveToSQLite = async () => {
       try {
-        console.log("[INFO] Fetching stored user...");
         const storedUser = await getStoredUser();
         if (!storedUser || !storedUser.id_number) {
-          console.error("[ERROR] No stored user or id_number found.");
           return;
         }
         const idNumber = storedUser.id_number;
-        console.log(`[INFO] Retrieved id_number: ${idNumber}`);
 
-        console.log(
-          `[INFO] Fetching user ongoing events for id_number: ${idNumber}`
-        );
         const ongoingApiResponse = await fetchUserOngoingEvents(idNumber);
-        if (
-          !ongoingApiResponse ||
-          !ongoingApiResponse.success ||
-          !ongoingApiResponse.events
-        ) {
-          console.error(
-            "[ERROR] Failed to fetch ongoing user events from API."
-          );
-        }
-
-        console.log(
-          `[INFO] Fetching user past events for id_number: ${idNumber}`
-        );
         const pastApiResponse = await fetchUserPastEvents(idNumber);
-        if (
-          !pastApiResponse ||
-          !pastApiResponse.success ||
-          !pastApiResponse.events
-        ) {
-          console.error("[ERROR] Failed to fetch past user events from API.");
-        }
 
         const allEvents = [
           ...(ongoingApiResponse?.events || []),
           ...(pastApiResponse?.events || []),
         ];
 
-        console.log("[INFO] Saving fetched events to SQLite...");
         const saveResult = await saveRecords(allEvents);
         if (!saveResult || !saveResult.success) {
-          console.error("[ERROR] Failed to save records to SQLite.");
           return;
         }
-        console.log("[INFO] Records saved successfully to SQLite.");
 
-        console.log("[INFO] Fetching stored records from SQLite...");
         const storedRecords = await getStoredRecords();
         if (!storedRecords || !storedRecords.success || !storedRecords.data) {
-          console.error("[ERROR] Failed to fetch stored records from SQLite.");
           return;
         }
-        console.log(
-          "[INFO] Stored records fetched successfully:",
-          storedRecords.data
-        );
 
         const currentDate = moment().format("YYYY-MM-DD");
         const groupedEvents = {};
@@ -133,12 +98,7 @@ const Records = () => {
 
         setOngoingEvents(ongoing);
         setPastEvents(past);
-      } catch (error) {
-        console.error(
-          "[ERROR] An error occurred during the process:",
-          error.message
-        );
-      }
+      } catch (error) {}
     };
 
     fetchDataAndSaveToSQLite();
@@ -155,7 +115,6 @@ const Records = () => {
           contentContainerStyle={styles.scrollview}
           showsVerticalScrollIndicator={false}
         >
-          {/* Ongoing Events Section */}
           {ongoingEvents.length > 0 && (
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>Ongoing Events</Text>
@@ -173,7 +132,6 @@ const Records = () => {
             </View>
           )}
 
-          {/* Past Events Section */}
           {pastEvents.length > 0 && (
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>Past Events</Text>
@@ -191,7 +149,6 @@ const Records = () => {
             </View>
           )}
 
-          {/* No Events Message */}
           {ongoingEvents.length === 0 && pastEvents.length === 0 && (
             <View style={styles.noEventsContainer}>
               <Text style={styles.noEventsText}>No events available.</Text>
