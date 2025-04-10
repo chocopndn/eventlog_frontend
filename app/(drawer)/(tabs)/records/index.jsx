@@ -12,7 +12,11 @@ import {
   saveRecords,
   getStoredRecords,
 } from "../../../../database/queries/records";
-import { fetchUserEvents } from "../../../../services/api/records";
+import {
+  fetchUserOngoingEvents,
+  fetchUserPastEvents,
+} from "../../../../services/api/records";
+import moment from "moment";
 
 import CustomSearch from "../../../../components/CustomSearch";
 
@@ -21,6 +25,8 @@ import theme from "../../../../constants/theme";
 
 const Records = () => {
   const [roleId, setRoleId] = useState(null);
+  const [ongoingEvents, setOngoingEvents] = useState([]);
+  const [pastEvents, setPastEvents] = useState([]);
 
   useEffect(() => {
     const fetchRoleId = async () => {
@@ -43,19 +49,39 @@ const Records = () => {
         const idNumber = storedUser.id_number;
         console.log(`[INFO] Retrieved id_number: ${idNumber}`);
 
-        console.log(`[INFO] Fetching user events for id_number: ${idNumber}`);
-        const apiResponse = await fetchUserEvents(idNumber);
-        if (!apiResponse || !apiResponse.success || !apiResponse.events) {
-          console.error("[ERROR] Failed to fetch user events from API.");
-          return;
-        }
         console.log(
-          "[INFO] Fetched user events successfully:",
-          apiResponse.events
+          `[INFO] Fetching user ongoing events for id_number: ${idNumber}`
         );
+        const ongoingApiResponse = await fetchUserOngoingEvents(idNumber);
+        if (
+          !ongoingApiResponse ||
+          !ongoingApiResponse.success ||
+          !ongoingApiResponse.events
+        ) {
+          console.error(
+            "[ERROR] Failed to fetch ongoing user events from API."
+          );
+        }
+
+        console.log(
+          `[INFO] Fetching user past events for id_number: ${idNumber}`
+        );
+        const pastApiResponse = await fetchUserPastEvents(idNumber);
+        if (
+          !pastApiResponse ||
+          !pastApiResponse.success ||
+          !pastApiResponse.events
+        ) {
+          console.error("[ERROR] Failed to fetch past user events from API.");
+        }
+
+        const allEvents = [
+          ...(ongoingApiResponse?.events || []),
+          ...(pastApiResponse?.events || []),
+        ];
 
         console.log("[INFO] Saving fetched events to SQLite...");
-        const saveResult = await saveRecords(apiResponse.events);
+        const saveResult = await saveRecords(allEvents);
         if (!saveResult || !saveResult.success) {
           console.error("[ERROR] Failed to save records to SQLite.");
           return;
@@ -72,6 +98,41 @@ const Records = () => {
           "[INFO] Stored records fetched successfully:",
           storedRecords.data
         );
+
+        const currentDate = moment().format("YYYY-MM-DD");
+        const groupedEvents = {};
+
+        storedRecords.data.forEach((record) => {
+          const { event_id, event_name, event_date } = record;
+
+          if (!groupedEvents[event_id]) {
+            groupedEvents[event_id] = {
+              event_id,
+              event_name,
+              event_dates: [],
+            };
+          }
+
+          groupedEvents[event_id].event_dates.push(event_date);
+        });
+
+        const ongoing = [];
+        const past = [];
+
+        Object.values(groupedEvents).forEach((event) => {
+          const isOngoing = event.event_dates.some((date) =>
+            moment(date).isSameOrAfter(currentDate)
+          );
+
+          if (isOngoing) {
+            ongoing.push(event);
+          } else {
+            past.push(event);
+          }
+        });
+
+        setOngoingEvents(ongoing);
+        setPastEvents(past);
       } catch (error) {
         console.error(
           "[ERROR] An error occurred during the process:",
@@ -94,29 +155,48 @@ const Records = () => {
           contentContainerStyle={styles.scrollview}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Ongoing Events</Text>
-            <TouchableOpacity style={styles.eventContainer}>
-              <Text style={styles.eventTitle}>National PRISAA 2025</Text>
-              <Text style={styles.eventDate}>April 7, 8, 9, 10, 2025</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.eventContainer}>
-              <Text style={styles.eventTitle}>IT Day</Text>
-              <Text style={styles.eventDate}>April 7, 8, 9, 10, 2025</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>Past Events</Text>
-            <TouchableOpacity style={styles.eventContainer}>
-              <Text style={styles.eventTitle}>Valentines Celebration</Text>
-              <Text style={styles.eventDate}>February 7, 8, 9, 14, 2025</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.eventContainer}>
-              <Text style={styles.eventTitle}>UCV Founding Anniversary</Text>
-              <Text style={styles.eventDate}>March 7, 8, 9, 10, 2025</Text>
-            </TouchableOpacity>
-            {/* Additional past events */}
-          </View>
+          {/* Ongoing Events Section */}
+          {ongoingEvents.length > 0 && (
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Ongoing Events</Text>
+              {ongoingEvents.map((event, index) => (
+                <TouchableOpacity key={index} style={styles.eventContainer}>
+                  <Text style={styles.eventTitle}>{event.event_name}</Text>
+                  <Text style={styles.eventDate}>
+                    {Array.isArray(event.event_dates) &&
+                    event.event_dates.length > 0
+                      ? event.event_dates.join(", ")
+                      : "No dates available"}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* Past Events Section */}
+          {pastEvents.length > 0 && (
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Past Events</Text>
+              {pastEvents.map((event, index) => (
+                <TouchableOpacity key={index} style={styles.eventContainer}>
+                  <Text style={styles.eventTitle}>{event.event_name}</Text>
+                  <Text style={styles.eventDate}>
+                    {Array.isArray(event.event_dates) &&
+                    event.event_dates.length > 0
+                      ? event.event_dates.join(", ")
+                      : "No dates available"}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* No Events Message */}
+          {ongoingEvents.length === 0 && pastEvents.length === 0 && (
+            <View style={styles.noEventsContainer}>
+              <Text style={styles.noEventsText}>No events available.</Text>
+            </View>
+          )}
         </ScrollView>
       </SafeAreaView>
     );
@@ -169,5 +249,17 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.title,
     fontFamily: "SquadaOne",
     color: theme.colors.primary,
+  },
+  noEventsContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: theme.spacing.large,
+  },
+  noEventsText: {
+    fontSize: theme.fontSizes.medium,
+    fontFamily: "SquadaOne",
+    color: theme.colors.secondary,
+    textAlign: "center",
+    marginTop: theme.spacing.medium,
   },
 });
