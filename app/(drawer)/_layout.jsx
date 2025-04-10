@@ -10,6 +10,7 @@ import { clearAllTablesData } from "../../database/queries";
 
 import images from "../../constants/images";
 import theme from "../../constants/theme";
+import { stopSync } from "../../services/api";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -41,6 +42,7 @@ const CustomDrawerContent = (props) => {
       await AsyncStorage.removeItem("userToken");
       await AsyncStorage.removeItem("id_number");
       await clearAllTablesData();
+      stopSync();
       router.replace("/login");
     } catch (error) {
       console.error("Error logging out:", error);

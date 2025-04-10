@@ -22,9 +22,12 @@ import {
 import { fetchUpcomingEvents } from "../../../../services/api";
 import CustomModal from "../../../../components/CustomModal";
 import NetInfo from "@react-native-community/netinfo";
+import { startSync } from "../../../../services/api";
+import { useFocusEffect } from "expo-router";
 
 const Home = () => {
   const [blockId, setBlockId] = useState(null);
+  const [roleId, setRoleId] = useState(null);
   const [events, setEvents] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -37,6 +40,7 @@ const Home = () => {
         const user = await getStoredUser();
         if (!user) return;
         setBlockId(user?.block_id || null);
+        setRoleId(user?.role_id || null);
       } catch (error) {
         console.error("Error fetching user data:", error.message);
       }
@@ -148,6 +152,12 @@ const Home = () => {
       })
       .join(" & ");
   };
+
+  useFocusEffect(() => {
+    if (roleId !== 1) {
+      startSync();
+    }
+  });
 
   return (
     <SafeAreaView style={globalStyles.secondaryContainer}>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { clearAllTablesData, getStoredUser } from "../database/queries";
+import { stopSync } from "../services/api";
 
 const useUserAccount = () => {
   const [user, setUser] = useState(null);
@@ -21,6 +22,7 @@ const useUserAccount = () => {
 
   const handleLogout = async () => {
     try {
+      stopSync();
       await clearAllTablesData();
       await AsyncStorage.multiRemove(["userToken", "id_number"]);
       router.replace("/login");
