@@ -3,23 +3,40 @@ import initDB from "../database";
 
 export const saveRecords = async (records) => {
   if (Platform.OS !== "web") {
+    let dbInstance = null;
+
     try {
-      const dbInstance = await initDB();
+      dbInstance = await initDB();
       if (!dbInstance) {
         throw new Error("Database initialization failed.");
       }
 
+      await dbInstance.runAsync("DELETE FROM records");
+
       const insertQuery = `
-          INSERT OR IGNORE INTO records (
-            event_id, event_name, event_date, am_in, am_out, pm_in, pm_out
-          ) VALUES (?, ?, ?, ?, ?, ?, ?);
-        `;
+        INSERT OR IGNORE INTO records (
+          event_id, event_name, event_date, am_in, am_out, pm_in, pm_out
+        ) VALUES (?, ?, ?, ?, ?, ?, ?);
+      `;
 
       await dbInstance.runAsync("BEGIN TRANSACTION");
 
       for (const record of records) {
         const { event_id, event_name, attendance } = record;
+
+        if (
+          !event_id ||
+          !event_name ||
+          !attendance ||
+          !Array.isArray(attendance)
+        ) {
+          continue;
+        }
+
         const attendanceMap = attendance[0];
+        if (!attendanceMap || typeof attendanceMap !== "object") {
+          continue;
+        }
 
         for (const [event_date, attendanceData] of Object.entries(
           attendanceMap
@@ -27,9 +44,6 @@ export const saveRecords = async (records) => {
           const { am_in, am_out, pm_in, pm_out } = attendanceData;
 
           if (!event_id || !event_name || !event_date) {
-            console.warn(
-              `[WARN] Skipping invalid record: ${JSON.stringify(record)}`
-            );
             continue;
           }
 
@@ -49,21 +63,21 @@ export const saveRecords = async (records) => {
 
       return { success: true, message: "Records saved successfully." };
     } catch (error) {
-      console.error("[SAVE RECORDS] Error saving records:", error.message);
-
-      try {
-        await dbInstance.runAsync("ROLLBACK");
-      } catch (rollbackError) {
-        console.error(
-          "[SAVE RECORDS] Error during rollback:",
-          rollbackError.message
-        );
+      if (dbInstance) {
+        try {
+          await dbInstance.runAsync("ROLLBACK");
+        } catch (rollbackError) {}
       }
 
       throw error;
+    } finally {
+      if (dbInstance && typeof dbInstance.close === "function") {
+        try {
+          await dbInstance.close();
+        } catch (closeError) {}
+      }
     }
   } else {
-    console.warn("[SAVE RECORDS] This function is not supported on web.");
     return {
       success: false,
       message: "This function is not supported on web.",
@@ -95,14 +109,9 @@ export const getStoredRecords = async () => {
 
       return { success: true, data: records };
     } catch (error) {
-      console.error(
-        "[GET STORED RECORDS] Error fetching records:",
-        error.message
-      );
       throw error;
     }
   } else {
-    console.warn("[GET STORED RECORDS] This function is not supported on web.");
     return {
       success: false,
       message: "This function is not supported on web.",
