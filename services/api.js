@@ -1,5 +1,6 @@
 import axios from "axios";
 import { API_URL } from "../config/config";
+import initDB from "../database/database";
 
 export const fetchEventById = async (eventId) => {
   try {
@@ -628,3 +629,70 @@ export const deleteEvent = async (id) => {
     throw error;
   }
 };
+
+export const syncAttendance = async () => {
+  let dbInstance;
+  try {
+    dbInstance = await initDB();
+    if (!dbInstance) {
+      throw new Error("Failed to initialize database.");
+    }
+
+    const attendanceRecords = await dbInstance.getAllAsync(
+      "SELECT * FROM attendance"
+    );
+
+    if (attendanceRecords.length === 0) {
+      return { success: true, message: "No attendance records to sync." };
+    }
+
+    const cleanedAttendanceData = attendanceRecords.map((record) => {
+      const cleanedRecord = {
+        event_date_id: record.event_date_id,
+        student_id_number: record.student_id_number,
+      };
+      if (record.am_in !== null && record.am_in !== undefined)
+        cleanedRecord.am_in = true;
+      if (record.am_out !== null && record.am_out !== undefined)
+        cleanedRecord.am_out = true;
+      if (record.pm_in !== null && record.pm_in !== undefined)
+        cleanedRecord.pm_in = true;
+      if (record.pm_out !== null && record.pm_out !== undefined)
+        cleanedRecord.pm_out = true;
+      return cleanedRecord;
+    });
+
+    const response = await axios.post(`${API_URL}/api/attendance/sync`, {
+      attendanceData: cleanedAttendanceData,
+    });
+
+    if (!response.data.success) {
+      throw new Error("Failed to sync attendance with the backend.");
+    }
+
+    await dbInstance.runAsync("DELETE FROM attendance");
+
+    return { success: true, message: "Attendance synced successfully." };
+  } catch (error) {
+    console.error("Error syncing attendance:", error.message);
+    throw error;
+  } finally {
+    if (dbInstance && typeof dbInstance.close === "function") {
+      dbInstance.close();
+    }
+  }
+};
+
+let syncInterval;
+
+export const startSync = () => {
+  syncInterval = setInterval(async () => {
+    try {
+      await syncAttendance();
+    } catch (error) {
+      console.error("[SYNC] Error syncing attendance:", error.message);
+    }
+  }, 30000);
+};
+
+startSync();
