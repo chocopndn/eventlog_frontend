@@ -26,14 +26,24 @@ const QRLayout = () => {
     return null;
   }
 
+  const showHeader = roleId !== 4;
+
   return (
     <Stack>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="index"
+        options={{
+          headerShown: showHeader,
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: theme.colors.secondary,
+          title: "QR Code",
+        }}
+      />
       <Stack.Screen
         name="Generate"
         options={{
           headerTitle: "Generate QR Code",
-          headerShown: false,
+          headerShown: showHeader,
           headerStyle: { backgroundColor: theme.colors.primary },
           headerTintColor: theme.colors.secondary,
         }}
@@ -42,7 +52,7 @@ const QRLayout = () => {
         name="Scan"
         options={{
           headerTitle: "Scan QR Code",
-          headerShown: false,
+          headerShown: showHeader,
           headerStyle: { backgroundColor: theme.colors.primary },
           headerTintColor: theme.colors.secondary,
         }}

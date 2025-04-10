@@ -1,14 +1,49 @@
 import { Stack } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { getRoleID } from "../../../../database/queries";
 import theme from "../../../../constants/theme";
 
 const RecordsLayout = () => {
+  const [roleId, setRoleId] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRoleId = async () => {
+      try {
+        const fetchedRoleId = await getRoleID();
+        setRoleId(fetchedRoleId);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRoleId();
+  }, []);
+
+  if (loading) {
+    return null;
+  }
+
+  const showHeader = roleId !== 4;
+
   return (
     <Stack>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="index"
+        options={{
+          headerShown: showHeader,
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: theme.colors.secondary,
+          title: "Records",
+        }}
+      />
       <Stack.Screen
         name="Attendance"
         options={{
           headerTitle: "Attendance",
+          headerShown: showHeader,
           headerStyle: { backgroundColor: theme.colors.primary },
           headerTintColor: theme.colors.secondary,
         }}
