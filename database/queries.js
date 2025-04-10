@@ -398,14 +398,12 @@ export const logAttendance = async (attendanceData) => {
       );
 
       const typeColumn = attendanceData.type.toLowerCase();
-
       const typeDescriptions = {
         AM_IN: "Morning Time In",
         AM_OUT: "Morning Time Out",
         PM_IN: "Afternoon Time In",
         PM_OUT: "Afternoon Time Out",
       };
-
       const typeDescription = typeDescriptions[attendanceData.type];
 
       if (existingRecord) {
@@ -414,8 +412,7 @@ export const logAttendance = async (attendanceData) => {
             `Attendance for ${typeDescription} has already been logged.`
           );
         }
-
-        let updateQuery = `
+        const updateQuery = `
           UPDATE attendance
           SET ${typeColumn} = TRUE
           WHERE event_date_id = ? AND student_id_number = ?
@@ -425,7 +422,7 @@ export const logAttendance = async (attendanceData) => {
           attendanceData.student_id_number,
         ]);
       } else {
-        let insertQuery = `
+        const insertQuery = `
           INSERT INTO attendance (event_date_id, student_id_number, ${typeColumn})
           VALUES (?, ?, TRUE)
         `;
