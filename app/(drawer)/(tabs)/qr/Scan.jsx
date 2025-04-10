@@ -16,7 +16,6 @@ import {
 
 const Scan = () => {
   const [permission, requestPermission] = useCameraPermissions();
-  const [facing] = useState("back");
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -240,7 +239,7 @@ const Scan = () => {
       <View style={styles.cameraContainer}>
         <CameraView
           style={styles.camera}
-          facing={facing}
+          facing="back"
           barcodeScannerSettings={{
             barcodeTypes: ["qr"],
           }}
