@@ -1,6 +1,8 @@
 import axios from "axios";
 import { API_URL } from "../config/config";
 import initDB from "../database/database";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 
 export const fetchEventById = async (eventId) => {
   try {
@@ -629,6 +631,9 @@ export const deleteEvent = async (id) => {
     throw error;
   }
 };
+let syncInterval;
+import { getStoredEvents } from "../database/queries";
+import moment from "moment";
 
 export const syncAttendance = async () => {
   let dbInstance;
@@ -645,6 +650,16 @@ export const syncAttendance = async () => {
     if (attendanceRecords.length === 0) {
       return { success: true, message: "No attendance records to sync." };
     }
+
+    const events = await getStoredEvents();
+    const currentDate = moment().format("YYYY-MM-DD");
+
+    const shouldClearAttendance = events.every((event) => {
+      const eventDates = event.event_dates || [];
+      return eventDates.every((eventDate) =>
+        moment(eventDate).isBefore(currentDate)
+      );
+    });
 
     const cleanedAttendanceData = attendanceRecords.map((record) => {
       const cleanedRecord = {
@@ -670,11 +685,12 @@ export const syncAttendance = async () => {
       throw new Error("Failed to sync attendance with the backend.");
     }
 
-    await dbInstance.runAsync("DELETE FROM attendance");
+    if (shouldClearAttendance) {
+      await dbInstance.runAsync("DELETE FROM attendance");
+    }
 
     return { success: true, message: "Attendance synced successfully." };
   } catch (error) {
-    console.error("Error syncing attendance:", error.message);
     throw error;
   } finally {
     if (dbInstance && typeof dbInstance.close === "function") {
@@ -683,16 +699,21 @@ export const syncAttendance = async () => {
   }
 };
 
-let syncInterval;
+export const startSync = async () => {
+  if (syncInterval) {
+    return;
+  }
 
-export const startSync = () => {
   syncInterval = setInterval(async () => {
     try {
       await syncAttendance();
-    } catch (error) {
-      console.error("[SYNC] Error syncing attendance:", error.message);
-    }
+    } catch (error) {}
   }, 30000);
 };
 
-startSync();
+export const stopSync = () => {
+  if (syncInterval) {
+    clearInterval(syncInterval);
+    syncInterval = null;
+  }
+};
