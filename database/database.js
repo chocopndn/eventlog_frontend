@@ -78,6 +78,19 @@ const initDB = async () => {
           );
         `);
 
+        await db.execAsync(`
+          CREATE TABLE IF NOT EXISTS records (
+            event_id INTEGER NOT NULL,
+            event_name TEXT NOT NULL,
+            event_date TEXT NOT NULL,
+            am_in BOOLEAN NOT NULL,
+            am_out BOOLEAN NOT NULL,
+            pm_in BOOLEAN NOT NULL,
+            pm_out BOOLEAN NOT NULL,
+            PRIMARY KEY (event_id, event_date, event_name)
+          );
+        `);
+
         return db;
       } catch (error) {
         console.error("Error initializing database:", error);

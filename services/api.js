@@ -1,8 +1,6 @@
 import axios from "axios";
 import { API_URL } from "../config/config";
 import initDB from "../database/database";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Platform } from "react-native";
 
 export const fetchEventById = async (eventId) => {
   try {

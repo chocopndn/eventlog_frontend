@@ -7,7 +7,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState, useEffect } from "react";
-import { getRoleID } from "../../../../database/queries";
+import { getRoleID, getStoredUser } from "../../../../database/queries";
+import {
+  saveRecords,
+  getStoredRecords,
+} from "../../../../database/queries/records";
+import { fetchUserEvents } from "../../../../services/api/records";
 
 import CustomSearch from "../../../../components/CustomSearch";
 
@@ -24,6 +29,58 @@ const Records = () => {
     };
 
     fetchRoleId();
+  }, []);
+
+  useEffect(() => {
+    const fetchDataAndSaveToSQLite = async () => {
+      try {
+        console.log("[INFO] Fetching stored user...");
+        const storedUser = await getStoredUser();
+        if (!storedUser || !storedUser.id_number) {
+          console.error("[ERROR] No stored user or id_number found.");
+          return;
+        }
+        const idNumber = storedUser.id_number;
+        console.log(`[INFO] Retrieved id_number: ${idNumber}`);
+
+        console.log(`[INFO] Fetching user events for id_number: ${idNumber}`);
+        const apiResponse = await fetchUserEvents(idNumber);
+        if (!apiResponse || !apiResponse.success || !apiResponse.events) {
+          console.error("[ERROR] Failed to fetch user events from API.");
+          return;
+        }
+        console.log(
+          "[INFO] Fetched user events successfully:",
+          apiResponse.events
+        );
+
+        console.log("[INFO] Saving fetched events to SQLite...");
+        const saveResult = await saveRecords(apiResponse.events);
+        if (!saveResult || !saveResult.success) {
+          console.error("[ERROR] Failed to save records to SQLite.");
+          return;
+        }
+        console.log("[INFO] Records saved successfully to SQLite.");
+
+        console.log("[INFO] Fetching stored records from SQLite...");
+        const storedRecords = await getStoredRecords();
+        if (!storedRecords || !storedRecords.success || !storedRecords.data) {
+          console.error("[ERROR] Failed to fetch stored records from SQLite.");
+          return;
+        }
+        console.log(
+          "[INFO] Stored records fetched successfully:",
+          storedRecords.data
+        );
+      } catch (error) {
+        console.error(
+          "[ERROR] An error occurred during the process:",
+          error.message
+        );
+      }
+    };
+
+    fetchDataAndSaveToSQLite();
   }, []);
 
   if (roleId === 1 || roleId === 2) {
@@ -55,25 +112,10 @@ const Records = () => {
               <Text style={styles.eventDate}>February 7, 8, 9, 14, 2025</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.eventContainer}>
-              <Text style={styles.eventTitle}>UCV Founding Anivesarry</Text>
+              <Text style={styles.eventTitle}>UCV Founding Anniversary</Text>
               <Text style={styles.eventDate}>March 7, 8, 9, 10, 2025</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.eventContainer}>
-              <Text style={styles.eventTitle}>UCV Founding Anivesarry</Text>
-              <Text style={styles.eventDate}>March 7, 8, 9, 10, 2025</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.eventContainer}>
-              <Text style={styles.eventTitle}>UCV Founding Anivesarry</Text>
-              <Text style={styles.eventDate}>March 7, 8, 9, 10, 2025</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.eventContainer}>
-              <Text style={styles.eventTitle}>UCV Founding Anivesarry</Text>
-              <Text style={styles.eventDate}>March 7, 8, 9, 10, 2025</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.eventContainer}>
-              <Text style={styles.eventTitle}>UCV Founding Anivesarry</Text>
-              <Text style={styles.eventDate}>March 7, 8, 9, 10, 2025</Text>
-            </TouchableOpacity>
+            {/* Additional past events */}
           </View>
         </ScrollView>
       </SafeAreaView>
