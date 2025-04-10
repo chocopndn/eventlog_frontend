@@ -33,7 +33,7 @@ const QRLayout = () => {
         name="Generate"
         options={{
           headerTitle: "Generate QR Code",
-          headerShown: roleId !== 4 || roleId === 1,
+          headerShown: false,
           headerStyle: { backgroundColor: theme.colors.primary },
           headerTintColor: theme.colors.secondary,
         }}
@@ -42,7 +42,7 @@ const QRLayout = () => {
         name="Scan"
         options={{
           headerTitle: "Scan QR Code",
-          headerShown: roleId !== 4,
+          headerShown: false,
           headerStyle: { backgroundColor: theme.colors.primary },
           headerTintColor: theme.colors.secondary,
         }}
