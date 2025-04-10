@@ -56,29 +56,27 @@ const Scan = () => {
 
   const handleBarcodeScanned = async ({ data }) => {
     try {
-      const fullDateTime = moment().format("YYYY-MM-DD HH:mm:ss");
-
       if (!isBase64(data)) {
-        throw new Error("Please scan eventlog QR Code only.");
+        throw new Error("Invalid QR Code format.");
       }
 
       const bytes = CryptoJS.AES.decrypt(data, QR_SECRET_KEY);
       const decryptedText = bytes.toString(CryptoJS.enc.Utf8);
 
-      if (!decryptedText || !decryptedText.startsWith("eventlog")) {
-        throw new Error("Decrypted data is not EventLog-specific");
+      if (!decryptedText.startsWith("eventlog")) {
+        throw new Error("Decrypted data is not EventLog-specific.");
       }
 
-      const parts = decryptedText.split("-");
-      if (parts.length !== 3 || parts[0] !== "eventlog") {
-        throw new Error("Please scan eventlog QR Code only.");
+      const [prefix, eventDateIdStr, studentIdStr] = decryptedText.split("-");
+      if (prefix !== "eventlog") {
+        throw new Error("Decrypted data does not match expected format.");
       }
 
-      const eventDateId = parseInt(parts[1], 10);
-      const studentId = parseInt(parts[2], 10);
+      const eventDateId = parseInt(eventDateIdStr, 10);
+      const studentId = parseInt(studentIdStr, 10);
 
       if (isNaN(eventDateId) || isNaN(studentId)) {
-        throw new Error("Please scan eventlog QR Code only.");
+        throw new Error("Invalid eventDateId or studentId.");
       }
 
       const events = await getStoredEvents(eventDateId);
@@ -198,7 +196,7 @@ const Scan = () => {
         setErrorModalVisible(true);
       }
     } catch (error) {
-      setErrorMessage(error.message);
+      setErrorMessage("Please scan eventlog-specific QR Code.");
       setErrorModalVisible(true);
     }
   };
