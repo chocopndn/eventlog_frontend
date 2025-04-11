@@ -38,6 +38,8 @@ import blocks from "../assets/icons/blocks.png";
 import check from "../assets/icons/check.png";
 import school from "../assets/icons/school.png";
 import calendarStar from "../assets/icons/calendar-star.png";
+import present from "../assets/icons/present.png";
+import absent from "../assets/icons/absent.png";
 
 export default {
   logo,
@@ -78,4 +80,6 @@ export default {
   check,
   school,
   calendarStar,
+  present,
+  absent,
 };
