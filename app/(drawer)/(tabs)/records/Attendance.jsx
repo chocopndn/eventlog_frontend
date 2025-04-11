@@ -5,6 +5,7 @@ import theme from "../../../../constants/theme";
 import globalStyles from "../../../../constants/globalStyles";
 import images from "../../../../constants/images";
 import { useLocalSearchParams } from "expo-router";
+import moment from "moment";
 
 const SessionLog = ({ label, data }) => {
   return (
@@ -83,12 +84,13 @@ const Attendance = () => {
 
           const formattedData = filteredRecords.reduce((acc, record) => {
             const date = record.event_date;
+            const formattedDate = moment(date).format("MMMM D, YYYY");
             const timeInKey = record.am_in ? "present" : "absent";
             const timeOutKey = record.am_out ? "present" : "absent";
 
-            if (!acc[date]) {
-              acc[date] = {
-                date,
+            if (!acc[formattedDate]) {
+              acc[formattedDate] = {
+                date: formattedDate,
                 morning: {
                   timeIn: timeInKey,
                   timeOut: timeOutKey,
@@ -106,6 +108,7 @@ const Attendance = () => {
           setAttendanceDataList(attendanceDataList);
         }
       } catch (error) {
+        console.error("Error fetching attendance data:", error);
       } finally {
         setLoading(false);
       }
