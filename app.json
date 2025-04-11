@@ -1,8 +1,9 @@
 {
   "expo": {
-    "name": "eventlog",
+    "name": "EVENTLOG",
     "scheme": "eventlog",
     "slug": "eventlog",
+    "icon": "./assets/images/icon.png",
     "version": "1.0.0",
     "plugins": [
       "expo-router",
@@ -42,6 +43,22 @@
           "recordAudioAndroid": true
         }
       ]
-    ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "53a32d78-9ca7-4ea5-9a69-308a59bbceaa"
+      }
+    },
+    "owner": "chocopndn",
+    "android": {
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.chocopndn.eventlog"
+    }
   }
 }

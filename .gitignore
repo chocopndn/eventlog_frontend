@@ -37,3 +37,7 @@ yarn-error.*
 
 .env*.local
 .env
+
+# android and ios build folders
+/android
+/ios
