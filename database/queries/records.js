@@ -68,7 +68,6 @@ export const saveRecords = async (records) => {
           await dbInstance.runAsync("ROLLBACK");
         } catch (rollbackError) {}
       }
-
       throw error;
     } finally {
       if (dbInstance && typeof dbInstance.close === "function") {
@@ -87,29 +86,47 @@ export const saveRecords = async (records) => {
 
 export const getStoredRecords = async () => {
   if (Platform.OS !== "web") {
+    let dbInstance = null;
+
     try {
-      const dbInstance = await initDB();
+      dbInstance = await initDB();
       if (!dbInstance) {
         throw new Error("Database initialization failed.");
       }
 
       const query = `
-          SELECT 
-            event_id, 
-            event_name, 
-            event_date, 
-            am_in, 
-            am_out, 
-            pm_in, 
-            pm_out 
-          FROM records;
-        `;
+        SELECT 
+          event_id, 
+          event_name, 
+          event_date, 
+          am_in, 
+          am_out, 
+          pm_in, 
+          pm_out 
+        FROM records;
+      `;
 
       const records = await dbInstance.getAllAsync(query);
 
-      return { success: true, data: records };
+      const formattedRecords = records.map((record) => ({
+        event_id: record.event_id,
+        event_name: record.event_name,
+        event_date: record.event_date,
+        am_in: !!record.am_in,
+        am_out: !!record.am_out,
+        pm_in: !!record.pm_in,
+        pm_out: !!record.pm_out,
+      }));
+
+      return { success: true, data: formattedRecords };
     } catch (error) {
       throw error;
+    } finally {
+      if (dbInstance && typeof dbInstance.close === "function") {
+        try {
+          await dbInstance.close();
+        } catch (closeError) {}
+      }
     }
   } else {
     return {
