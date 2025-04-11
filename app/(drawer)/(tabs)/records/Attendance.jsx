@@ -7,7 +7,11 @@ import globalStyles from "../../../../constants/globalStyles";
 const Attendance = () => {
   return (
     <View style={globalStyles.secondaryContainer}>
-      <View style={styles.attendanceWrapper}></View>
+      <View style={styles.attendanceWrapper}>
+        <View>
+          <Text style={styles.eventTitle}>PRISAA National 2025</Text>
+        </View>
+      </View>
     </View>
   );
 };
@@ -20,5 +24,13 @@ const styles = StyleSheet.create({
     width: "100%",
     borderWidth: 2,
     borderColor: theme.colors.primary,
+  },
+  eventTitle: {
+    fontSize: theme.fontSizes.huge,
+    fontFamily: theme.fontFamily.SquadaOne,
+    color: theme.colors.primary,
+    textAlign: "center",
+    paddingTop: theme.spacing.medium,
+    paddingBottom: theme.spacing.medium,
   },
 });
