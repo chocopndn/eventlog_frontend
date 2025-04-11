@@ -1,8 +1,9 @@
-import { StyleSheet, Text, View, ScrollView } from "react-native";
+import { StyleSheet, Text, View, ScrollView, Image } from "react-native";
 import React from "react";
 
 import theme from "../../../../constants/theme";
 import globalStyles from "../../../../constants/globalStyles";
+import images from "../../../../constants/images";
 
 const Attendance = () => {
   return (
@@ -17,10 +18,93 @@ const Attendance = () => {
               <Text style={styles.date}>April 7, 2025</Text>
             </View>
 
-            <View>
-              <View style={styles.morningContainer}>
+            <View style={styles.sessionRow}>
+              <View
+                style={[
+                  styles.sessionContainer,
+                  { borderRightWidth: 3, borderColor: theme.colors.primary },
+                ]}
+              >
                 <View style={styles.morningTextContainer}>
                   <Text style={styles.morningText}>Morning</Text>
+                </View>
+
+                <View style={styles.logContainer}>
+                  <View style={styles.timeContainer}>
+                    <View
+                      style={[
+                        styles.timeLabelContainer,
+                        { borderRightWidth: 0, borderLeftWidth: 0 },
+                      ]}
+                    >
+                      <Text style={styles.timeLabel}>Time In</Text>
+                    </View>
+                    <View
+                      style={[styles.imageContainer, { borderLeftWidth: 0 }]}
+                    >
+                      <Image
+                        source={images.present}
+                        style={styles.presentIcon}
+                      />
+                    </View>
+                  </View>
+                  <View style={styles.timeContainer}>
+                    <View
+                      style={[
+                        styles.timeLabelContainer,
+                        { borderRightWidth: 0 },
+                      ]}
+                    >
+                      <Text style={styles.timeLabel}>Time Out</Text>
+                    </View>
+                    <View
+                      style={[styles.imageContainer, { borderRightWidth: 0 }]}
+                    >
+                      <Image source={images.absent} style={styles.absentIcon} />
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.sessionContainer}>
+                <View style={styles.morningTextContainer}>
+                  <Text style={styles.morningText}>Afternoon</Text>
+                </View>
+
+                <View style={styles.logContainer}>
+                  <View style={styles.timeContainer}>
+                    <View
+                      style={[
+                        styles.timeLabelContainer,
+                        { borderRightWidth: 0, borderLeftWidth: 0 },
+                      ]}
+                    >
+                      <Text style={styles.timeLabel}>Time In</Text>
+                    </View>
+                    <View
+                      style={[styles.imageContainer, { borderLeftWidth: 0 }]}
+                    >
+                      <Image
+                        source={images.present}
+                        style={styles.presentIcon}
+                      />
+                    </View>
+                  </View>
+                  <View style={styles.timeContainer}>
+                    <View
+                      style={[
+                        styles.timeLabelContainer,
+                        { borderRightWidth: 0 },
+                      ]}
+                    >
+                      <Text style={styles.timeLabel}>Time Out</Text>
+                    </View>
+                    <View
+                      style={[styles.imageContainer, { borderRightWidth: 0 }]}
+                    >
+                      <Image source={images.absent} style={styles.absentIcon} />
+                    </View>
+                  </View>
                 </View>
               </View>
             </View>
@@ -68,14 +152,60 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: theme.colors.primary,
   },
+  sessionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  sessionContainer: {
+    flex: 1,
+  },
   morningText: {
     fontSize: theme.fontSizes.extraLarge,
     fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
-    textAlign: "center",
   },
-  morningContainer: {
+  morningTextContainer: {
     height: 40,
     justifyContent: "center",
+    alignItems: "center",
+  },
+  logContainer: {
+    flexDirection: "row",
+  },
+  timeContainer: {
+    width: "50%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  timeLabelContainer: {
+    borderWidth: 3,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    borderColor: theme.colors.primary,
+    height: 50,
+  },
+  timeLabel: {
+    fontSize: theme.fontSizes.large,
+    fontFamily: theme.fontFamily.SquadaOne,
+    color: theme.colors.primary,
+  },
+  imageContainer: {
+    borderLeftWidth: 3,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    height: 50,
+    borderColor: theme.colors.primary,
+  },
+  absentIcon: {
+    width: 35,
+    height: 35,
+    tintColor: "red",
+  },
+  presentIcon: {
+    width: 35,
+    height: 35,
+    tintColor: theme.colors.green,
   },
 });
