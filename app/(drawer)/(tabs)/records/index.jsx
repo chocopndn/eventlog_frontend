@@ -17,12 +17,9 @@ import {
   fetchUserPastEvents,
 } from "../../../../services/api/records";
 import moment from "moment";
-
 import CustomSearch from "../../../../components/CustomSearch";
-
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
-
 import { router } from "expo-router";
 
 const Records = () => {
@@ -31,25 +28,24 @@ const Records = () => {
   const [filteredOngoingEvents, setFilteredOngoingEvents] = useState([]);
   const [filteredPastEvents, setFilteredPastEvents] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchRoleId = async () => {
       const roleId = await getRoleID();
       setRoleId(roleId);
     };
-
     fetchRoleId();
   }, []);
 
   useEffect(() => {
     const fetchDataAndSaveToSQLite = async () => {
       try {
+        setLoading(true);
         const storedUser = await getStoredUser();
-        if (!storedUser || !storedUser.id_number) {
-          return;
-        }
-        const idNumber = storedUser.id_number;
+        if (!storedUser || !storedUser.id_number) return;
 
+        const idNumber = storedUser.id_number;
         const ongoingApiResponse = await fetchUserOngoingEvents(idNumber);
         const pastApiResponse = await fetchUserPastEvents(idNumber);
 
@@ -59,14 +55,11 @@ const Records = () => {
         ];
 
         const saveResult = await saveRecords(allEvents);
-        if (!saveResult || !saveResult.success) {
-          return;
-        }
+        if (!saveResult || !saveResult.success) return;
 
         const storedRecords = await getStoredRecords();
-        if (!storedRecords || !storedRecords.success || !storedRecords.data) {
+        if (!storedRecords || !storedRecords.success || !storedRecords.data)
           return;
-        }
 
         const currentDate = moment().format("YYYY-MM-DD");
         const groupedEvents = {};
@@ -103,7 +96,11 @@ const Records = () => {
         setAllEvents(ongoing.concat(past));
         setFilteredOngoingEvents(ongoing);
         setFilteredPastEvents(past);
-      } catch (error) {}
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchDataAndSaveToSQLite();
@@ -128,6 +125,14 @@ const Records = () => {
     setFilteredOngoingEvents(ongoing);
     setFilteredPastEvents(past);
   }, [searchTerm]);
+
+  if (loading) {
+    return (
+      <SafeAreaView style={globalStyles.secondaryContainer}>
+        <Text style={styles.loadingText}>Loading...</Text>
+      </SafeAreaView>
+    );
+  }
 
   if (roleId === 1 || roleId === 2) {
     return (
@@ -259,5 +264,12 @@ const styles = StyleSheet.create({
     color: theme.colors.secondary,
     textAlign: "center",
     marginTop: theme.spacing.medium,
+  },
+  loadingText: {
+    fontSize: theme.fontSizes.large,
+    fontFamily: "SquadaOne",
+    color: theme.colors.primary,
+    textAlign: "center",
+    marginTop: theme.spacing.large,
   },
 });
