@@ -3,6 +3,7 @@ const theme = {
     primary: "#255586",
     secondary: "#FBF1E5",
     gray: "#333333",
+    green: "#4CAF50",
   },
   fontSizes: {
     extraSmall: 12,
