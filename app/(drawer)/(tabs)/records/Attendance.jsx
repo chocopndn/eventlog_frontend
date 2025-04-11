@@ -16,6 +16,14 @@ const Attendance = () => {
             <View style={styles.dateContainer}>
               <Text style={styles.date}>April 7, 2025</Text>
             </View>
+
+            <View>
+              <View style={styles.morningContainer}>
+                <View style={styles.morningTextContainer}>
+                  <Text style={styles.morningText}>Morning</Text>
+                </View>
+              </View>
+            </View>
           </View>
         </ScrollView>
       </View>
@@ -59,5 +67,15 @@ const styles = StyleSheet.create({
   attendanceContainer: {
     borderWidth: 3,
     borderColor: theme.colors.primary,
+  },
+  morningText: {
+    fontSize: theme.fontSizes.extraLarge,
+    fontFamily: theme.fontFamily.SquadaOne,
+    color: theme.colors.primary,
+    textAlign: "center",
+  },
+  morningContainer: {
+    height: 40,
+    justifyContent: "center",
   },
 });
