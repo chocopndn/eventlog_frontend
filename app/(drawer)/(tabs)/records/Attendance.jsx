@@ -1,9 +1,10 @@
 import { StyleSheet, Text, View, ScrollView, Image } from "react-native";
-import React from "react";
-
+import React, { useState, useEffect } from "react";
+import { getStoredRecords } from "../../../../database/queries/records";
 import theme from "../../../../constants/theme";
 import globalStyles from "../../../../constants/globalStyles";
 import images from "../../../../constants/images";
+import { useLocalSearchParams } from "expo-router";
 
 const SessionLog = ({ label, data }) => {
   return (
@@ -57,36 +58,93 @@ const SessionLog = ({ label, data }) => {
 };
 
 const Attendance = () => {
-  const attendanceData = {
-    date: "April 7, 2025",
-    morning: {
-      timeIn: "present",
-      timeOut: "absent",
-    },
-    afternoon: {
-      timeIn: "present",
-      timeOut: "absent",
-    },
-  };
+  const [attendanceDataList, setAttendanceDataList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [eventName, setEventName] = useState("");
+  const { eventId } = useLocalSearchParams();
 
-  const hasMorning = !!attendanceData.morning;
-  const hasAfternoon = !!attendanceData.afternoon;
+  useEffect(() => {
+    const fetchAttendanceData = async () => {
+      try {
+        setLoading(true);
+        const records = await getStoredRecords();
+
+        if (records.success && Array.isArray(records.data)) {
+          const filteredRecords = records.data.filter(
+            (record) => record.event_id.toString() === eventId
+          );
+
+          if (filteredRecords.length === 0) {
+            return;
+          }
+
+          const eventName = filteredRecords[0].event_name;
+          setEventName(eventName);
+
+          const formattedData = filteredRecords.reduce((acc, record) => {
+            const date = record.event_date;
+            const timeInKey = record.am_in ? "present" : "absent";
+            const timeOutKey = record.am_out ? "present" : "absent";
+
+            if (!acc[date]) {
+              acc[date] = {
+                date,
+                morning: {
+                  timeIn: timeInKey,
+                  timeOut: timeOutKey,
+                },
+                afternoon: {
+                  timeIn: record.pm_in ? "present" : "absent",
+                  timeOut: record.pm_out ? "present" : "absent",
+                },
+              };
+            }
+            return acc;
+          }, {});
+
+          const attendanceDataList = Object.values(formattedData);
+          setAttendanceDataList(attendanceDataList);
+        }
+      } catch (error) {
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAttendanceData();
+  }, [eventId]);
+
+  if (loading) {
+    return (
+      <View style={globalStyles.secondaryContainer}>
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (attendanceDataList.length === 0) {
+    return (
+      <View style={globalStyles.secondaryContainer}>
+        <Text style={styles.noEventsText}>No attendance data available.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={globalStyles.secondaryContainer}>
       <View style={styles.attendanceWrapper}>
-        <Text style={styles.eventTitle}>PRISAA National 2025</Text>
+        <Text style={styles.eventTitle}>{eventName}</Text>
 
         <ScrollView
           contentContainerStyle={styles.scrollviewContainer}
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.attendanceContainer}>
-            <View style={styles.dateContainer}>
-              <Text style={styles.date}>{attendanceData.date}</Text>
-            </View>
+          {attendanceDataList.map((attendanceData, index) => (
+            <View key={index} style={styles.attendanceContainer}>
+              <View style={styles.dateContainer}>
+                <Text style={styles.date}>{attendanceData.date}</Text>
+              </View>
 
-            {hasMorning && hasAfternoon ? (
               <View style={styles.sessionRow}>
                 <View
                   style={{
@@ -104,99 +162,8 @@ const Attendance = () => {
                   />
                 </View>
               </View>
-            ) : hasMorning ? (
-              <SessionLog label="Morning" data={attendanceData.morning} />
-            ) : hasAfternoon ? (
-              <SessionLog label="Afternoon" data={attendanceData.afternoon} />
-            ) : null}
-          </View>
-          <View style={styles.attendanceContainer}>
-            <View style={styles.dateContainer}>
-              <Text style={styles.date}>{attendanceData.date}</Text>
             </View>
-
-            {hasMorning && hasAfternoon ? (
-              <View style={styles.sessionRow}>
-                <View
-                  style={{
-                    borderRightWidth: 3,
-                    borderColor: theme.colors.primary,
-                    flex: 1,
-                  }}
-                >
-                  <SessionLog label="Morning" data={attendanceData.morning} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <SessionLog
-                    label="Afternoon"
-                    data={attendanceData.afternoon}
-                  />
-                </View>
-              </View>
-            ) : hasMorning ? (
-              <SessionLog label="Morning" data={attendanceData.morning} />
-            ) : hasAfternoon ? (
-              <SessionLog label="Afternoon" data={attendanceData.afternoon} />
-            ) : null}
-          </View>
-          <View style={styles.attendanceContainer}>
-            <View style={styles.dateContainer}>
-              <Text style={styles.date}>{attendanceData.date}</Text>
-            </View>
-
-            {hasMorning && hasAfternoon ? (
-              <View style={styles.sessionRow}>
-                <View
-                  style={{
-                    borderRightWidth: 3,
-                    borderColor: theme.colors.primary,
-                    flex: 1,
-                  }}
-                >
-                  <SessionLog label="Morning" data={attendanceData.morning} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <SessionLog
-                    label="Afternoon"
-                    data={attendanceData.afternoon}
-                  />
-                </View>
-              </View>
-            ) : hasMorning ? (
-              <SessionLog label="Morning" data={attendanceData.morning} />
-            ) : hasAfternoon ? (
-              <SessionLog label="Afternoon" data={attendanceData.afternoon} />
-            ) : null}
-          </View>
-          <View style={styles.attendanceContainer}>
-            <View style={styles.dateContainer}>
-              <Text style={styles.date}>{attendanceData.date}</Text>
-            </View>
-
-            {hasMorning && hasAfternoon ? (
-              <View style={styles.sessionRow}>
-                <View
-                  style={{
-                    borderRightWidth: 3,
-                    borderColor: theme.colors.primary,
-                    flex: 1,
-                  }}
-                >
-                  <SessionLog label="Morning" data={attendanceData.morning} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <SessionLog
-                    label="Afternoon"
-                    data={attendanceData.afternoon}
-                  />
-                </View>
-              </View>
-            ) : hasMorning ? (
-              <SessionLog label="Morning" data={attendanceData.morning} />
-            ) : hasAfternoon ? (
-              <SessionLog label="Afternoon" data={attendanceData.afternoon} />
-            ) : null}
-          </View>
+          ))}
         </ScrollView>
       </View>
     </View>
@@ -295,5 +262,19 @@ const styles = StyleSheet.create({
     width: 35,
     height: 35,
     tintColor: theme.colors.green,
+  },
+  loadingText: {
+    fontSize: theme.fontSizes.large,
+    fontFamily: "SquadaOne",
+    color: theme.colors.primary,
+    textAlign: "center",
+    marginTop: theme.spacing.large,
+  },
+  noEventsText: {
+    fontSize: theme.fontSizes.medium,
+    fontFamily: "SquadaOne",
+    color: theme.colors.secondary,
+    textAlign: "center",
+    marginTop: theme.spacing.medium,
   },
 });
