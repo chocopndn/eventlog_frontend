@@ -147,7 +147,9 @@ export default function DrawerLayout() {
       screenOptions={{
         headerShown: true,
         headerShadowVisible: false,
-        headerLeft: () => <DrawerToggleButton />,
+        headerLeft: () => (
+          <DrawerToggleButton tintColor={theme.colors.secondary} />
+        ),
         drawerStyle: {
           backgroundColor: theme.colors.secondary,
           width: screenWidth * 0.8,
