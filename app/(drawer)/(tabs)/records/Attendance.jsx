@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, ScrollView } from "react-native";
 import React from "react";
 
 import theme from "../../../../constants/theme";
@@ -11,6 +11,13 @@ const Attendance = () => {
         <View>
           <Text style={styles.eventTitle}>PRISAA National 2025</Text>
         </View>
+        <ScrollView contentContainerStyle={styles.scrollviewContainer}>
+          <View style={styles.attendanceContainer}>
+            <View style={styles.dateContainer}>
+              <Text style={styles.date}>April 7, 2025</Text>
+            </View>
+          </View>
+        </ScrollView>
       </View>
     </View>
   );
@@ -32,5 +39,25 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingTop: theme.spacing.medium,
     paddingBottom: theme.spacing.medium,
+  },
+  scrollviewContainer: {
+    paddingHorizontal: theme.spacing.medium,
+  },
+  dateContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    borderBottomWidth: 3,
+    borderColor: theme.colors.primary,
+    height: 40,
+  },
+  date: {
+    fontSize: theme.fontSizes.extraLarge,
+    fontFamily: theme.fontFamily.SquadaOne,
+    color: theme.colors.primary,
+    textAlign: "center",
+  },
+  attendanceContainer: {
+    borderWidth: 3,
+    borderColor: theme.colors.primary,
   },
 });
