@@ -5,109 +5,197 @@ import theme from "../../../../constants/theme";
 import globalStyles from "../../../../constants/globalStyles";
 import images from "../../../../constants/images";
 
+const SessionLog = ({ label, data }) => {
+  return (
+    <View style={styles.sessionContainer}>
+      <View style={styles.morningTextContainer}>
+        <Text style={styles.morningText}>{label}</Text>
+      </View>
+      <View style={styles.logContainer}>
+        <View style={styles.timeContainer}>
+          <View
+            style={[
+              styles.timeLabelContainer,
+              { borderRightWidth: 0, borderLeftWidth: 0 },
+            ]}
+          >
+            <Text style={styles.timeLabel}>Time In</Text>
+          </View>
+          <View style={[styles.imageContainer, { borderLeftWidth: 0 }]}>
+            <Image
+              source={
+                data?.timeIn === "present" ? images.present : images.absent
+              }
+              style={
+                data?.timeIn === "present"
+                  ? styles.presentIcon
+                  : styles.absentIcon
+              }
+            />
+          </View>
+        </View>
+        <View style={styles.timeContainer}>
+          <View style={[styles.timeLabelContainer, { borderRightWidth: 0 }]}>
+            <Text style={styles.timeLabel}>Time Out</Text>
+          </View>
+          <View style={[styles.imageContainer, { borderRightWidth: 0 }]}>
+            <Image
+              source={
+                data?.timeOut === "present" ? images.present : images.absent
+              }
+              style={
+                data?.timeOut === "present"
+                  ? styles.presentIcon
+                  : styles.absentIcon
+              }
+            />
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+};
+
 const Attendance = () => {
+  const attendanceData = {
+    date: "April 7, 2025",
+    morning: {
+      timeIn: "present",
+      timeOut: "absent",
+    },
+    afternoon: {
+      timeIn: "present",
+      timeOut: "absent",
+    },
+  };
+
+  const hasMorning = !!attendanceData.morning;
+  const hasAfternoon = !!attendanceData.afternoon;
+
   return (
     <View style={globalStyles.secondaryContainer}>
       <View style={styles.attendanceWrapper}>
-        <View>
-          <Text style={styles.eventTitle}>PRISAA National 2025</Text>
-        </View>
-        <ScrollView contentContainerStyle={styles.scrollviewContainer}>
+        <Text style={styles.eventTitle}>PRISAA National 2025</Text>
+
+        <ScrollView
+          contentContainerStyle={styles.scrollviewContainer}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.attendanceContainer}>
             <View style={styles.dateContainer}>
-              <Text style={styles.date}>April 7, 2025</Text>
+              <Text style={styles.date}>{attendanceData.date}</Text>
             </View>
 
-            <View style={styles.sessionRow}>
-              <View
-                style={[
-                  styles.sessionContainer,
-                  { borderRightWidth: 3, borderColor: theme.colors.primary },
-                ]}
-              >
-                <View style={styles.morningTextContainer}>
-                  <Text style={styles.morningText}>Morning</Text>
+            {hasMorning && hasAfternoon ? (
+              <View style={styles.sessionRow}>
+                <View
+                  style={{
+                    borderRightWidth: 3,
+                    borderColor: theme.colors.primary,
+                    flex: 1,
+                  }}
+                >
+                  <SessionLog label="Morning" data={attendanceData.morning} />
                 </View>
-
-                <View style={styles.logContainer}>
-                  <View style={styles.timeContainer}>
-                    <View
-                      style={[
-                        styles.timeLabelContainer,
-                        { borderRightWidth: 0, borderLeftWidth: 0 },
-                      ]}
-                    >
-                      <Text style={styles.timeLabel}>Time In</Text>
-                    </View>
-                    <View
-                      style={[styles.imageContainer, { borderLeftWidth: 0 }]}
-                    >
-                      <Image
-                        source={images.present}
-                        style={styles.presentIcon}
-                      />
-                    </View>
-                  </View>
-                  <View style={styles.timeContainer}>
-                    <View
-                      style={[
-                        styles.timeLabelContainer,
-                        { borderRightWidth: 0 },
-                      ]}
-                    >
-                      <Text style={styles.timeLabel}>Time Out</Text>
-                    </View>
-                    <View
-                      style={[styles.imageContainer, { borderRightWidth: 0 }]}
-                    >
-                      <Image source={images.absent} style={styles.absentIcon} />
-                    </View>
-                  </View>
+                <View style={{ flex: 1 }}>
+                  <SessionLog
+                    label="Afternoon"
+                    data={attendanceData.afternoon}
+                  />
                 </View>
               </View>
-
-              <View style={styles.sessionContainer}>
-                <View style={styles.morningTextContainer}>
-                  <Text style={styles.morningText}>Afternoon</Text>
-                </View>
-
-                <View style={styles.logContainer}>
-                  <View style={styles.timeContainer}>
-                    <View
-                      style={[
-                        styles.timeLabelContainer,
-                        { borderRightWidth: 0, borderLeftWidth: 0 },
-                      ]}
-                    >
-                      <Text style={styles.timeLabel}>Time In</Text>
-                    </View>
-                    <View
-                      style={[styles.imageContainer, { borderLeftWidth: 0 }]}
-                    >
-                      <Image
-                        source={images.present}
-                        style={styles.presentIcon}
-                      />
-                    </View>
-                  </View>
-                  <View style={styles.timeContainer}>
-                    <View
-                      style={[
-                        styles.timeLabelContainer,
-                        { borderRightWidth: 0 },
-                      ]}
-                    >
-                      <Text style={styles.timeLabel}>Time Out</Text>
-                    </View>
-                    <View
-                      style={[styles.imageContainer, { borderRightWidth: 0 }]}
-                    >
-                      <Image source={images.absent} style={styles.absentIcon} />
-                    </View>
-                  </View>
-                </View>
-              </View>
+            ) : hasMorning ? (
+              <SessionLog label="Morning" data={attendanceData.morning} />
+            ) : hasAfternoon ? (
+              <SessionLog label="Afternoon" data={attendanceData.afternoon} />
+            ) : null}
+          </View>
+          <View style={styles.attendanceContainer}>
+            <View style={styles.dateContainer}>
+              <Text style={styles.date}>{attendanceData.date}</Text>
             </View>
+
+            {hasMorning && hasAfternoon ? (
+              <View style={styles.sessionRow}>
+                <View
+                  style={{
+                    borderRightWidth: 3,
+                    borderColor: theme.colors.primary,
+                    flex: 1,
+                  }}
+                >
+                  <SessionLog label="Morning" data={attendanceData.morning} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <SessionLog
+                    label="Afternoon"
+                    data={attendanceData.afternoon}
+                  />
+                </View>
+              </View>
+            ) : hasMorning ? (
+              <SessionLog label="Morning" data={attendanceData.morning} />
+            ) : hasAfternoon ? (
+              <SessionLog label="Afternoon" data={attendanceData.afternoon} />
+            ) : null}
+          </View>
+          <View style={styles.attendanceContainer}>
+            <View style={styles.dateContainer}>
+              <Text style={styles.date}>{attendanceData.date}</Text>
+            </View>
+
+            {hasMorning && hasAfternoon ? (
+              <View style={styles.sessionRow}>
+                <View
+                  style={{
+                    borderRightWidth: 3,
+                    borderColor: theme.colors.primary,
+                    flex: 1,
+                  }}
+                >
+                  <SessionLog label="Morning" data={attendanceData.morning} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <SessionLog
+                    label="Afternoon"
+                    data={attendanceData.afternoon}
+                  />
+                </View>
+              </View>
+            ) : hasMorning ? (
+              <SessionLog label="Morning" data={attendanceData.morning} />
+            ) : hasAfternoon ? (
+              <SessionLog label="Afternoon" data={attendanceData.afternoon} />
+            ) : null}
+          </View>
+          <View style={styles.attendanceContainer}>
+            <View style={styles.dateContainer}>
+              <Text style={styles.date}>{attendanceData.date}</Text>
+            </View>
+
+            {hasMorning && hasAfternoon ? (
+              <View style={styles.sessionRow}>
+                <View
+                  style={{
+                    borderRightWidth: 3,
+                    borderColor: theme.colors.primary,
+                    flex: 1,
+                  }}
+                >
+                  <SessionLog label="Morning" data={attendanceData.morning} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <SessionLog
+                    label="Afternoon"
+                    data={attendanceData.afternoon}
+                  />
+                </View>
+              </View>
+            ) : hasMorning ? (
+              <SessionLog label="Morning" data={attendanceData.morning} />
+            ) : hasAfternoon ? (
+              <SessionLog label="Afternoon" data={attendanceData.afternoon} />
+            ) : null}
           </View>
         </ScrollView>
       </View>
@@ -129,8 +217,7 @@ const styles = StyleSheet.create({
     fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
     textAlign: "center",
-    paddingTop: theme.spacing.medium,
-    paddingBottom: theme.spacing.medium,
+    paddingVertical: theme.spacing.medium,
   },
   scrollviewContainer: {
     paddingHorizontal: theme.spacing.medium,
@@ -151,6 +238,7 @@ const styles = StyleSheet.create({
   attendanceContainer: {
     borderWidth: 3,
     borderColor: theme.colors.primary,
+    marginBottom: theme.spacing.medium,
   },
   sessionRow: {
     flexDirection: "row",
