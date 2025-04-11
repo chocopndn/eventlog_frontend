@@ -114,7 +114,7 @@ const EditBlock = () => {
       }
 
       const submitData = {
-        block_name: formData.block_name,
+        name: formData.block_name,
         course_id: formData.course,
         year_level_id: formData.year_level,
         status: formData.status,
