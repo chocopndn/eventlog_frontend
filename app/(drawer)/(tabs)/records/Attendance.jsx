@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View, ScrollView, Image } from "react-native";
 import React, { useState, useEffect } from "react";
 import { getStoredRecords } from "../../../../database/queries/records";
+import { getStoredUser } from "../../../../database/queries";
 import theme from "../../../../constants/theme";
 import globalStyles from "../../../../constants/globalStyles";
 import images from "../../../../constants/images";
@@ -62,22 +63,35 @@ const Attendance = () => {
   const [attendanceDataList, setAttendanceDataList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [eventName, setEventName] = useState("");
+  const [userDetails, setUserDetails] = useState(null);
   const { eventId } = useLocalSearchParams();
 
   useEffect(() => {
-    const fetchAttendanceData = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const records = await getStoredRecords();
+        const storedUser = await getStoredUser();
+        if (!storedUser || !storedUser.id_number) return;
 
+        const courseCode = storedUser.course_code || "N/A";
+        const blockName = storedUser.block_name || "N/A";
+        const courseBlockSet = new Set([courseCode, blockName]);
+        const courseBlock = Array.from(courseBlockSet).join(" ");
+
+        setUserDetails({
+          name: `${storedUser.first_name || "Unknown"} ${
+            storedUser.last_name || "Unknown"
+          }`,
+          id: storedUser.id_number || "N/A",
+          courseBlock: courseBlock,
+        });
+
+        const records = await getStoredRecords();
         if (records.success && Array.isArray(records.data)) {
           const filteredRecords = records.data.filter(
             (record) => record.event_id.toString() === eventId
           );
-
-          if (filteredRecords.length === 0) {
-            return;
-          }
+          if (filteredRecords.length === 0) return;
 
           const eventName = filteredRecords[0].event_name;
           setEventName(eventName);
@@ -87,7 +101,6 @@ const Attendance = () => {
             const formattedDate = moment(date).format("MMMM D, YYYY");
             const timeInKey = record.am_in ? "present" : "absent";
             const timeOutKey = record.am_out ? "present" : "absent";
-
             if (!acc[formattedDate]) {
               acc[formattedDate] = {
                 date: formattedDate,
@@ -108,13 +121,13 @@ const Attendance = () => {
           setAttendanceDataList(attendanceDataList);
         }
       } catch (error) {
-        console.error("Error fetching attendance data:", error);
+        console.error(error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchAttendanceData();
+    fetchData();
   }, [eventId]);
 
   if (loading) {
@@ -137,7 +150,15 @@ const Attendance = () => {
     <View style={globalStyles.secondaryContainer}>
       <View style={styles.attendanceWrapper}>
         <Text style={styles.eventTitle}>{eventName}</Text>
-
+        <View style={styles.infoContainer}>
+          <Text style={styles.info}>
+            Name: {userDetails?.name || "Unknown"}
+          </Text>
+          <Text style={styles.info}>ID: {userDetails?.id || "N/A"}</Text>
+          <Text style={styles.info}>
+            Course/Block: {userDetails?.courseBlock || "N/A"}
+          </Text>
+        </View>
         <ScrollView
           contentContainerStyle={styles.scrollviewContainer}
           showsVerticalScrollIndicator={false}
@@ -147,7 +168,6 @@ const Attendance = () => {
               <View style={styles.dateContainer}>
                 <Text style={styles.date}>{attendanceData.date}</Text>
               </View>
-
               <View style={styles.sessionRow}>
                 <View
                   style={{
@@ -279,5 +299,15 @@ const styles = StyleSheet.create({
     color: theme.colors.secondary,
     textAlign: "center",
     marginTop: theme.spacing.medium,
+  },
+  infoContainer: {
+    paddingHorizontal: theme.spacing.medium,
+    marginBottom: theme.spacing.large,
+  },
+  info: {
+    fontSize: theme.fontSizes.large,
+    fontFamily: "SquadaOne",
+    color: theme.colors.primary,
+    marginTop: theme.spacing.xsmall,
   },
 });
