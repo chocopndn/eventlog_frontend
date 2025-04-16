@@ -6,7 +6,6 @@ import {
   ScrollView,
   ActivityIndicator,
 } from "react-native";
-
 import { StatusBar } from "expo-status-bar";
 import TabsComponent from "../../../../components/TabsComponent";
 import globalStyles from "../../../../constants/globalStyles";
@@ -19,9 +18,10 @@ import CustomDropdown from "../../../../components/CustomDropdown";
 import {
   fetchBlockById,
   editBlock,
-  fetchCourses,
   fetchYearLevels,
+  fetchDepartments,
 } from "../../../../services/api";
+import { fetchCoursesByDepartmentId } from "../../../../services/api/courses";
 
 const EditBlock = () => {
   const { id: block_id } = useLocalSearchParams();
@@ -29,6 +29,7 @@ const EditBlock = () => {
     block_name: "",
     course: "",
     year_level: "",
+    department: "",
     status: "Active",
   });
 
@@ -40,6 +41,7 @@ const EditBlock = () => {
     type: "success",
   });
 
+  const [departments, setDepartments] = useState([]);
   const [courses, setCourses] = useState([]);
   const [yearLevels, setYearLevels] = useState([]);
 
@@ -64,25 +66,37 @@ const EditBlock = () => {
           block_name: blockDetails.block_name || "",
           course: blockDetails.course_id || "",
           year_level: blockDetails.year_level_id || "",
+          department: blockDetails.department_id || "",
           status: initialStatus,
         });
 
-        const coursesData = await fetchCourses();
-        const yearLevelsData = await fetchYearLevels();
-
-        setCourses(
-          coursesData.map((course) => ({
-            label: course.course_code,
-            value: course.course_id,
+        const departmentsData = await fetchDepartments();
+        setDepartments(
+          departmentsData.departments.map((department) => ({
+            label: department.department_name,
+            value: department.department_id,
           }))
         );
 
+        const yearLevelsData = await fetchYearLevels();
         setYearLevels(
           yearLevelsData.map((yearLevel) => ({
             label: yearLevel.year_level_name,
             value: yearLevel.year_level_id,
           }))
         );
+
+        if (blockDetails.department_id) {
+          const coursesData = await fetchCoursesByDepartmentId(
+            blockDetails.department_id
+          );
+          setCourses(
+            coursesData.map((course) => ({
+              label: course.course_code,
+              value: course.course_id,
+            }))
+          );
+        }
       } catch (error) {
         setModal({
           visible: true,
@@ -101,9 +115,35 @@ const EditBlock = () => {
   const handleChange = (name, value) =>
     setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
 
+  const handleDepartmentChange = async (item) => {
+    handleChange("department", item.value);
+
+    try {
+      const coursesData = await fetchCoursesByDepartmentId(item.value);
+      setCourses(
+        coursesData.map((course) => ({
+          label: course.course_code,
+          value: course.course_id,
+        }))
+      );
+    } catch (error) {
+      setModal({
+        visible: true,
+        title: "Error",
+        message: "Failed to load courses for the selected department.",
+        type: "error",
+      });
+    }
+  };
+
   const handleSubmit = async () => {
     try {
-      if (!formData.block_name.trim()) {
+      if (
+        !formData.block_name.trim() ||
+        !formData.course ||
+        !formData.year_level ||
+        !formData.department
+      ) {
         setModal({
           visible: true,
           title: "Warning",
@@ -117,6 +157,7 @@ const EditBlock = () => {
         name: formData.block_name,
         course_id: formData.course,
         year_level_id: formData.year_level,
+        department_id: formData.department,
         status: formData.status,
       };
 
@@ -172,6 +213,14 @@ const EditBlock = () => {
             placeholder="Enter block name"
             value={formData.block_name}
             onChangeText={(text) => handleChange("block_name", text)}
+          />
+
+          <CustomDropdown
+            title="Department"
+            data={departments}
+            placeholder="Select Department"
+            value={formData.department}
+            onSelect={handleDepartmentChange}
           />
 
           <CustomDropdown

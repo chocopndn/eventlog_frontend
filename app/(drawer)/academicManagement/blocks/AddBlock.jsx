@@ -16,9 +16,11 @@ import CustomModal from "../../../../components/CustomModal";
 import CustomDropdown from "../../../../components/CustomDropdown";
 import {
   addBlock,
-  fetchCourses,
   fetchYearLevels,
+  fetchDepartments,
 } from "../../../../services/api";
+
+import { fetchCoursesByDepartmentId } from "../../../../services/api/courses";
 
 const AddBlock = () => {
   const [formData, setFormData] = useState({
@@ -35,23 +37,28 @@ const AddBlock = () => {
     type: "success",
   });
 
+  const [departments, setDepartments] = useState([]);
   const [courses, setCourses] = useState([]);
   const [yearLevels, setYearLevels] = useState([]);
+  const [selectedDepartment, setSelectedDepartment] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const coursesData = await fetchCourses();
+        const response = await fetchDepartments();
+        if (response.success) {
+          setDepartments(
+            response.departments.map((department) => ({
+              label: department.department_name,
+              value: department.department_id,
+            }))
+          );
+        } else {
+          throw new Error("Failed to fetch departments");
+        }
+
         const yearLevelsData = await fetchYearLevels();
-
-        setCourses(
-          coursesData.map((course) => ({
-            label: course.course_code,
-            value: course.course_id,
-          }))
-        );
-
         setYearLevels(
           yearLevelsData.map((yearLevel) => ({
             label: yearLevel.year_level_name,
@@ -59,6 +66,7 @@ const AddBlock = () => {
           }))
         );
       } catch (error) {
+        console.error("Error fetching dropdown data:", error.message);
         setModal({
           visible: true,
           title: "Error",
@@ -76,9 +84,36 @@ const AddBlock = () => {
   const handleChange = (name, value) =>
     setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
 
+  const handleDepartmentChange = async (item) => {
+    setSelectedDepartment(item.value);
+
+    try {
+      const coursesData = await fetchCoursesByDepartmentId(item.value);
+      setCourses(
+        coursesData.map((course) => ({
+          label: course.course_code,
+          value: course.course_id,
+        }))
+      );
+    } catch (error) {
+      console.error("Error fetching courses:", error.message);
+      setModal({
+        visible: true,
+        title: "Error",
+        message: error.message || "Failed to load courses.",
+        type: "error",
+      });
+    }
+  };
+
   const handleSubmit = async () => {
     try {
-      if (!formData.name.trim() || !formData.course || !formData.year_level) {
+      if (
+        !formData.name.trim() ||
+        !formData.course ||
+        !formData.year_level ||
+        !selectedDepartment
+      ) {
         setModal({
           visible: true,
           title: "Warning",
@@ -92,9 +127,11 @@ const AddBlock = () => {
         name: formData.name,
         course_id: formData.course,
         year_level_id: formData.year_level,
+        department_id: selectedDepartment,
       };
 
       setIsLoading(true);
+
       await addBlock(submitData);
 
       setModal({
@@ -109,7 +146,11 @@ const AddBlock = () => {
         course: "",
         year_level: "",
       });
+      setSelectedDepartment(null);
+      setCourses([]);
     } catch (error) {
+      console.error("Error adding block:", error.message || error);
+
       setModal({
         visible: true,
         title: "Error",
@@ -155,6 +196,14 @@ const AddBlock = () => {
             placeholder="Enter block name"
             value={formData.name}
             onChangeText={(text) => handleChange("name", text)}
+          />
+
+          <CustomDropdown
+            title="Department"
+            data={departments}
+            placeholder="Select Department"
+            value={selectedDepartment}
+            onSelect={handleDepartmentChange}
           />
 
           <CustomDropdown
