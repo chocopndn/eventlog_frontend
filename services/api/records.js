@@ -68,7 +68,6 @@ export const fetchAllPastEvents = async (page = 1, limit = 10, search = "") => {
     const response = await axios.post(
       `${API_URL}/api/attendance/admin/past/events`,
       {
-        id_number: idNumber,
         page,
         limit,
         search,
@@ -94,9 +93,8 @@ export const fetchAllOngoingEvents = async (
 ) => {
   try {
     const response = await axios.post(
-      `${API_URL}/api/attendance/admin/past/events`,
+      `${API_URL}/api/attendance/admin/ongoing/events`,
       {
-        id_number: idNumber,
         page,
         limit,
         search,
