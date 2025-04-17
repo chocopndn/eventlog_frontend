@@ -48,6 +48,15 @@ const RecordsLayout = () => {
           headerTintColor: theme.colors.secondary,
         }}
       />
+      <Stack.Screen
+        name="BlockList"
+        options={{
+          headerTitle: "List of Blocks",
+          headerShown: showHeader,
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: theme.colors.secondary,
+        }}
+      />
     </Stack>
   );
 };
