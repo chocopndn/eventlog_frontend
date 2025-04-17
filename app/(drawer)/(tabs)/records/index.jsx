@@ -141,15 +141,20 @@ const Records = () => {
     );
   }
 
+  const hasEvents =
+    filteredOngoingEvents.length > 0 || filteredPastEvents.length > 0;
+
   if (roleId === 1 || roleId === 2) {
     return (
       <View style={globalStyles.secondaryContainer}>
-        <View style={styles.searchContainer}>
-          <CustomSearch
-            placeholder="Search records"
-            onSearch={(text) => setSearchTerm(text)}
-          />
-        </View>
+        {hasEvents && (
+          <View style={styles.searchContainer}>
+            <CustomSearch
+              placeholder="Search records"
+              onSearch={(text) => setSearchTerm(text)}
+            />
+          </View>
+        )}
         <ScrollView
           style={{ flex: 1, width: "100%", marginBottom: 20 }}
           contentContainerStyle={styles.scrollview}
@@ -201,24 +206,25 @@ const Records = () => {
             </View>
           )}
 
-          {filteredOngoingEvents.length === 0 &&
-            filteredPastEvents.length === 0 && (
-              <View style={styles.noEventsContainer}>
-                <Text style={styles.noEventsText}>No events available.</Text>
-              </View>
-            )}
+          {!hasEvents && (
+            <View style={styles.noEventsContainer}>
+              <Text style={styles.noEventsText}>No events available.</Text>
+            </View>
+          )}
         </ScrollView>
       </View>
     );
   } else if (roleId === 3) {
     return (
       <View style={globalStyles.secondaryContainer}>
-        <View style={styles.searchContainer}>
-          <CustomSearch
-            placeholder="Search records"
-            onSearch={(text) => setSearchTerm(text)}
-          />
-        </View>
+        {hasEvents && (
+          <View style={styles.searchContainer}>
+            <CustomSearch
+              placeholder="Search records"
+              onSearch={(text) => setSearchTerm(text)}
+            />
+          </View>
+        )}
         <ScrollView
           style={{ flex: 1, width: "100%", marginBottom: 20 }}
           contentContainerStyle={styles.scrollview}
@@ -270,12 +276,11 @@ const Records = () => {
             </View>
           )}
 
-          {filteredOngoingEvents.length === 0 &&
-            filteredPastEvents.length === 0 && (
-              <View style={styles.noEventsContainer}>
-                <Text style={styles.noEventsText}>No events available.</Text>
-              </View>
-            )}
+          {!hasEvents && (
+            <View style={styles.noEventsContainer}>
+              <Text style={styles.noEventsText}>No events available.</Text>
+            </View>
+          )}
         </ScrollView>
       </View>
     );
