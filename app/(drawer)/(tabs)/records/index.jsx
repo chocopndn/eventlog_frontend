@@ -5,16 +5,13 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState, useEffect } from "react";
 import { getRoleID, getStoredUser } from "../../../../database/queries";
 import {
-  saveRecords,
-  getStoredRecords,
-} from "../../../../database/queries/records";
-import {
   fetchUserOngoingEvents,
   fetchUserPastEvents,
+  fetchAllPastEvents,
+  fetchAllOngoingEvents,
 } from "../../../../services/api/records";
 import moment from "moment";
 import CustomSearch from "../../../../components/CustomSearch";
@@ -32,39 +29,47 @@ const Records = () => {
 
   useEffect(() => {
     const fetchRoleId = async () => {
-      const roleId = await getRoleID();
-      setRoleId(roleId);
+      try {
+        const roleId = await getRoleID();
+        setRoleId(roleId);
+      } catch (error) {
+        console.error("Error fetching role ID:", error);
+      }
     };
     fetchRoleId();
   }, []);
 
   useEffect(() => {
-    const fetchDataAndSaveToSQLite = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const storedUser = await getStoredUser();
-        if (!storedUser || !storedUser.id_number) return;
+        let ongoingEvents = [];
+        let pastEvents = [];
 
-        const idNumber = storedUser.id_number;
-        const ongoingApiResponse = await fetchUserOngoingEvents(idNumber);
-        const pastApiResponse = await fetchUserPastEvents(idNumber);
+        if (roleId === 1 || roleId === 2) {
+          const storedUser = await getStoredUser();
+          if (!storedUser || !storedUser.id_number) {
+            return;
+          }
 
-        const allEvents = [
-          ...(ongoingApiResponse?.events || []),
-          ...(pastApiResponse?.events || []),
-        ];
+          const idNumber = storedUser.id_number;
+          const ongoingApiResponse = await fetchUserOngoingEvents(idNumber);
+          const pastApiResponse = await fetchUserPastEvents(idNumber);
 
-        const saveResult = await saveRecords(allEvents);
-        if (!saveResult || !saveResult.success) return;
+          ongoingEvents = ongoingApiResponse?.events || [];
+          pastEvents = pastApiResponse?.events || [];
+        } else if (roleId === 3) {
+          const ongoingApiResponse = await fetchAllOngoingEvents();
+          const pastApiResponse = await fetchAllPastEvents();
 
-        const storedRecords = await getStoredRecords();
-        if (!storedRecords || !storedRecords.success || !storedRecords.data)
-          return;
+          ongoingEvents = ongoingApiResponse?.events || [];
+          pastEvents = pastApiResponse?.events || [];
+        }
 
         const currentDate = moment().format("YYYY-MM-DD");
         const groupedEvents = {};
 
-        storedRecords.data.forEach((record) => {
+        [...ongoingEvents, ...pastEvents].forEach((record) => {
           const { event_id, event_name, event_date } = record;
 
           if (!groupedEvents[event_id]) {
@@ -97,14 +102,16 @@ const Records = () => {
         setFilteredOngoingEvents(ongoing);
         setFilteredPastEvents(past);
       } catch (error) {
-        console.error(error);
+        console.error("Error in fetchData:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDataAndSaveToSQLite();
-  }, []);
+    if (roleId !== null) {
+      fetchData();
+    }
+  }, [roleId]);
 
   useEffect(() => {
     const filteredEvents = allEvents.filter((event) =>
@@ -128,15 +135,15 @@ const Records = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <Text style={styles.loadingText}>Loading...</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (roleId === 1 || roleId === 2) {
     return (
-      <SafeAreaView style={globalStyles.secondaryContainer}>
+      <View style={globalStyles.secondaryContainer}>
         <View style={styles.searchContainer}>
           <CustomSearch
             placeholder="Search records"
@@ -201,13 +208,76 @@ const Records = () => {
               </View>
             )}
         </ScrollView>
-      </SafeAreaView>
+      </View>
     );
   } else if (roleId === 3) {
     return (
-      <SafeAreaView>
-        <Text>View for roleid 3</Text>
-      </SafeAreaView>
+      <View style={globalStyles.secondaryContainer}>
+        <View style={styles.searchContainer}>
+          <CustomSearch
+            placeholder="Search records"
+            onSearch={(text) => setSearchTerm(text)}
+          />
+        </View>
+        <ScrollView
+          style={{ flex: 1, width: "100%", marginBottom: 20 }}
+          contentContainerStyle={styles.scrollview}
+          showsVerticalScrollIndicator={false}
+        >
+          {filteredOngoingEvents.length > 0 && (
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Ongoing Events</Text>
+              {filteredOngoingEvents.map((event, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.eventContainer}
+                  onPress={() =>
+                    router.push(`/records/BlockList?eventId=${event.event_id}`)
+                  }
+                >
+                  <Text style={styles.eventTitle}>{event.event_name}</Text>
+                  <Text style={styles.eventDate}>
+                    {Array.isArray(event.event_dates) &&
+                    event.event_dates.length > 0
+                      ? event.event_dates.join(", ")
+                      : "No dates available"}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {filteredPastEvents.length > 0 && (
+            <View style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>Past Events</Text>
+              {filteredPastEvents.map((event, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.eventContainer}
+                  onPress={() =>
+                    router.push(`/records/BlockList?eventId=${event.event_id}`)
+                  }
+                >
+                  <Text style={styles.eventTitle}>{event.event_name}</Text>
+                  <Text style={styles.eventDate}>
+                    {Array.isArray(event.event_dates) &&
+                    event.event_dates.length > 0
+                      ? event.event_dates.join(", ")
+                      : "No dates available"}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {filteredOngoingEvents.length === 0 &&
+            filteredPastEvents.length === 0 && (
+              <View style={styles.noEventsContainer}>
+                <Text style={styles.noEventsText}>No events available.</Text>
+              </View>
+            )}
+        </ScrollView>
+      </View>
     );
   }
 };
