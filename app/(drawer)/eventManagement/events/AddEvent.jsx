@@ -41,6 +41,7 @@ const AddEvent = () => {
     event_date: null,
     duration: 0,
     created_by: "",
+    status: "Pending", // Default status is "Pending"
   });
   const [eventNames, setEventNames] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
@@ -64,7 +65,13 @@ const AddEvent = () => {
         if (!storedUserData || !storedUserData.id_number) {
           throw new Error("Invalid or missing user ID.");
         }
-        handleChange("created_by", storedUserData.id_number);
+        // Set status to "Approved" if role_id is 4, otherwise default to "Pending"
+        const status = storedUserData.role_id === 4 ? "Approved" : "Pending";
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          created_by: storedUserData.id_number,
+          status: status, // Update status here
+        }));
       } catch (error) {
         setModal({
           visible: true,
@@ -79,15 +86,12 @@ const AddEvent = () => {
       setIsLoading(true);
       try {
         const eventNamesData = await fetchEventNames();
-
         if (!Array.isArray(eventNamesData)) {
           throw new Error("Invalid data format from API.");
         }
-
         const activeEventNamesData = eventNamesData.filter(
           (name) => name.status === "Active"
         );
-
         const formattedEventNames = activeEventNamesData.map((name) => ({
           label: name.label || name.name,
           value: name.value || name.id,
@@ -110,24 +114,19 @@ const AddEvent = () => {
       setErrorDepartments(null);
       try {
         const response = await fetchDepartments();
-
         if (!response || !Array.isArray(response.departments)) {
           throw new Error(
             "Invalid data format from API: Expected 'departments' array."
           );
         }
-
         const departmentsData = response.departments;
-
         const activeDepartmentsData = departmentsData.filter(
           (dept) => dept.status === "Active"
         );
-
         const formattedDepartments = activeDepartmentsData.map((dept) => ({
           label: dept.department_name,
           value: dept.department_id,
         }));
-
         if (
           formattedDepartments.some(
             (dept) => !dept.label || dept.value === undefined
@@ -135,7 +134,6 @@ const AddEvent = () => {
         ) {
           throw new Error("Invalid department data.");
         }
-
         setDepartmentOptions(formattedDepartments);
       } catch (err) {
         setErrorDepartments(err);
@@ -172,7 +170,7 @@ const AddEvent = () => {
           (block) => block.status === "Active"
         );
         const formattedBlocks = activeBlocks.map((block) => ({
-          label: block.block_name,
+          label: `${block.course_code} ${block.block_name}`, // Combine course_code and block_name
           value: block.block_id,
         }));
         setBlockOptions(formattedBlocks);
@@ -205,7 +203,6 @@ const AddEvent = () => {
         });
         return;
       }
-
       if (formData.department_ids.length === 0) {
         setModal({
           visible: true,
@@ -215,7 +212,6 @@ const AddEvent = () => {
         });
         return;
       }
-
       if (formData.block_ids.length === 0) {
         setModal({
           visible: true,
@@ -225,7 +221,6 @@ const AddEvent = () => {
         });
         return;
       }
-
       if (!formData.venue) {
         setModal({
           visible: true,
@@ -235,7 +230,6 @@ const AddEvent = () => {
         });
         return;
       }
-
       if (!formData.description.trim()) {
         setModal({
           visible: true,
@@ -245,7 +239,6 @@ const AddEvent = () => {
         });
         return;
       }
-
       if (!formData.event_date) {
         setModal({
           visible: true,
@@ -255,11 +248,9 @@ const AddEvent = () => {
         });
         return;
       }
-
       const formattedDates = Array.isArray(formData.event_date)
         ? formData.event_date.flat().filter(Boolean)
         : [];
-
       if (formattedDates.length === 0) {
         setModal({
           visible: true,
@@ -269,7 +260,6 @@ const AddEvent = () => {
         });
         return;
       }
-
       if (
         !(
           formData.am_in ||
@@ -286,18 +276,14 @@ const AddEvent = () => {
         });
         return;
       }
-
       const convertToMinutes = (timeString) => {
         const [hours, minutes] = timeString.split(":").map(Number);
         return hours * 60 + minutes;
       };
-
       if (formData.am_in && formData.am_out) {
         const amInMinutes = convertToMinutes(formData.am_in);
         const amOutMinutes = convertToMinutes(formData.am_out);
-
         const amTimeDifference = amOutMinutes - amInMinutes;
-
         if (amTimeDifference < 60) {
           setModal({
             visible: true,
@@ -308,13 +294,10 @@ const AddEvent = () => {
           return;
         }
       }
-
       if (formData.pm_in && formData.pm_out) {
         const pmInMinutes = convertToMinutes(formData.pm_in);
         const pmOutMinutes = convertToMinutes(formData.pm_out);
-
         const pmTimeDifference = pmOutMinutes - pmInMinutes;
-
         if (pmTimeDifference < 60) {
           setModal({
             visible: true,
@@ -325,7 +308,6 @@ const AddEvent = () => {
           return;
         }
       }
-
       if (formData.duration < 30) {
         setModal({
           visible: true,
@@ -335,7 +317,6 @@ const AddEvent = () => {
         });
         return;
       }
-
       const requestData = {
         event_name_id: formData.event_name_id,
         venue: formData.venue,
@@ -348,10 +329,9 @@ const AddEvent = () => {
         pm_out: formData.pm_out,
         duration: formData.duration,
         admin_id_number: formData.created_by,
+        status: formData.status, // Include the status in the request payload
       };
-
       const response = await addEvent(requestData);
-
       if (response?.success) {
         setModal({
           visible: true,
@@ -360,11 +340,9 @@ const AddEvent = () => {
           type: "success",
           onPress: () => router.back(),
         });
-
         setTimeout(() => {
           router.back();
         }, 1500);
-
         setFormData({
           event_name_id: "",
           department_ids: [],
@@ -378,6 +356,7 @@ const AddEvent = () => {
           event_date: null,
           duration: 0,
           created_by: formData.created_by,
+          status: "Pending", // Reset status to default after submission
         });
       } else {
         let errorMessage =
@@ -395,14 +374,12 @@ const AddEvent = () => {
     } catch (error) {
       let errorMessage =
         "Failed to add the event. Please double-check your information and try again.";
-
       if (error?.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.message === "Network request failed") {
         errorMessage =
           "There was a problem connecting to the server. Please check your internet connection and try again.";
       }
-
       setModal({
         visible: true,
         title: "Error",
