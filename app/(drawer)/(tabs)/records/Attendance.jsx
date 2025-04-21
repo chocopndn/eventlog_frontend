@@ -69,14 +69,28 @@ const Attendance = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log("Fetching attendance data for event ID:", eventId);
         setLoading(true);
+
+        // Fetch stored user data
         const storedUser = await getStoredUser();
-        if (!storedUser || !storedUser.id_number) return;
+        if (!storedUser || !storedUser.id_number) {
+          console.error("Invalid or missing user ID in stored user data.");
+          return;
+        }
 
         const courseCode = storedUser.course_code || "N/A";
         const blockName = storedUser.block_name || "N/A";
         const courseBlockSet = new Set([courseCode, blockName]);
         const courseBlock = Array.from(courseBlockSet).join(" ");
+
+        console.log("Fetched user details:", {
+          name: `${storedUser.first_name || "Unknown"} ${
+            storedUser.last_name || "Unknown"
+          }`,
+          id: storedUser.id_number || "N/A",
+          courseBlock: courseBlock,
+        });
 
         setUserDetails({
           name: `${storedUser.first_name || "Unknown"} ${
@@ -86,42 +100,59 @@ const Attendance = () => {
           courseBlock: courseBlock,
         });
 
+        // Fetch stored records
         const records = await getStoredRecords();
-        if (records.success && Array.isArray(records.data)) {
-          const filteredRecords = records.data.filter(
-            (record) => record.event_id.toString() === eventId
-          );
-          if (filteredRecords.length === 0) return;
+        console.log("Fetched records from database:", records);
 
-          const eventName = filteredRecords[0].event_name;
-          setEventName(eventName);
-
-          const formattedData = filteredRecords.reduce((acc, record) => {
-            const date = record.event_date;
-            const formattedDate = moment(date).format("MMMM D, YYYY");
-            const timeInKey = record.am_in ? "present" : "absent";
-            const timeOutKey = record.am_out ? "present" : "absent";
-            if (!acc[formattedDate]) {
-              acc[formattedDate] = {
-                date: formattedDate,
-                morning: {
-                  timeIn: timeInKey,
-                  timeOut: timeOutKey,
-                },
-                afternoon: {
-                  timeIn: record.pm_in ? "present" : "absent",
-                  timeOut: record.pm_out ? "present" : "absent",
-                },
-              };
-            }
-            return acc;
-          }, {});
-
-          const attendanceDataList = Object.values(formattedData);
-          setAttendanceDataList(attendanceDataList);
+        if (!records.success || !Array.isArray(records.data)) {
+          console.error("Invalid records data format:", records);
+          return;
         }
+
+        const filteredRecords = records.data.filter(
+          (record) => record.event_id.toString() === eventId
+        );
+
+        if (filteredRecords.length === 0) {
+          console.warn("No records found for event ID:", eventId);
+          return;
+        }
+
+        console.log("Filtered records for event ID:", eventId, filteredRecords);
+
+        const eventName = filteredRecords[0].event_name;
+        console.log("Event name fetched:", eventName);
+        setEventName(eventName);
+
+        const formattedData = filteredRecords.reduce((acc, record) => {
+          const date = record.event_date;
+          const formattedDate = moment(date).format("MMMM D, YYYY");
+          const timeInKey = record.am_in ? "present" : "absent";
+          const timeOutKey = record.am_out ? "present" : "absent";
+          if (!acc[formattedDate]) {
+            acc[formattedDate] = {
+              date: formattedDate,
+              morning: {
+                timeIn: timeInKey,
+                timeOut: timeOutKey,
+              },
+              afternoon: {
+                timeIn: record.pm_in ? "present" : "absent",
+                timeOut: record.pm_out ? "present" : "absent",
+              },
+            };
+          }
+          return acc;
+        }, {});
+
+        console.log("Formatted attendance data:", formattedData);
+
+        const attendanceDataList = Object.values(formattedData);
+        console.log("Final attendance data list:", attendanceDataList);
+
+        setAttendanceDataList(attendanceDataList);
       } catch (error) {
-        console.error(error);
+        console.error("Error in fetchData:", error.message || error);
       } finally {
         setLoading(false);
       }
@@ -131,6 +162,7 @@ const Attendance = () => {
   }, [eventId]);
 
   if (loading) {
+    console.log("Loading state is true. Displaying loading indicator...");
     return (
       <View style={globalStyles.secondaryContainer}>
         <Text style={styles.loadingText}>Loading...</Text>
@@ -139,6 +171,7 @@ const Attendance = () => {
   }
 
   if (attendanceDataList.length === 0) {
+    console.warn("No attendance data available for event ID:", eventId);
     return (
       <View style={globalStyles.secondaryContainer}>
         <Text style={styles.noEventsText}>No attendance data available.</Text>
