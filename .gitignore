@@ -41,3 +41,7 @@ yarn-error.*
 # android and ios build folders
 /android
 /ios
+
+# saved code
+cleardb.js
+checklist.txt
