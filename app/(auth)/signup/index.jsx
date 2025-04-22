@@ -94,6 +94,11 @@ const SignUp = () => {
       return;
     }
 
+    if (formData.password.length < 8) {
+      showModal("Password must be at least 8 characters long.", "error");
+      return;
+    }
+
     if (formData.password !== formData.confirm_password) {
       showModal("Passwords do not match.", "error");
       return;
@@ -206,6 +211,11 @@ const SignUp = () => {
           secureTextEntry
           onChangeText={(value) => handleInputChange("password", value)}
           titleColor="secondary"
+          errorMessage={
+            formData.password && formData.password.length < 8
+              ? "Password must be at least 8 characters long."
+              : ""
+          }
         />
         <FormField
           type="password"
