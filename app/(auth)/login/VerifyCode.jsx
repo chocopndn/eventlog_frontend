@@ -31,8 +31,31 @@ const VerifyCode = () => {
     }
   }, [timer]);
 
-  const handleResend = () => {
-    setTimer(60);
+  const handleResend = async () => {
+    try {
+      setTimer(60);
+
+      const response = await axios.post(`${API_URL}/api/auth/reset-password`, {
+        email,
+      });
+
+      if (response.status === 200) {
+        setModalType("success");
+        setModalTitle("Success");
+        setModalMessage("A new code has been sent to your email.");
+        setModalVisible(true);
+      } else {
+        throw new Error("Failed to resend the code. Please try again later.");
+      }
+    } catch (error) {
+      setModalType("error");
+      setModalTitle("Error");
+      setModalMessage(
+        error.response?.data?.message ||
+          "Failed to resend the code. Please try again later."
+      );
+      setModalVisible(true);
+    }
   };
 
   const handleVerifyCode = async () => {
@@ -94,12 +117,12 @@ const VerifyCode = () => {
       </View>
 
       <View style={styles.resendContainer}>
-        <Text style={styles.question}>Didn't receive the email?</Text>
+        <Text style={styles.question}>Didn't receive the code?</Text>
         {timer > 0 ? (
-          <Text style={styles.timerText}>Resend email in {timer}s</Text>
+          <Text style={styles.timerText}>Resend code in {timer}s</Text>
         ) : (
           <TouchableOpacity onPress={handleResend}>
-            <Text style={styles.resendText}>Resend email</Text>
+            <Text style={styles.resendText}>Resend code</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -110,6 +133,7 @@ const VerifyCode = () => {
         message={modalMessage}
         type={modalType}
         onClose={() => setModalVisible(false)}
+        cancelTitle="CLOSE"
       />
 
       <StatusBar style="auto" />
