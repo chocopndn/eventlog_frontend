@@ -263,7 +263,6 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     marginTop: 20,
-    marginBottom: 10,
     paddingHorizontal: theme.spacing.medium,
   },
 });
