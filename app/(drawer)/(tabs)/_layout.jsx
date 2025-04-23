@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   },
   tabItem: {
     alignItems: "center",
-    width: 50,
+    width: 60,
   },
   tabIcon: {
     width: 24,
