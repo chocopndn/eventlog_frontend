@@ -18,6 +18,7 @@ import CustomSearch from "../../../../components/CustomSearch";
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import { router } from "expo-router";
+import { saveRecords } from "../../../../database/queries/records";
 
 const Records = () => {
   const [roleId, setRoleId] = useState(null);
@@ -30,16 +31,18 @@ const Records = () => {
   useEffect(() => {
     const fetchRoleId = async () => {
       try {
-        console.log("Fetching role ID...");
         const roleId = await getRoleID();
         if (!roleId) {
-          console.error("Role ID is null or undefined.");
-        } else {
-          console.log(`Role ID fetched successfully: ${roleId}`);
+          console.error(
+            "Error: Role ID is null or undefined. Unable to proceed."
+          );
         }
         setRoleId(roleId);
       } catch (error) {
-        console.error("Error fetching role ID:", error.message || error);
+        console.error(
+          "Critical Error: Failed to fetch role ID.",
+          error.message || error
+        );
       }
     };
     fetchRoleId();
@@ -48,78 +51,69 @@ const Records = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        console.log("Fetching data for role ID:", roleId);
         setLoading(true);
-
         let ongoingEvents = [];
         let pastEvents = [];
 
         if (roleId === 1 || roleId === 2) {
-          console.log("Fetching user-specific events...");
           const storedUser = await getStoredUser();
           if (!storedUser || !storedUser.id_number) {
-            console.error("Invalid or missing user ID in stored user data.");
+            console.error(
+              "Error: Invalid or missing user ID in stored user data."
+            );
             return;
           }
+
           const idNumber = storedUser.id_number;
-          console.log(
-            `Fetching ongoing and past events for user ID: ${idNumber}`
-          );
-
           const ongoingApiResponse = await fetchUserOngoingEvents(idNumber);
-          console.log(
-            "API Response for fetchUserOngoingEvents:",
-            JSON.stringify(ongoingApiResponse, null, 2) // Log the full response in detail
-          );
-
           const pastApiResponse = await fetchUserPastEvents(idNumber);
-          console.log(
-            "API Response for fetchUserPastEvents:",
-            JSON.stringify(pastApiResponse, null, 2) // Log the full response in detail
-          );
 
           ongoingEvents = ongoingApiResponse?.events || [];
           pastEvents = pastApiResponse?.events || [];
-
-          // Log the attendance array in detail
-          if (ongoingEvents.length > 0) {
-            ongoingEvents.forEach((event, index) => {
-              console.log(`Event ${index + 1}:`, event);
-              if (event.attendance && Array.isArray(event.attendance)) {
-                console.log(
-                  `Attendance for Event ${index + 1}:`,
-                  event.attendance
-                );
-              } else {
-                console.log(`No attendance data for Event ${index + 1}.`);
-              }
-            });
-          }
         } else if (roleId === 3) {
-          console.log("Fetching all events...");
-
           const ongoingApiResponse = await fetchAllOngoingEvents();
-          console.log(
-            "API Response for fetchAllOngoingEvents:",
-            JSON.stringify(ongoingApiResponse, null, 2)
-          );
-
           const pastApiResponse = await fetchAllPastEvents();
-          console.log(
-            "API Response for fetchAllPastEvents:",
-            JSON.stringify(pastApiResponse, null, 2)
-          );
 
           ongoingEvents = ongoingApiResponse?.events || [];
           pastEvents = pastApiResponse?.events || [];
         }
 
-        console.log("Processing events...");
-        const currentDate = moment().format("YYYY-MM-DD");
-        const groupedEvents = {};
+        const flattenedRecords = [...ongoingEvents, ...pastEvents].flatMap(
+          (record) => {
+            const { event_id, event_name, attendance } = record;
 
+            if (
+              !event_id ||
+              !event_name ||
+              !attendance ||
+              !Array.isArray(attendance)
+            ) {
+              return [];
+            }
+
+            const attendanceMap = attendance[0];
+            if (!attendanceMap || typeof attendanceMap !== "object") {
+              return [];
+            }
+
+            return Object.entries(attendanceMap).map(([event_date, times]) => ({
+              event_id,
+              event_name,
+              attendance: [{ [event_date]: times }],
+            }));
+          }
+        );
+
+        try {
+          await saveRecords(flattenedRecords);
+        } catch (error) {
+          console.error("Error saving records:", error.message || error);
+        }
+
+        const groupedEvents = {};
         [...ongoingEvents, ...pastEvents].forEach((record) => {
           const { event_id, event_name, event_date } = record;
+
           if (!groupedEvents[event_id]) {
             groupedEvents[event_id] = {
               event_id,
@@ -130,6 +124,7 @@ const Records = () => {
           groupedEvents[event_id].event_dates.push(event_date);
         });
 
+        const currentDate = moment().format("YYYY-MM-DD");
         const ongoing = [];
         const past = [];
 
@@ -144,15 +139,11 @@ const Records = () => {
           }
         });
 
-        console.log(
-          `Processed ${ongoing.length} ongoing events and ${past.length} past events.`
-        );
-
         setAllEvents(ongoing.concat(past));
         setFilteredOngoingEvents(ongoing);
         setFilteredPastEvents(past);
       } catch (error) {
-        console.error("Error in fetchData:", error.message || error);
+        console.error("Critical Error in fetchData:", error.message || error);
       } finally {
         setLoading(false);
       }
@@ -165,7 +156,6 @@ const Records = () => {
 
   useEffect(() => {
     try {
-      console.log("Filtering events based on search term...");
       const filteredEvents = allEvents.filter((event) =>
         event.event_name.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -181,18 +171,14 @@ const Records = () => {
             moment(date).isSameOrAfter(currentDate)
           )
       );
-      console.log(
-        `Filtered ${ongoing.length} ongoing events and ${past.length} past events.`
-      );
       setFilteredOngoingEvents(ongoing);
       setFilteredPastEvents(past);
     } catch (error) {
-      console.error("Error filtering events:", error.message || error);
+      console.error("Critical Error filtering events:", error.message || error);
     }
   }, [searchTerm]);
 
   if (loading) {
-    console.log("Loading state is true. Displaying loading indicator...");
     return (
       <View style={globalStyles.secondaryContainer}>
         <Text style={styles.loadingText}>Loading...</Text>
@@ -204,7 +190,6 @@ const Records = () => {
     filteredOngoingEvents.length > 0 || filteredPastEvents.length > 0;
 
   if (roleId === 1 || roleId === 2) {
-    console.log("Rendering records for role ID 1 or 2...");
     return (
       <View style={globalStyles.secondaryContainer}>
         {hasEvents && (
@@ -273,7 +258,6 @@ const Records = () => {
       </View>
     );
   } else if (roleId === 3) {
-    console.log("Rendering records for role ID 3...");
     return (
       <View style={globalStyles.secondaryContainer}>
         {hasEvents && (
