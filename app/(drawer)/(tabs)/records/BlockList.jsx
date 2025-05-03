@@ -15,6 +15,7 @@ import theme from "../../../../constants/theme";
 
 import CustomSearch from "../../../../components/CustomSearch";
 import CustomDropdown from "../../../../components/CustomDropdown";
+import CustomButton from "../../../../components/CustomButton";
 
 const BlockList = () => {
   const { eventId } = useLocalSearchParams();
@@ -71,6 +72,9 @@ const BlockList = () => {
           </View>
         )}
       </ScrollView>
+      <View style={styles.buttonContainer}>
+        <CustomButton title="Print" />
+      </View>
     </View>
   );
 };
@@ -107,7 +111,6 @@ const styles = StyleSheet.create({
   },
   scrollviewContainer: {
     paddingHorizontal: theme.spacing.medium,
-    paddingBottom: theme.spacing.large,
     flexGrow: 1,
   },
   blockText: {
@@ -136,5 +139,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
+  },
+  buttonContainer: {
+    width: "100%",
+    marginVertical: 20,
+    paddingHorizontal: theme.spacing.medium,
   },
 });
