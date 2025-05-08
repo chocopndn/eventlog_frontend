@@ -112,3 +112,24 @@ export const fetchAllOngoingEvents = async (
     throw error;
   }
 };
+
+export const fetchBlocksOfEvents = async (eventId) => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/api/attendance/events/blocks`,
+      {
+        event_id: eventId,
+      }
+    );
+
+    if (response.data.success) {
+      return response.data;
+    }
+
+    throw new Error(
+      response.data.message || "Failed to fetch blocks of events."
+    );
+  } catch (error) {
+    throw error;
+  }
+};

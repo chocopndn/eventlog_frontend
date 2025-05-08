@@ -71,7 +71,9 @@ const Attendance = () => {
       try {
         setLoading(true);
         const storedUser = await getStoredUser();
-        if (!storedUser || !storedUser.id_number) return;
+        if (!storedUser || !storedUser.id_number) {
+          return;
+        }
 
         const courseCode = storedUser.course_code || "N/A";
         const blockName = storedUser.block_name || "N/A";
@@ -87,41 +89,46 @@ const Attendance = () => {
         });
 
         const records = await getStoredRecords();
-        if (records.success && Array.isArray(records.data)) {
-          const filteredRecords = records.data.filter(
-            (record) => record.event_id.toString() === eventId
-          );
-          if (filteredRecords.length === 0) return;
-
-          const eventName = filteredRecords[0].event_name;
-          setEventName(eventName);
-
-          const formattedData = filteredRecords.reduce((acc, record) => {
-            const date = record.event_date;
-            const formattedDate = moment(date).format("MMMM D, YYYY");
-            const timeInKey = record.am_in ? "present" : "absent";
-            const timeOutKey = record.am_out ? "present" : "absent";
-            if (!acc[formattedDate]) {
-              acc[formattedDate] = {
-                date: formattedDate,
-                morning: {
-                  timeIn: timeInKey,
-                  timeOut: timeOutKey,
-                },
-                afternoon: {
-                  timeIn: record.pm_in ? "present" : "absent",
-                  timeOut: record.pm_out ? "present" : "absent",
-                },
-              };
-            }
-            return acc;
-          }, {});
-
-          const attendanceDataList = Object.values(formattedData);
-          setAttendanceDataList(attendanceDataList);
+        if (!records.success || !Array.isArray(records.data)) {
+          return;
         }
+
+        const filteredRecords = records.data.filter(
+          (record) => record.event_id.toString() === eventId
+        );
+
+        if (filteredRecords.length === 0) {
+          return;
+        }
+
+        const eventName = filteredRecords[0].event_name;
+        setEventName(eventName);
+
+        const formattedData = filteredRecords.reduce((acc, record) => {
+          const date = record.event_date;
+          const formattedDate = moment(date).format("MMMM D, YYYY");
+          const timeInKey = record.am_in ? "present" : "absent";
+          const timeOutKey = record.am_out ? "present" : "absent";
+
+          if (!acc[formattedDate]) {
+            acc[formattedDate] = {
+              date: formattedDate,
+              morning: {
+                timeIn: timeInKey,
+                timeOut: timeOutKey,
+              },
+              afternoon: {
+                timeIn: record.pm_in ? "present" : "absent",
+                timeOut: record.pm_out ? "present" : "absent",
+              },
+            };
+          }
+          return acc;
+        }, {});
+
+        const attendanceDataList = Object.values(formattedData);
+        setAttendanceDataList(attendanceDataList);
       } catch (error) {
-        console.error(error);
       } finally {
         setLoading(false);
       }

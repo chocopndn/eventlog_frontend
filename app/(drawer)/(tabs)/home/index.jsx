@@ -49,8 +49,10 @@ const Home = () => {
   }, []);
 
   const fetchEvent = async () => {
-    setRefreshing(true);
     let timeoutTriggered = false;
+
+    setRefreshing(true);
+
     const timeout = setTimeout(() => {
       timeoutTriggered = true;
       setModalTitle("Connection Issue");
@@ -117,6 +119,8 @@ const Home = () => {
   }, [blockId]);
 
   const onRefresh = async () => {
+    if (refreshing) return;
+
     await fetchEvent();
   };
 
@@ -180,7 +184,12 @@ const Home = () => {
           contentContainerStyle={styles.scrollview}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[theme.colors.primary]}
+              tintColor={theme.colors.primary}
+            />
           }
         >
           {events.length > 0 ? (
@@ -263,7 +272,6 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     marginTop: 20,
-    marginBottom: 10,
     paddingHorizontal: theme.spacing.medium,
   },
 });

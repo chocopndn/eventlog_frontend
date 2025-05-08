@@ -18,6 +18,7 @@ import CustomSearch from "../../../../components/CustomSearch";
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import { router } from "expo-router";
+import { saveRecords } from "../../../../database/queries/records";
 
 const Records = () => {
   const [roleId, setRoleId] = useState(null);
@@ -31,10 +32,9 @@ const Records = () => {
     const fetchRoleId = async () => {
       try {
         const roleId = await getRoleID();
+        if (!roleId) return;
         setRoleId(roleId);
-      } catch (error) {
-        console.error("Error fetching role ID:", error);
-      }
+      } catch (error) {}
     };
     fetchRoleId();
   }, []);
@@ -45,33 +45,48 @@ const Records = () => {
         setLoading(true);
         let ongoingEvents = [];
         let pastEvents = [];
-
         if (roleId === 1 || roleId === 2) {
           const storedUser = await getStoredUser();
-          if (!storedUser || !storedUser.id_number) {
-            return;
-          }
-
+          if (!storedUser || !storedUser.id_number) return;
           const idNumber = storedUser.id_number;
           const ongoingApiResponse = await fetchUserOngoingEvents(idNumber);
           const pastApiResponse = await fetchUserPastEvents(idNumber);
-
           ongoingEvents = ongoingApiResponse?.events || [];
           pastEvents = pastApiResponse?.events || [];
         } else if (roleId === 3) {
           const ongoingApiResponse = await fetchAllOngoingEvents();
           const pastApiResponse = await fetchAllPastEvents();
-
           ongoingEvents = ongoingApiResponse?.events || [];
           pastEvents = pastApiResponse?.events || [];
         }
-
-        const currentDate = moment().format("YYYY-MM-DD");
+        const flattenedRecords = [...ongoingEvents, ...pastEvents].flatMap(
+          (record) => {
+            const { event_id, event_name, attendance } = record;
+            if (
+              !event_id ||
+              !event_name ||
+              !attendance ||
+              !Array.isArray(attendance)
+            ) {
+              return [];
+            }
+            const attendanceMap = attendance[0];
+            if (!attendanceMap || typeof attendanceMap !== "object") {
+              return [];
+            }
+            return Object.entries(attendanceMap).map(([event_date, times]) => ({
+              event_id,
+              event_name,
+              attendance: [{ [event_date]: times }],
+            }));
+          }
+        );
+        try {
+          await saveRecords(flattenedRecords);
+        } catch (error) {}
         const groupedEvents = {};
-
         [...ongoingEvents, ...pastEvents].forEach((record) => {
           const { event_id, event_name, event_date } = record;
-
           if (!groupedEvents[event_id]) {
             groupedEvents[event_id] = {
               event_id,
@@ -79,58 +94,51 @@ const Records = () => {
               event_dates: [],
             };
           }
-
           groupedEvents[event_id].event_dates.push(event_date);
         });
-
-        const ongoing = [];
-        const past = [];
-
-        Object.values(groupedEvents).forEach((event) => {
-          const isOngoing = event.event_dates.some((date) =>
-            moment(date).isSameOrAfter(currentDate)
-          );
-
-          if (isOngoing) {
-            ongoing.push(event);
-          } else {
-            past.push(event);
-          }
-        });
-
-        setAllEvents(ongoing.concat(past));
-        setFilteredOngoingEvents(ongoing);
-        setFilteredPastEvents(past);
+        const allEvents = [
+          ...Object.values(groupedEvents).filter((event) =>
+            ongoingEvents.some((e) => e.event_id === event.event_id)
+          ),
+          ...Object.values(groupedEvents).filter((event) =>
+            pastEvents.some((e) => e.event_id === event.event_id)
+          ),
+        ];
+        setAllEvents(allEvents);
+        setFilteredOngoingEvents(
+          Object.values(groupedEvents).filter((event) =>
+            ongoingEvents.some((e) => e.event_id === event.event_id)
+          )
+        );
+        setFilteredPastEvents(
+          Object.values(groupedEvents).filter((event) =>
+            pastEvents.some((e) => e.event_id === event.event_id)
+          )
+        );
       } catch (error) {
-        console.error("Error in fetchData:", error);
       } finally {
         setLoading(false);
       }
     };
-
     if (roleId !== null) {
       fetchData();
     }
   }, [roleId]);
 
   useEffect(() => {
-    const filteredEvents = allEvents.filter((event) =>
-      event.event_name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    const currentDate = moment().format("YYYY-MM-DD");
-    const ongoing = filteredEvents.filter((event) =>
-      event.event_dates.some((date) => moment(date).isSameOrAfter(currentDate))
-    );
-    const past = filteredEvents.filter(
-      (event) =>
-        !event.event_dates.some((date) =>
-          moment(date).isSameOrAfter(currentDate)
-        )
-    );
-
-    setFilteredOngoingEvents(ongoing);
-    setFilteredPastEvents(past);
+    try {
+      const filteredEvents = allEvents.filter((event) =>
+        event.event_name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      const ongoing = filteredEvents.filter((event) =>
+        filteredOngoingEvents.some((e) => e.event_id === event.event_id)
+      );
+      const past = filteredEvents.filter((event) =>
+        filteredPastEvents.some((e) => e.event_id === event.event_id)
+      );
+      setFilteredOngoingEvents(ongoing);
+      setFilteredPastEvents(past);
+    } catch (error) {}
   }, [searchTerm]);
 
   if (loading) {
@@ -182,7 +190,6 @@ const Records = () => {
               ))}
             </View>
           )}
-
           {filteredPastEvents.length > 0 && (
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>Past Events</Text>
@@ -205,7 +212,6 @@ const Records = () => {
               ))}
             </View>
           )}
-
           {!hasEvents && (
             <View style={styles.noEventsContainer}>
               <Text style={styles.noEventsText}>No events available.</Text>
@@ -252,7 +258,6 @@ const Records = () => {
               ))}
             </View>
           )}
-
           {filteredPastEvents.length > 0 && (
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionTitle}>Past Events</Text>
@@ -275,7 +280,6 @@ const Records = () => {
               ))}
             </View>
           )}
-
           {!hasEvents && (
             <View style={styles.noEventsContainer}>
               <Text style={styles.noEventsText}>No events available.</Text>

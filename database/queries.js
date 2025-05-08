@@ -73,6 +73,7 @@ export const clearAllTablesData = async () => {
         DELETE FROM events;
         DELETE FROM event_dates;
         DELETE FROM attendance;
+        DELETE FROM records;
       `);
     } catch (error) {
       console.error("Error clearing all tables data:", error);
