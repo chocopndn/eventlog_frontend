@@ -113,12 +113,18 @@ export const fetchAllOngoingEvents = async (
   }
 };
 
-export const fetchBlocksOfEvents = async (eventId) => {
+export const fetchBlocksOfEvents = async (
+  eventId,
+  selectedDepartment,
+  selectedYearLevel
+) => {
   try {
     const response = await axios.post(
       `${API_URL}/api/attendance/events/blocks`,
       {
         event_id: eventId,
+        department_id: selectedDepartment || undefined,
+        year_level_id: selectedYearLevel || undefined,
       }
     );
 
