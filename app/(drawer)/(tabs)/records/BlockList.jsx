@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -5,18 +6,19 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import React, { useEffect, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
+
 
 import { fetchBlocksOfEvents } from "../../../../services/api/records";
 import { fetchDepartments, fetchYearLevels } from "../../../../services/api";
 
+
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 
-import CustomSearch from "../../../../components/CustomSearch";
-import CustomDropdown from "../../../../components/CustomDropdown";
+
 import CustomButton from "../../../../components/CustomButton";
+import CustomDropdown from "../../../../components/CustomDropdown";
 
 const BlockList = () => {
   const { eventId } = useLocalSearchParams();
@@ -26,58 +28,140 @@ const BlockList = () => {
   const [yearLevels, setYearLevels] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedYearLevel, setSelectedYearLevel] = useState("");
+
+  
+  const [allDepartments, setAllDepartments] = useState([]);
+  const [allYearLevels, setAllYearLevels] = useState([]);
+
+  
   useEffect(() => {
-    const fetchData = async () => {
+    console.log("🔄 Starting: Loading all departments/year levels");
+
+    const loadFilterOptions = async () => {
       try {
-        const blocksData = await fetchBlocksOfEvents(eventId);
-        console.log("Fetched Blocks:\n", JSON.stringify(blocksData, null, 2));
+        const deptData = await fetchDepartments();
+        const yearData = await fetchYearLevels();
+
+        console.log("✅ Fetched All Departments:", deptData.departments);
+        console.log("✅ Fetched All Year Levels:", yearData);
+
+        setAllDepartments(deptData.departments || []);
+        setAllYearLevels(yearData || []);
+
+        console.log("📦 Stored all departments/year levels");
+      } catch (error) {
+        console.error("❌ Failed to load filter options:", error.message);
+      }
+    };
+
+    loadFilterOptions();
+  }, []);
+
+  
+  useEffect(() => {
+    if (!eventId) return;
+
+    console.log(`🔄 Starting: Loading data for event ID ${eventId}`);
+
+    const loadEventData = async () => {
+      try {
+        setLoading(true);
+
+        const event_id = Number(eventId);
+
+        console.log("📡 Sending initial request for event:", event_id);
+
+        const blocksData = await fetchBlocksOfEvents(event_id, "", "");
+        console.log("✅ Fetched Blocks Data:\n", JSON.stringify(blocksData, null, 2));
+
+        if (!blocksData?.success) {
+          throw new Error("Backend returned success: false");
+        }
+
         setEventTitle(blocksData?.data?.event_title || "Event Title Not Found");
         setBlocks(blocksData?.data?.block_details || []);
 
-        const deptData = await fetchDepartments();
-        console.log("Fetched Departments:\n", deptData);
+        
+        const deptIDs = blocksData?.data?.department_ids || [];
+        console.log("📌 Department IDs from event:", deptIDs);
 
-        const filteredDepartments =
-          deptData?.departments
-            ?.filter((dept) =>
-              blocksData?.data?.department_ids?.includes(dept.department_id)
-            )
-            .map((dept) => ({
-              label: dept.department_code,
-              value: dept.department_id,
-            })) || [];
+        const deptOptions = allDepartments
+          .filter((dept) => deptIDs.includes(dept.department_id))
+          .map((dept) => ({
+            label: dept.department_code,
+            value: String(dept.department_id),
+          }));
 
-        setDepartments(filteredDepartments);
+        console.log("🧾 Filtered Departments:", deptOptions);
+        setDepartments([{ label: "All Departments", value: "" }, ...deptOptions]);
 
-        const yearData = await fetchYearLevels();
-        console.log("Fetched Year Levels:\n", yearData);
+        
+        const yearIDs = blocksData?.data?.yearlevel_ids || [];
+        console.log("📌 Year Level IDs from event:", yearIDs);
 
-        const filteredYearLevels =
-          yearData
-            ?.filter((year) =>
-              blocksData?.data?.yearlevel_ids?.includes(year.year_level_id)
-            )
-            .map((year) => ({
-              label: year.year_level_name,
-              value: year.year_level_id,
-            })) || [];
+        const yearOptions = allYearLevels
+          .filter((year) => yearIDs.includes(year.year_level_id))
+          .map((year) => ({
+            label: year.year_level_name,
+            value: String(year.year_level_id),
+          }));
 
-        setYearLevels(filteredYearLevels);
+        console.log("🧾 Filtered Year Levels:", yearOptions);
+        setYearLevels([{ label: "All Year Levels", value: "" }, ...yearOptions]);
       } catch (error) {
-        console.error("Failed to fetch data:", error);
+        console.error("❌ Failed to load event data:", error.message);
+        setBlocks([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEventData();
+  }, [eventId]);
+
+  
+  useEffect(() => {
+    if (!eventId) return;
+
+    console.log("🔄 Triggered refetch due to filter change");
+    console.log("🔍 Current Filters:", {
+      department_id: selectedDepartment,
+      year_level_id: selectedYearLevel,
+    });
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        const event_id = Number(eventId);
+
+        const blocksData = await fetchBlocksOfEvents(
+          event_id,
+          selectedDepartment || undefined,
+          selectedYearLevel || undefined
+        );
+
+        console.log("✅ Fetched filtered blocks:\n", JSON.stringify(blocksData, null, 2));
+        setBlocks(blocksData?.data?.block_details || []);
+      } catch (error) {
+        console.error("❌ Failed to fetch filtered blocks:", error.message);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [eventId]);
+  }, [selectedDepartment, selectedYearLevel, eventId]);
 
   return (
     <View style={globalStyles.secondaryContainer}>
+      {/* Event Title */}
       <Text style={styles.eventTitle}>{eventTitle}</Text>
+
+      {/* Filter Dropdowns */}
       <View style={styles.container}>
-        <CustomSearch />
         <View style={styles.filterContainer}>
           <View style={{ width: "48%" }}>
             <CustomDropdown
@@ -85,6 +169,11 @@ const BlockList = () => {
               data={departments}
               labelField="label"
               valueField="value"
+              value={selectedDepartment}
+              onSelect={(item) => {
+                console.log("🔽 Selected Department changed to", item.value);
+                setSelectedDepartment(item.value);
+              }}
             />
           </View>
           <View style={{ width: "48%" }}>
@@ -93,15 +182,18 @@ const BlockList = () => {
               data={yearLevels}
               labelField="label"
               valueField="value"
+              value={selectedYearLevel}
+              onSelect={(item) => {
+                console.log("🔽 Selected Year Level changed to", item.value);
+                setSelectedYearLevel(item.value);
+              }}
             />
           </View>
         </View>
       </View>
 
-      <ScrollView
-        contentContainerStyle={styles.scrollviewContainer}
-        showsVerticalScrollIndicator={false}
-      >
+      {/* Scrollable Block List */}
+      <ScrollView contentContainerStyle={styles.scrollviewContainer}>
         {loading ? (
           <Text style={styles.noDataText}>Loading blocks...</Text>
         ) : blocks.length === 0 ? (
@@ -114,12 +206,15 @@ const BlockList = () => {
           </View>
         )}
       </ScrollView>
+
+      {/* Print Button */}
       <View style={styles.buttonContainer}>
         <CustomButton title="Print" />
       </View>
     </View>
   );
 };
+
 
 const BlockItem = ({ block }) => {
   return (
@@ -130,6 +225,7 @@ const BlockItem = ({ block }) => {
     </TouchableOpacity>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
