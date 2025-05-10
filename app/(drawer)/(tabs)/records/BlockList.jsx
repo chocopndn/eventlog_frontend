@@ -8,15 +8,15 @@ import {
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 
-
+// API Services
 import { fetchBlocksOfEvents } from "../../../../services/api/records";
 import { fetchDepartments, fetchYearLevels } from "../../../../services/api";
 
-
+// Constants & Styles
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 
-
+// Components
 import CustomButton from "../../../../components/CustomButton";
 import CustomDropdown from "../../../../components/CustomDropdown";
 
@@ -31,11 +31,11 @@ const BlockList = () => {
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedYearLevel, setSelectedYearLevel] = useState("");
 
-  
+  // Store all departments/year levels (fetched once)
   const [allDepartments, setAllDepartments] = useState([]);
   const [allYearLevels, setAllYearLevels] = useState([]);
 
-  
+  // Load all departments/year levels ONCE
   useEffect(() => {
     console.log("🔄 Starting: Loading all departments/year levels");
 
@@ -44,22 +44,19 @@ const BlockList = () => {
         const deptData = await fetchDepartments();
         const yearData = await fetchYearLevels();
 
-        console.log("✅ Fetched All Departments:", deptData.departments);
-        console.log("✅ Fetched All Year Levels:", yearData);
-
         setAllDepartments(deptData.departments || []);
         setAllYearLevels(yearData || []);
 
         console.log("📦 Stored all departments/year levels");
       } catch (error) {
-        console.error("❌ Failed to load filter options:", error.message);
+        console.error("❌ Failed to load dropdown options:", error.message);
       }
     };
 
     loadFilterOptions();
   }, []);
 
-  
+  // Load event data + filter dropdowns based on event
   useEffect(() => {
     if (!eventId) return;
 
@@ -81,34 +78,34 @@ const BlockList = () => {
         }
 
         setEventTitle(blocksData?.data?.event_title || "Event Title Not Found");
-        setBlocks(blocksData?.data?.block_details || []);
 
-        
+        // ✅ Map blocks using course_code from backend
+        const blocksWithDeptCode = blocksData?.data?.block_details.map((block) => ({
+          ...block,
+          display_name: block.course_code
+            ? `${block.course_code} ${block.block_name}`
+            : block.block_name,
+        }));
+
+        setBlocks(blocksWithDeptCode || []);
+
+        // Filter departments/year levels based on event
         const deptIDs = blocksData?.data?.department_ids || [];
-        console.log("📌 Department IDs from event:", deptIDs);
-
         const deptOptions = allDepartments
           .filter((dept) => deptIDs.includes(dept.department_id))
           .map((dept) => ({
             label: dept.department_code,
             value: String(dept.department_id),
           }));
-
-        console.log("🧾 Filtered Departments:", deptOptions);
         setDepartments([{ label: "All Departments", value: "" }, ...deptOptions]);
 
-        
         const yearIDs = blocksData?.data?.yearlevel_ids || [];
-        console.log("📌 Year Level IDs from event:", yearIDs);
-
         const yearOptions = allYearLevels
           .filter((year) => yearIDs.includes(year.year_level_id))
           .map((year) => ({
             label: year.year_level_name,
             value: String(year.year_level_id),
           }));
-
-        console.log("🧾 Filtered Year Levels:", yearOptions);
         setYearLevels([{ label: "All Year Levels", value: "" }, ...yearOptions]);
       } catch (error) {
         console.error("❌ Failed to load event data:", error.message);
@@ -121,7 +118,7 @@ const BlockList = () => {
     loadEventData();
   }, [eventId]);
 
-  
+  // Refetch blocks when filters change
   useEffect(() => {
     if (!eventId) return;
 
@@ -143,8 +140,15 @@ const BlockList = () => {
           selectedYearLevel || undefined
         );
 
-        console.log("✅ Fetched filtered blocks:\n", JSON.stringify(blocksData, null, 2));
-        setBlocks(blocksData?.data?.block_details || []);
+        // ✅ Map again with display name
+        const blocksWithDeptCode = blocksData?.data?.block_details.map((block) => ({
+          ...block,
+          display_name: block.course_code
+            ? `${block.course_code} ${block.block_name}`
+            : block.block_name,
+        }));
+
+        setBlocks(blocksWithDeptCode || []);
       } catch (error) {
         console.error("❌ Failed to fetch filtered blocks:", error.message);
       } finally {
@@ -215,18 +219,18 @@ const BlockList = () => {
   );
 };
 
-
+// Individual Block Item Component
 const BlockItem = ({ block }) => {
   return (
     <TouchableOpacity style={styles.blockContainer}>
       <Text style={styles.blockText}>
-        {block.block_name || "Unnamed Block"}
+        {block.display_name || "Unnamed Block"}
       </Text>
     </TouchableOpacity>
   );
 };
 
-
+// Styles
 const styles = StyleSheet.create({
   container: {
     width: "100%",
