@@ -78,9 +78,7 @@ const EventDetails = () => {
     try {
       await deleteEvent(eventDetails.event_id);
       setIsDeleteModalVisible(false);
-      setSuccessMessage(
-        `${eventDetails.event_name} has been successfully deleted.`
-      );
+      setSuccessMessage(`${eventDetails.event_name} has been successfully deleted.`);
       setIsSuccessModalVisible(true);
       setTimeout(() => {
         setIsSuccessModalVisible(false);
@@ -97,9 +95,7 @@ const EventDetails = () => {
     try {
       await approveEvent(eventDetails.event_id, storedUser.id_number);
       setIsApproveModalVisible(false);
-      setSuccessMessage(
-        `${eventDetails.event_name} has been successfully approved.`
-      );
+      setSuccessMessage(`${eventDetails.event_name} has been successfully approved.`);
       setIsSuccessModalVisible(true);
       setTimeout(() => {
         setIsSuccessModalVisible(false);
@@ -255,6 +251,7 @@ const EventDetails = () => {
         message={successMessage}
         type="success"
         onClose={() => setIsSuccessModalVisible(false)}
+        cancelTitle="CLOSE"
         hideButtons={true}
       />
       <TabsComponent />
@@ -264,6 +261,7 @@ const EventDetails = () => {
 };
 
 export default EventDetails;
+
 
 const styles = StyleSheet.create({
   headerContainer: {
