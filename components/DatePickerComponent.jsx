@@ -217,6 +217,5 @@ const styles = StyleSheet.create({
   selectedDateItem: {
     color: theme.colors.primary,
     fontSize: theme.fontSizes.small,
-    marginBottom: theme.spacing.tiny / 2,
   },
 });
