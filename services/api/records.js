@@ -116,16 +116,31 @@ export const fetchAllOngoingEvents = async (
 export const fetchBlocksOfEvents = async (
   eventId,
   selectedDepartment,
-  selectedYearLevel
+  selectedYearLevel,
+  searchQuery = ""
 ) => {
   try {
+    const body = {
+      event_id: eventId,
+    };
+
+    if (selectedDepartment) {
+      body.department_id = selectedDepartment;
+    }
+
+    if (selectedYearLevel) {
+      body.year_level_id = selectedYearLevel;
+    }
+
+    if (searchQuery.trim() !== "") {
+      body.search_query = searchQuery;
+    }
+
+    console.log("📡 Sending to backend:", body);
+
     const response = await axios.post(
       `${API_URL}/api/attendance/events/blocks`,
-      {
-        event_id: eventId,
-        department_id: selectedDepartment || undefined,
-        year_level_id: selectedYearLevel || undefined,
-      }
+      body
     );
 
     if (response.data.success) {
@@ -136,6 +151,7 @@ export const fetchBlocksOfEvents = async (
       response.data.message || "Failed to fetch blocks of events."
     );
   } catch (error) {
+    console.error("❌ Failed to fetch blocks:", error.message);
     throw error;
   }
 };
