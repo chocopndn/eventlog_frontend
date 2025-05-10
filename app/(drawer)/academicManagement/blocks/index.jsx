@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -49,7 +49,7 @@ export default function BlocksScreen() {
   };
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       loadBlocks();
     }, [])
   );
@@ -122,7 +122,7 @@ export default function BlocksScreen() {
             >
               <View style={styles.textContainer}>
                 <Text style={styles.name} numberOfLines={1}>
-                  {block.block_name}
+                  {`${block.course_code || ""} ${block.block_name || ""}`.trim()}
                 </Text>
                 <Text style={styles.courseName} numberOfLines={1}>
                   {block.status}
@@ -163,7 +163,11 @@ export default function BlocksScreen() {
       <CustomModal
         visible={isDisableModalVisible}
         title="Confirm Disable"
-        message={`Are you sure you want to disable ${blockToDisable?.block_name}?`}
+        message={`Are you sure you want to disable ${
+          blockToDisable?.block_name
+            ? `${blockToDisable.course_code || ""} ${blockToDisable.block_name}`
+            : ""
+        }?`}
         type="warning"
         onClose={handleDisableModalClose}
         onConfirm={handleConfirmDisable}
