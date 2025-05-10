@@ -56,8 +56,6 @@
     "android": {
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ],
       "package": "com.chocopndn.eventlog"
@@ -66,6 +64,8 @@
     "updates": {
       "url": "https://u.expo.dev/53a32d78-9ca7-4ea5-9a69-308a59bbceaa"
     },
-    "ios": {}
+    "ios": {
+      "bundleIdentifier": "com.chocopndn.eventlog"
+    }
   }
 }
