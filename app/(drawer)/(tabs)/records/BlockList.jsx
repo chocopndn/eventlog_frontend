@@ -24,7 +24,7 @@ import CustomSearch from "../../../../components/CustomSearch"; // Make sure thi
 const BlockList = () => {
   const { eventId } = useLocalSearchParams();
   const [eventTitle, setEventTitle] = useState("");
-  const [allBlocks, setAllBlocks] = useState([]); // ✅ Original list for filtering
+  const [allBlocks, setAllBlocks] = useState([]); // Original list for filtering
   const [blocks, setBlocks] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [yearLevels, setYearLevels] = useState([]);
@@ -82,16 +82,20 @@ const BlockList = () => {
 
         setEventTitle(blocksData?.data?.event_title || "Event Title Not Found");
 
-        // ✅ Map blocks with course_code + block_name
-        const mappedBlocks = blocksData?.data?.block_details.map((block) => ({
-          ...block,
-          display_name: block.course_code
-            ? `${block.course_code} ${block.block_name}`
-            : block.block_name,
-        }));
+        // ✅ Only map if there are results
+        let mappedBlocks = [];
 
-        setAllBlocks(mappedBlocks); // Save original list for filtering
-        setBlocks(mappedBlocks);    // Set current list to show all
+        if (blocksData?.data?.block_details?.length > 0) {
+          mappedBlocks = blocksData.data.block_details.map((block) => ({
+            ...block,
+            display_name: block.course_code
+              ? `${block.course_code} ${block.block_name}`
+              : block.block_name,
+          }));
+        }
+
+        setAllBlocks(mappedBlocks);
+        setBlocks(mappedBlocks);
 
         // Filter departments/year levels based on event
         const deptIDs = blocksData?.data?.department_ids || [];
@@ -113,6 +117,7 @@ const BlockList = () => {
         setYearLevels([{ label: "All Year Levels", value: "" }, ...yearOptions]);
       } catch (error) {
         console.error("❌ Failed to load event data:", error.message);
+        setAllBlocks([]);
         setBlocks([]);
       } finally {
         setLoading(false);
@@ -144,18 +149,24 @@ const BlockList = () => {
           selectedYearLevel || undefined
         );
 
-        // ✅ Map again with display name
-        const mappedBlocks = blocksData?.data?.block_details.map((block) => ({
-          ...block,
-          display_name: block.course_code
-            ? `${block.course_code} ${block.block_name}`
-            : block.block_name,
-        }));
+        // ✅ Only map if there are results
+        let mappedBlocks = [];
+
+        if (blocksData?.data?.block_details?.length > 0) {
+          mappedBlocks = blocksData.data.block_details.map((block) => ({
+            ...block,
+            display_name: block.course_code
+              ? `${block.course_code} ${block.block_name}`
+              : block.block_name,
+          }));
+        }
 
         setAllBlocks(mappedBlocks);
         setBlocks(mappedBlocks);
       } catch (error) {
         console.error("❌ Failed to fetch filtered blocks:", error.message);
+        setAllBlocks([]);
+        setBlocks([]);
       } finally {
         setLoading(false);
       }
