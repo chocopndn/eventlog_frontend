@@ -8,23 +8,23 @@ import {
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 
-// API Services
+
 import { fetchBlocksOfEvents } from "../../../../services/api/records";
 import { fetchDepartments, fetchYearLevels } from "../../../../services/api";
 
-// Constants & Styles
+
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 
-// Components
+
 import CustomButton from "../../../../components/CustomButton";
 import CustomDropdown from "../../../../components/CustomDropdown";
-import CustomSearch from "../../../../components/CustomSearch"; // Make sure this exists
+import CustomSearch from "../../../../components/CustomSearch"; 
 
 const BlockList = () => {
   const { eventId } = useLocalSearchParams();
   const [eventTitle, setEventTitle] = useState("");
-  const [allBlocks, setAllBlocks] = useState([]); // Original list for filtering
+  const [allBlocks, setAllBlocks] = useState([]); 
   const [blocks, setBlocks] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [yearLevels, setYearLevels] = useState([]);
@@ -34,11 +34,11 @@ const BlockList = () => {
   const [selectedYearLevel, setSelectedYearLevel] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Store all departments/year levels (fetched once)
+  
   const [allDepartments, setAllDepartments] = useState([]);
   const [allYearLevels, setAllYearLevels] = useState([]);
 
-  // Load all departments/year levels ONCE
+  
   useEffect(() => {
     console.log("🔄 Starting: Loading all departments/year levels");
 
@@ -59,7 +59,7 @@ const BlockList = () => {
     loadFilterOptions();
   }, []);
 
-  // Load event data + filter dropdowns based on event
+  
   useEffect(() => {
     if (!eventId) return;
 
@@ -82,7 +82,7 @@ const BlockList = () => {
 
         setEventTitle(blocksData?.data?.event_title || "Event Title Not Found");
 
-        // ✅ Only map if there are results
+        
         let mappedBlocks = [];
 
         if (blocksData?.data?.block_details?.length > 0) {
@@ -97,7 +97,7 @@ const BlockList = () => {
         setAllBlocks(mappedBlocks);
         setBlocks(mappedBlocks);
 
-        // Filter departments/year levels based on event
+        
         const deptIDs = blocksData?.data?.department_ids || [];
         const deptOptions = allDepartments
           .filter((dept) => deptIDs.includes(dept.department_id))
@@ -127,7 +127,7 @@ const BlockList = () => {
     loadEventData();
   }, [eventId]);
 
-  // Refetch blocks when filters change
+  
   useEffect(() => {
     if (!eventId) return;
 
@@ -149,7 +149,7 @@ const BlockList = () => {
           selectedYearLevel || undefined
         );
 
-        // ✅ Only map if there are results
+        
         let mappedBlocks = [];
 
         if (blocksData?.data?.block_details?.length > 0) {
@@ -175,10 +175,10 @@ const BlockList = () => {
     fetchData();
   }, [selectedDepartment, selectedYearLevel, eventId]);
 
-  // Handle Search Input
+  
   useEffect(() => {
     if (!searchQuery.trim()) {
-      setBlocks(allBlocks); // Reset to full list
+      setBlocks(allBlocks); 
       return;
     }
 
@@ -251,7 +251,20 @@ const BlockList = () => {
         ) : (
           <View style={styles.gridContainer}>
             {blocks.map((block, index) => (
-              <BlockItem key={index} block={block} />
+              <View
+                key={index}
+                style={
+                  blocks.length === 1
+                    ? styles.singleBlockContainer
+                    : styles.multiBlockContainer
+                }
+              >
+                <TouchableOpacity style={styles.blockContainer}>
+                  <Text style={styles.blockText}>
+                    {block.display_name || "Unnamed Block"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             ))}
           </View>
         )}
@@ -265,7 +278,7 @@ const BlockList = () => {
   );
 };
 
-// Individual Block Item Component
+
 const BlockItem = ({ block }) => {
   return (
     <TouchableOpacity style={styles.blockContainer}>
@@ -276,7 +289,7 @@ const BlockItem = ({ block }) => {
   );
 };
 
-// Styles
+
 const styles = StyleSheet.create({
   container: {
     width: "100%",
@@ -308,10 +321,16 @@ const styles = StyleSheet.create({
   blockContainer: {
     borderWidth: 2,
     borderColor: theme.colors.primary,
-    width: "48%",
     height: 50,
     justifyContent: "center",
     alignItems: "center",
+  },
+  singleBlockContainer: {
+    width: "100%",
+    marginVertical: theme.spacing.small,
+  },
+  multiBlockContainer: {
+    width: "48%",
     marginVertical: theme.spacing.small,
   },
   noDataText: {
