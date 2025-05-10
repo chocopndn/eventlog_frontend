@@ -19,10 +19,12 @@ import theme from "../../../../constants/theme";
 // Components
 import CustomButton from "../../../../components/CustomButton";
 import CustomDropdown from "../../../../components/CustomDropdown";
+import CustomSearch from "../../../../components/CustomSearch"; // Make sure this exists
 
 const BlockList = () => {
   const { eventId } = useLocalSearchParams();
   const [eventTitle, setEventTitle] = useState("");
+  const [allBlocks, setAllBlocks] = useState([]); // ✅ Original list for filtering
   const [blocks, setBlocks] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [yearLevels, setYearLevels] = useState([]);
@@ -30,6 +32,7 @@ const BlockList = () => {
 
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedYearLevel, setSelectedYearLevel] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Store all departments/year levels (fetched once)
   const [allDepartments, setAllDepartments] = useState([]);
@@ -79,15 +82,16 @@ const BlockList = () => {
 
         setEventTitle(blocksData?.data?.event_title || "Event Title Not Found");
 
-        // ✅ Map blocks using course_code from backend
-        const blocksWithDeptCode = blocksData?.data?.block_details.map((block) => ({
+        // ✅ Map blocks with course_code + block_name
+        const mappedBlocks = blocksData?.data?.block_details.map((block) => ({
           ...block,
           display_name: block.course_code
             ? `${block.course_code} ${block.block_name}`
             : block.block_name,
         }));
 
-        setBlocks(blocksWithDeptCode || []);
+        setAllBlocks(mappedBlocks); // Save original list for filtering
+        setBlocks(mappedBlocks);    // Set current list to show all
 
         // Filter departments/year levels based on event
         const deptIDs = blocksData?.data?.department_ids || [];
@@ -141,14 +145,15 @@ const BlockList = () => {
         );
 
         // ✅ Map again with display name
-        const blocksWithDeptCode = blocksData?.data?.block_details.map((block) => ({
+        const mappedBlocks = blocksData?.data?.block_details.map((block) => ({
           ...block,
           display_name: block.course_code
             ? `${block.course_code} ${block.block_name}`
             : block.block_name,
         }));
 
-        setBlocks(blocksWithDeptCode || []);
+        setAllBlocks(mappedBlocks);
+        setBlocks(mappedBlocks);
       } catch (error) {
         console.error("❌ Failed to fetch filtered blocks:", error.message);
       } finally {
@@ -159,10 +164,38 @@ const BlockList = () => {
     fetchData();
   }, [selectedDepartment, selectedYearLevel, eventId]);
 
+  // Handle Search Input
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setBlocks(allBlocks); // Reset to full list
+      return;
+    }
+
+    const lowerQuery = searchQuery.toLowerCase();
+
+    const filtered = allBlocks.filter((block) =>
+      block.display_name.toLowerCase().includes(lowerQuery)
+    );
+
+    setBlocks(filtered);
+  }, [searchQuery]);
+
   return (
     <View style={globalStyles.secondaryContainer}>
       {/* Event Title */}
       <Text style={styles.eventTitle}>{eventTitle}</Text>
+
+      {/* Search Input */}
+      <View style={styles.container}>
+        <CustomSearch
+          placeholder="Search blocks..."
+          value={searchQuery}
+          onChangeText={(text) => {
+            console.log("🔍 Search changed to:", text);
+            setSearchQuery(text);
+          }}
+        />
+      </View>
 
       {/* Filter Dropdowns */}
       <View style={styles.container}>
@@ -200,6 +233,8 @@ const BlockList = () => {
       <ScrollView contentContainerStyle={styles.scrollviewContainer}>
         {loading ? (
           <Text style={styles.noDataText}>Loading blocks...</Text>
+        ) : blocks.length === 0 && searchQuery !== "" ? (
+          <Text style={styles.noDataText}>No matching blocks found.</Text>
         ) : blocks.length === 0 ? (
           <Text style={styles.noDataText}>No blocks found.</Text>
         ) : (
