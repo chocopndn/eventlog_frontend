@@ -155,3 +155,42 @@ export const fetchBlocksOfEvents = async (
     throw error;
   }
 };
+
+export const fetchStudentAttendanceByEventAndBlock = async (
+  eventId,
+  blockId,
+  searchQuery = ""
+) => {
+  try {
+    if (!eventId || !blockId) {
+      throw new Error("Missing required parameters: eventId and blockId.");
+    }
+
+    const body = {
+      event_id: eventId,
+      block_id: blockId,
+    };
+
+    if (searchQuery.trim() !== "") {
+      body.search_query = searchQuery;
+    }
+
+    console.log("📡 Sending to backend:", body);
+
+    const response = await axios.post(
+      `${API_URL}/api/attendance/events/block/students`,
+      body
+    );
+
+    if (response.data.success) {
+      return response.data;
+    }
+
+    throw new Error(
+      response.data.message || "Failed to fetch student attendance data."
+    );
+  } catch (error) {
+    console.error("❌ Failed to fetch student attendance:", error.message);
+    throw error;
+  }
+};
