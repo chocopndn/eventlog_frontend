@@ -28,16 +28,20 @@ const BlockList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [allDepartments, setAllDepartments] = useState([]);
   const [allYearLevels, setAllYearLevels] = useState([]);
+  const [dropdownsLoaded, setDropdownsLoaded] = useState(false);
 
-  
+  // Load departments and year levels first
   useEffect(() => {
     console.log("🔄 Starting: Loading all departments/year levels");
     const loadFilterOptions = async () => {
       try {
         const deptData = await fetchDepartments();
         const yearData = await fetchYearLevels();
+        
+        // Store the complete lists
         setAllDepartments(deptData.departments || []);
         setAllYearLevels(yearData || []);
+        setDropdownsLoaded(true);
         console.log("📦 Stored all departments/year levels");
       } catch (error) {
         console.error("❌ Failed to load dropdown options:", error.message);
@@ -46,9 +50,10 @@ const BlockList = () => {
     loadFilterOptions();
   }, []);
 
-  
+  // Load event data after dropdowns are loaded
   useEffect(() => {
-    if (!eventId) return;
+    if (!eventId || !dropdownsLoaded) return;
+    
     console.log(`🔄 Starting: Loading data for event ID ${eventId}`);
     const loadEventData = async () => {
       try {
@@ -57,10 +62,15 @@ const BlockList = () => {
         console.log("📡 Sending initial request for event:", event_id);
         const blocksData = await fetchBlocksOfEvents(event_id, "", "");
         console.log("✅ Fetched Blocks Data:", JSON.stringify(blocksData, null, 2));
+        
         if (!blocksData?.success) {
           throw new Error("Backend returned success: false");
         }
+        
+        // Set event title
         setEventTitle(blocksData?.data?.event_title || "Event Title Not Found");
+        
+        // Process blocks data
         let mappedBlocks = [];
         if (blocksData?.data?.block_details?.length > 0) {
           mappedBlocks = blocksData.data.block_details.map((block) => ({
@@ -72,6 +82,8 @@ const BlockList = () => {
         }
         setAllBlocks(mappedBlocks);
         setBlocks(mappedBlocks);
+        
+        // Process department dropdown options
         const deptIDs = blocksData?.data?.department_ids || [];
         const deptOptions = allDepartments
           .filter((dept) => deptIDs.includes(dept.department_id))
@@ -79,7 +91,11 @@ const BlockList = () => {
             label: dept.department_code,
             value: String(dept.department_id),
           }));
+          
         setDepartments([{ label: "All Departments", value: "" }, ...deptOptions]);
+        console.log("🏢 Department options set:", deptOptions.length);
+        
+        // Process year level dropdown options
         const yearIDs = blocksData?.data?.yearlevel_ids || [];
         const yearOptions = allYearLevels
           .filter((year) => yearIDs.includes(year.year_level_id))
@@ -87,7 +103,10 @@ const BlockList = () => {
             label: year.year_level_name,
             value: String(year.year_level_id),
           }));
+          
         setYearLevels([{ label: "All Year Levels", value: "" }, ...yearOptions]);
+        console.log("📚 Year level options set:", yearOptions.length);
+        
       } catch (error) {
         console.error("❌ Failed to load event data:", error.message);
         setAllBlocks([]);
@@ -96,19 +115,23 @@ const BlockList = () => {
         setLoading(false);
       }
     };
+    
     loadEventData();
-  }, [eventId]);
+  }, [eventId, dropdownsLoaded, allDepartments, allYearLevels]);
 
-  
+  // Handle filter changes
   useEffect(() => {
     if (!eventId) return;
     
+    // Skip the initial render when filters haven't been selected yet
     if (!selectedDepartment && !selectedYearLevel) return;
+    
     console.log("🔄 Triggered refetch due to filter change");
     console.log("🔍 Current Filters:", {
       department_id: selectedDepartment,
       year_level_id: selectedYearLevel,
     });
+    
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -118,6 +141,7 @@ const BlockList = () => {
           selectedDepartment || undefined,
           selectedYearLevel || undefined
         );
+        
         let mappedBlocks = [];
         if (blocksData?.data?.block_details?.length > 0) {
           mappedBlocks = blocksData.data.block_details.map((block) => ({
@@ -127,6 +151,7 @@ const BlockList = () => {
               : block.block_name,
           }));
         }
+        
         setAllBlocks(mappedBlocks);
         setBlocks(mappedBlocks);
       } catch (error) {
@@ -137,26 +162,30 @@ const BlockList = () => {
         setLoading(false);
       }
     };
+    
     fetchData();
   }, [selectedDepartment, selectedYearLevel, eventId]);
 
-  
+  // Handle search filtering
   useEffect(() => {
     if (!searchQuery.trim()) {
       setBlocks(allBlocks); 
       return;
     }
+    
     const lowerQuery = searchQuery.toLowerCase();
     const filtered = allBlocks.filter((block) =>
       block.display_name.toLowerCase().includes(lowerQuery)
     );
+    
     setBlocks(filtered);
-  }, [searchQuery]);
+  }, [searchQuery, allBlocks]);
 
   return (
     <View style={globalStyles.secondaryContainer}>
       {/* Event Title */}
       <Text style={styles.eventTitle}>{eventTitle}</Text>
+      
       {/* Search Input */}
       <View style={styles.container}>
         <CustomSearch
@@ -168,6 +197,7 @@ const BlockList = () => {
           }}
         />
       </View>
+      
       {/* Filter Dropdowns */}
       <View style={styles.container}>
         <View style={styles.filterContainer}>
@@ -199,6 +229,7 @@ const BlockList = () => {
           </View>
         </View>
       </View>
+      
       {/* Scrollable Block List */}
       <ScrollView contentContainerStyle={styles.scrollviewContainer}>
         {loading ? (
@@ -228,21 +259,12 @@ const BlockList = () => {
           </View>
         )}
       </ScrollView>
+      
       {/* Print Button */}
       <View style={styles.buttonContainer}>
         <CustomButton title="Print" />
       </View>
     </View>
-  );
-};
-
-const BlockItem = ({ block }) => {
-  return (
-    <TouchableOpacity style={styles.blockContainer}>
-      <Text style={styles.blockText}>
-        {block.display_name || "Unnamed Block"}
-      </Text>
-    </TouchableOpacity>
   );
 };
 
