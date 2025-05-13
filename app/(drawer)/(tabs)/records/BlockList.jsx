@@ -173,11 +173,14 @@ const BlockList = () => {
       return;
     }
     
+    console.log("🔎 Filtering blocks with query:", searchQuery);
     const lowerQuery = searchQuery.toLowerCase();
-    const filtered = allBlocks.filter((block) =>
-      block.display_name.toLowerCase().includes(lowerQuery)
-    );
+    const filtered = allBlocks.filter((block) => {
+      const displayName = block.display_name || "";
+      return displayName.toLowerCase().includes(lowerQuery);
+    });
     
+    console.log(`🔢 Found ${filtered.length} matching blocks out of ${allBlocks.length}`);
     setBlocks(filtered);
   }, [searchQuery, allBlocks]);
 
@@ -190,8 +193,7 @@ const BlockList = () => {
       <View style={styles.container}>
         <CustomSearch
           placeholder="Search blocks..."
-          value={searchQuery}
-          onChangeText={(text) => {
+          onSearch={(text) => {
             console.log("🔍 Search changed to:", text);
             setSearchQuery(text);
           }}
