@@ -136,8 +136,6 @@ export const fetchBlocksOfEvents = async (
       body.search_query = searchQuery;
     }
 
-    console.log("📡 Sending to backend:", body);
-
     const response = await axios.post(
       `${API_URL}/api/attendance/events/blocks`,
       body
@@ -174,8 +172,6 @@ export const fetchStudentAttendanceByEventAndBlock = async (
     if (searchQuery.trim() !== "") {
       body.search_query = searchQuery;
     }
-
-    console.log("📡 Sending to backend:", body);
 
     const response = await axios.post(
       `${API_URL}/api/attendance/events/block/students`,
