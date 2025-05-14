@@ -1,12 +1,11 @@
 import { StyleSheet, Text, View, ScrollView, Image } from "react-native";
 import React, { useState, useEffect } from "react";
-import { getStoredRecords } from "../../../../database/queries/records";
-import { getStoredUser } from "../../../../database/queries";
 import theme from "../../../../constants/theme";
 import globalStyles from "../../../../constants/globalStyles";
 import images from "../../../../constants/images";
 import { useLocalSearchParams } from "expo-router";
 import moment from "moment";
+import { fetchStudentAttendanceByEventAndBlock } from "../../../../services/api/records";
 
 const SessionLog = ({ label, data }) => {
   return (
@@ -63,79 +62,63 @@ const Attendance = () => {
   const [attendanceDataList, setAttendanceDataList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [eventName, setEventName] = useState("");
-  const [userDetails, setUserDetails] = useState(null);
-  const { eventId } = useLocalSearchParams();
+  const [studentDetails, setStudentDetails] = useState(null);
+  const { eventId, blockId, studentId } = useLocalSearchParams();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const storedUser = await getStoredUser();
-        if (!storedUser || !storedUser.id_number) {
-          return;
-        }
-
-        const courseCode = storedUser.course_code || "N/A";
-        const blockName = storedUser.block_name || "N/A";
-        const courseBlockSet = new Set([courseCode, blockName]);
-        const courseBlock = Array.from(courseBlockSet).join(" ");
-
-        setUserDetails({
-          name: `${storedUser.first_name || "Unknown"} ${
-            storedUser.last_name || "Unknown"
-          }`,
-          id: storedUser.id_number || "N/A",
-          courseBlock: courseBlock,
-        });
-
-        const records = await getStoredRecords();
-        if (!records.success || !Array.isArray(records.data)) {
-          return;
-        }
-
-        const filteredRecords = records.data.filter(
-          (record) => record.event_id.toString() === eventId
+        const response = await fetchStudentAttendanceByEventAndBlock(
+          eventId,
+          blockId,
+          studentId
         );
 
-        if (filteredRecords.length === 0) {
-          return;
-        }
+        if (response.success) {
+          const { data } = response;
+          const student = data.students.find(
+            (student) => student.student_id === studentId
+          );
 
-        const eventName = filteredRecords[0].event_name;
-        setEventName(eventName);
+          if (student) {
+            setEventName(data.event_name);
+            setStudentDetails({
+              name: student.name,
+              id: student.student_id,
+              courseBlock: `${data.course_code} ${data.block_name}`,
+            });
 
-        const formattedData = filteredRecords.reduce((acc, record) => {
-          const date = record.event_date;
-          const formattedDate = moment(date).format("MMMM D, YYYY");
-          const timeInKey = record.am_in ? "present" : "absent";
-          const timeOutKey = record.am_out ? "present" : "absent";
+            const formattedData = student.dates.reduce((acc, dateData) => {
+              const formattedDate = moment(dateData.date).format(
+                "MMMM D, YYYY"
+              );
+              acc[formattedDate] = {
+                date: formattedDate,
+                morning: {
+                  timeIn: dateData.attendance.am_in ? "present" : "absent",
+                  timeOut: dateData.attendance.am_out ? "present" : "absent",
+                },
+                afternoon: {
+                  timeIn: dateData.attendance.pm_in ? "present" : "absent",
+                  timeOut: dateData.attendance.pm_out ? "present" : "absent",
+                },
+              };
+              return acc;
+            }, {});
 
-          if (!acc[formattedDate]) {
-            acc[formattedDate] = {
-              date: formattedDate,
-              morning: {
-                timeIn: timeInKey,
-                timeOut: timeOutKey,
-              },
-              afternoon: {
-                timeIn: record.pm_in ? "present" : "absent",
-                timeOut: record.pm_out ? "present" : "absent",
-              },
-            };
+            setAttendanceDataList(Object.values(formattedData));
           }
-          return acc;
-        }, {});
-
-        const attendanceDataList = Object.values(formattedData);
-        setAttendanceDataList(attendanceDataList);
+        }
       } catch (error) {
+        console.error("Error fetching attendance data:", error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [eventId]);
+  }, [eventId, blockId, studentId]);
 
   if (loading) {
     return (
@@ -159,11 +142,11 @@ const Attendance = () => {
         <Text style={styles.eventTitle}>{eventName}</Text>
         <View style={styles.infoContainer}>
           <Text style={styles.info}>
-            Name: {userDetails?.name || "Unknown"}
+            Name: {studentDetails?.name || "Unknown"}
           </Text>
-          <Text style={styles.info}>ID: {userDetails?.id || "N/A"}</Text>
+          <Text style={styles.info}>ID: {studentDetails?.id || "N/A"}</Text>
           <Text style={styles.info}>
-            Course/Block: {userDetails?.courseBlock || "N/A"}
+            Course/Block: {studentDetails?.courseBlock || "N/A"}
           </Text>
         </View>
         <ScrollView

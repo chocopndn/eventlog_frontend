@@ -13,12 +13,13 @@ import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import CustomButton from "../../../../components/CustomButton";
 import CustomDropdown from "../../../../components/CustomDropdown";
-import CustomSearch from "../../../../components/CustomSearch"; 
+import CustomSearch from "../../../../components/CustomSearch";
+import { router } from "expo-router";
 
 const BlockList = () => {
-  const { eventId } = useLocalSearchParams();
+  const { eventId, blockId } = useLocalSearchParams();
   const [eventTitle, setEventTitle] = useState("");
-  const [allBlocks, setAllBlocks] = useState([]); 
+  const [allBlocks, setAllBlocks] = useState([]);
   const [blocks, setBlocks] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [yearLevels, setYearLevels] = useState([]);
@@ -30,47 +31,35 @@ const BlockList = () => {
   const [allYearLevels, setAllYearLevels] = useState([]);
   const [dropdownsLoaded, setDropdownsLoaded] = useState(false);
 
-  // Load departments and year levels first
   useEffect(() => {
-    console.log("🔄 Starting: Loading all departments/year levels");
     const loadFilterOptions = async () => {
       try {
         const deptData = await fetchDepartments();
         const yearData = await fetchYearLevels();
-        
-        // Store the complete lists
+
         setAllDepartments(deptData.departments || []);
         setAllYearLevels(yearData || []);
         setDropdownsLoaded(true);
-        console.log("📦 Stored all departments/year levels");
-      } catch (error) {
-        console.error("❌ Failed to load dropdown options:", error.message);
-      }
+      } catch (error) {}
     };
     loadFilterOptions();
   }, []);
 
-  // Load event data after dropdowns are loaded
   useEffect(() => {
     if (!eventId || !dropdownsLoaded) return;
-    
-    console.log(`🔄 Starting: Loading data for event ID ${eventId}`);
+
     const loadEventData = async () => {
       try {
         setLoading(true);
         const event_id = Number(eventId);
-        console.log("📡 Sending initial request for event:", event_id);
         const blocksData = await fetchBlocksOfEvents(event_id, "", "");
-        console.log("✅ Fetched Blocks Data:", JSON.stringify(blocksData, null, 2));
-        
+
         if (!blocksData?.success) {
           throw new Error("Backend returned success: false");
         }
-        
-        // Set event title
-        setEventTitle(blocksData?.data?.event_title || "Event Title Not Found");
-        
-        // Process blocks data
+
+        setEventTitle(blocksData?.data?.event_title || "");
+
         let mappedBlocks = [];
         if (blocksData?.data?.block_details?.length > 0) {
           mappedBlocks = blocksData.data.block_details.map((block) => ({
@@ -82,8 +71,7 @@ const BlockList = () => {
         }
         setAllBlocks(mappedBlocks);
         setBlocks(mappedBlocks);
-        
-        // Process department dropdown options
+
         const deptIDs = blocksData?.data?.department_ids || [];
         const deptOptions = allDepartments
           .filter((dept) => deptIDs.includes(dept.department_id))
@@ -91,11 +79,12 @@ const BlockList = () => {
             label: dept.department_code,
             value: String(dept.department_id),
           }));
-          
-        setDepartments([{ label: "All Departments", value: "" }, ...deptOptions]);
-        console.log("🏢 Department options set:", deptOptions.length);
-        
-        // Process year level dropdown options
+
+        setDepartments([
+          { label: "All Departments", value: "" },
+          ...deptOptions,
+        ]);
+
         const yearIDs = blocksData?.data?.yearlevel_ids || [];
         const yearOptions = allYearLevels
           .filter((year) => yearIDs.includes(year.year_level_id))
@@ -103,35 +92,26 @@ const BlockList = () => {
             label: year.year_level_name,
             value: String(year.year_level_id),
           }));
-          
-        setYearLevels([{ label: "All Year Levels", value: "" }, ...yearOptions]);
-        console.log("📚 Year level options set:", yearOptions.length);
-        
+
+        setYearLevels([
+          { label: "All Year Levels", value: "" },
+          ...yearOptions,
+        ]);
       } catch (error) {
-        console.error("❌ Failed to load event data:", error.message);
         setAllBlocks([]);
         setBlocks([]);
       } finally {
         setLoading(false);
       }
     };
-    
+
     loadEventData();
   }, [eventId, dropdownsLoaded, allDepartments, allYearLevels]);
 
-  // Handle filter changes
   useEffect(() => {
     if (!eventId) return;
-    
-    // Skip the initial render when filters haven't been selected yet
     if (!selectedDepartment && !selectedYearLevel) return;
-    
-    console.log("🔄 Triggered refetch due to filter change");
-    console.log("🔍 Current Filters:", {
-      department_id: selectedDepartment,
-      year_level_id: selectedYearLevel,
-    });
-    
+
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -141,7 +121,7 @@ const BlockList = () => {
           selectedDepartment || undefined,
           selectedYearLevel || undefined
         );
-        
+
         let mappedBlocks = [];
         if (blocksData?.data?.block_details?.length > 0) {
           mappedBlocks = blocksData.data.block_details.map((block) => ({
@@ -151,56 +131,46 @@ const BlockList = () => {
               : block.block_name,
           }));
         }
-        
+
         setAllBlocks(mappedBlocks);
         setBlocks(mappedBlocks);
       } catch (error) {
-        console.error("❌ Failed to fetch filtered blocks:", error.message);
         setAllBlocks([]);
         setBlocks([]);
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchData();
   }, [selectedDepartment, selectedYearLevel, eventId]);
 
-  // Handle search filtering
   useEffect(() => {
     if (!searchQuery.trim()) {
-      setBlocks(allBlocks); 
+      setBlocks(allBlocks);
       return;
     }
-    
-    console.log("🔎 Filtering blocks with query:", searchQuery);
+
     const lowerQuery = searchQuery.toLowerCase();
     const filtered = allBlocks.filter((block) => {
       const displayName = block.display_name || "";
       return displayName.toLowerCase().includes(lowerQuery);
     });
-    
-    console.log(`🔢 Found ${filtered.length} matching blocks out of ${allBlocks.length}`);
+
     setBlocks(filtered);
   }, [searchQuery, allBlocks]);
 
   return (
     <View style={globalStyles.secondaryContainer}>
-      {/* Event Title */}
       <Text style={styles.eventTitle}>{eventTitle}</Text>
-      
-      {/* Search Input */}
+
       <View style={styles.container}>
         <CustomSearch
           placeholder="Search blocks..."
-          onSearch={(text) => {
-            console.log("🔍 Search changed to:", text);
-            setSearchQuery(text);
-          }}
+          onSearch={(text) => setSearchQuery(text)}
         />
       </View>
-      
-      {/* Filter Dropdowns */}
+
       <View style={styles.container}>
         <View style={styles.filterContainer}>
           <View style={{ width: "48%" }}>
@@ -210,10 +180,7 @@ const BlockList = () => {
               labelField="label"
               valueField="value"
               value={selectedDepartment}
-              onSelect={(item) => {
-                console.log("🔽 Selected Department changed to", item.value);
-                setSelectedDepartment(item.value);
-              }}
+              onSelect={(item) => setSelectedDepartment(item.value)}
             />
           </View>
           <View style={{ width: "48%" }}>
@@ -223,16 +190,12 @@ const BlockList = () => {
               labelField="label"
               valueField="value"
               value={selectedYearLevel}
-              onSelect={(item) => {
-                console.log("🔽 Selected Year Level changed to", item.value);
-                setSelectedYearLevel(item.value);
-              }}
+              onSelect={(item) => setSelectedYearLevel(item.value)}
             />
           </View>
         </View>
       </View>
-      
-      {/* Scrollable Block List */}
+
       <ScrollView contentContainerStyle={styles.scrollviewContainer}>
         {loading ? (
           <Text style={styles.noDataText}>Loading blocks...</Text>
@@ -251,7 +214,18 @@ const BlockList = () => {
                     : styles.multiBlockContainer
                 }
               >
-                <TouchableOpacity style={styles.blockContainer}>
+                <TouchableOpacity
+                  style={styles.blockContainer}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/records/StudentsList",
+                      params: {
+                        eventId: eventId,
+                        blockId: block.block_id,
+                      },
+                    })
+                  }
+                >
                   <Text style={styles.blockText}>
                     {block.display_name || "Unnamed Block"}
                   </Text>
@@ -261,8 +235,7 @@ const BlockList = () => {
           </View>
         )}
       </ScrollView>
-      
-      {/* Print Button */}
+
       <View style={styles.buttonContainer}>
         <CustomButton title="Print" />
       </View>

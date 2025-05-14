@@ -57,6 +57,15 @@ const RecordsLayout = () => {
           headerTintColor: theme.colors.secondary,
         }}
       />
+      <Stack.Screen
+        name="StudentsList"
+        options={{
+          headerTitle: "List of Students",
+          headerShown: showHeader,
+          headerStyle: { backgroundColor: theme.colors.primary },
+          headerTintColor: theme.colors.secondary,
+        }}
+      />
     </Stack>
   );
 };
