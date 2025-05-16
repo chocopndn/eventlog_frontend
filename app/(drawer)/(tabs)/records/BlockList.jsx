@@ -8,7 +8,6 @@ import {
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { fetchBlocksOfEvents } from "../../../../services/api/records";
-import { fetchDepartments, fetchYearLevels } from "../../../../services/api";
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import CustomButton from "../../../../components/CustomButton";
@@ -27,26 +26,11 @@ const BlockList = () => {
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedYearLevel, setSelectedYearLevel] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [allDepartments, setAllDepartments] = useState([]);
-  const [allYearLevels, setAllYearLevels] = useState([]);
-  const [dropdownsLoaded, setDropdownsLoaded] = useState(false);
 
   useEffect(() => {
-    const loadFilterOptions = async () => {
-      try {
-        const deptData = await fetchDepartments();
-        const yearData = await fetchYearLevels();
-
-        setAllDepartments(deptData.departments || []);
-        setAllYearLevels(yearData || []);
-        setDropdownsLoaded(true);
-      } catch (error) {}
-    };
-    loadFilterOptions();
-  }, []);
-
-  useEffect(() => {
-    if (!eventId || !dropdownsLoaded) return;
+    if (!eventId) {
+      return;
+    }
 
     const loadEventData = async () => {
       try {
@@ -58,40 +42,40 @@ const BlockList = () => {
           throw new Error("Backend returned success: false");
         }
 
-        setEventTitle(blocksData?.data?.event_title || "");
+        setEventTitle(blocksData?.data?.event_title || "Event Title Not Found");
 
-        let mappedBlocks = [];
-        if (blocksData?.data?.block_details?.length > 0) {
-          mappedBlocks = blocksData.data.block_details.map((block) => ({
+        const mappedBlocks =
+          blocksData?.data?.blocks?.map((block) => ({
             ...block,
             display_name: block.course_code
               ? `${block.course_code} ${block.block_name}`
               : block.block_name,
-          }));
-        }
+          })) || [];
+
         setAllBlocks(mappedBlocks);
         setBlocks(mappedBlocks);
 
-        const deptIDs = blocksData?.data?.department_ids || [];
-        const deptOptions = allDepartments
-          .filter((dept) => deptIDs.includes(dept.department_id))
-          .map((dept) => ({
-            label: dept.department_code,
-            value: String(dept.department_id),
-          }));
+        const uniqueDepartments = [
+          ...new Set(mappedBlocks.map((block) => block.department_id)),
+        ];
+        const deptOptions = uniqueDepartments.map((deptId) => ({
+          label: mappedBlocks.find((block) => block.department_id === deptId)
+            ?.course_code,
+          value: String(deptId),
+        }));
 
         setDepartments([
           { label: "All Departments", value: "" },
           ...deptOptions,
         ]);
 
-        const yearIDs = blocksData?.data?.yearlevel_ids || [];
-        const yearOptions = allYearLevels
-          .filter((year) => yearIDs.includes(year.year_level_id))
-          .map((year) => ({
-            label: year.year_level_name,
-            value: String(year.year_level_id),
-          }));
+        const uniqueYearLevels = [
+          ...new Set(mappedBlocks.map((block) => block.year_level_id)),
+        ];
+        const yearOptions = uniqueYearLevels.map((yearId) => ({
+          label: `Year ${yearId}`,
+          value: String(yearId),
+        }));
 
         setYearLevels([
           { label: "All Year Levels", value: "" },
@@ -106,11 +90,16 @@ const BlockList = () => {
     };
 
     loadEventData();
-  }, [eventId, dropdownsLoaded, allDepartments, allYearLevels]);
+  }, [eventId]);
 
   useEffect(() => {
-    if (!eventId) return;
-    if (!selectedDepartment && !selectedYearLevel) return;
+    if (!eventId) {
+      return;
+    }
+
+    if (!selectedDepartment && !selectedYearLevel) {
+      return;
+    }
 
     const fetchData = async () => {
       try {
@@ -123,8 +112,8 @@ const BlockList = () => {
         );
 
         let mappedBlocks = [];
-        if (blocksData?.data?.block_details?.length > 0) {
-          mappedBlocks = blocksData.data.block_details.map((block) => ({
+        if (blocksData?.data?.blocks?.length > 0) {
+          mappedBlocks = blocksData.data.blocks.map((block) => ({
             ...block,
             display_name: block.course_code
               ? `${block.course_code} ${block.block_name}`
@@ -167,7 +156,9 @@ const BlockList = () => {
       <View style={styles.container}>
         <CustomSearch
           placeholder="Search blocks..."
-          onSearch={(text) => setSearchQuery(text)}
+          onSearch={(text) => {
+            setSearchQuery(text);
+          }}
         />
       </View>
 
@@ -180,7 +171,9 @@ const BlockList = () => {
               labelField="label"
               valueField="value"
               value={selectedDepartment}
-              onSelect={(item) => setSelectedDepartment(item.value)}
+              onSelect={(item) => {
+                setSelectedDepartment(item.value);
+              }}
             />
           </View>
           <View style={{ width: "48%" }}>
@@ -190,7 +183,9 @@ const BlockList = () => {
               labelField="label"
               valueField="value"
               value={selectedYearLevel}
-              onSelect={(item) => setSelectedYearLevel(item.value)}
+              onSelect={(item) => {
+                setSelectedYearLevel(item.value);
+              }}
             />
           </View>
         </View>
@@ -216,15 +211,15 @@ const BlockList = () => {
               >
                 <TouchableOpacity
                   style={styles.blockContainer}
-                  onPress={() =>
+                  onPress={() => {
                     router.push({
                       pathname: "/records/StudentsList",
                       params: {
                         eventId: eventId,
                         blockId: block.block_id,
                       },
-                    })
-                  }
+                    });
+                  }}
                 >
                   <Text style={styles.blockText}>
                     {block.display_name || "Unnamed Block"}
@@ -237,7 +232,7 @@ const BlockList = () => {
       </ScrollView>
 
       <View style={styles.buttonContainer}>
-        <CustomButton title="Print" />
+        <CustomButton title="Print" onPress={() => {}} />
       </View>
     </View>
   );
