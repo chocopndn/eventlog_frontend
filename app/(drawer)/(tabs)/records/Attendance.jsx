@@ -5,58 +5,55 @@ import globalStyles from "../../../../constants/globalStyles";
 import images from "../../../../constants/images";
 import { useLocalSearchParams } from "expo-router";
 import moment from "moment";
+
 import { fetchStudentAttendanceByEventAndBlock } from "../../../../services/api/records";
 
-const SessionLog = ({ label, data }) => {
-  return (
-    <View style={styles.sessionContainer}>
-      <View style={styles.morningTextContainer}>
-        <Text style={styles.morningText}>{label}</Text>
-      </View>
-      <View style={styles.logContainer}>
-        <View style={styles.timeContainer}>
-          <View
-            style={[
-              styles.timeLabelContainer,
-              { borderRightWidth: 0, borderLeftWidth: 0 },
-            ]}
-          >
-            <Text style={styles.timeLabel}>Time In</Text>
-          </View>
-          <View style={[styles.imageContainer, { borderLeftWidth: 0 }]}>
-            <Image
-              source={
-                data?.timeIn === "present" ? images.present : images.absent
-              }
-              style={
-                data?.timeIn === "present"
-                  ? styles.presentIcon
-                  : styles.absentIcon
-              }
-            />
-          </View>
+const SessionLog = ({ label, data }) => (
+  <View style={styles.sessionContainer}>
+    <View style={styles.morningTextContainer}>
+      <Text style={styles.morningText}>{label}</Text>
+    </View>
+    <View style={styles.logContainer}>
+      <View style={styles.timeContainer}>
+        <View
+          style={[
+            styles.timeLabelContainer,
+            { borderRightWidth: 0, borderLeftWidth: 0 },
+          ]}
+        >
+          <Text style={styles.timeLabel}>Time In</Text>
         </View>
-        <View style={styles.timeContainer}>
-          <View style={[styles.timeLabelContainer, { borderRightWidth: 0 }]}>
-            <Text style={styles.timeLabel}>Time Out</Text>
-          </View>
-          <View style={[styles.imageContainer, { borderRightWidth: 0 }]}>
-            <Image
-              source={
-                data?.timeOut === "present" ? images.present : images.absent
-              }
-              style={
-                data?.timeOut === "present"
-                  ? styles.presentIcon
-                  : styles.absentIcon
-              }
-            />
-          </View>
+        <View style={[styles.imageContainer, { borderLeftWidth: 0 }]}>
+          <Image
+            source={data?.timeIn === "present" ? images.present : images.absent}
+            style={
+              data?.timeIn === "present"
+                ? styles.presentIcon
+                : styles.absentIcon
+            }
+          />
+        </View>
+      </View>
+      <View style={styles.timeContainer}>
+        <View style={[styles.timeLabelContainer, { borderRightWidth: 0 }]}>
+          <Text style={styles.timeLabel}>Time Out</Text>
+        </View>
+        <View style={[styles.imageContainer, { borderRightWidth: 0 }]}>
+          <Image
+            source={
+              data?.timeOut === "present" ? images.present : images.absent
+            }
+            style={
+              data?.timeOut === "present"
+                ? styles.presentIcon
+                : styles.absentIcon
+            }
+          />
         </View>
       </View>
     </View>
-  );
-};
+  </View>
+);
 
 const Attendance = () => {
   const [attendanceDataList, setAttendanceDataList] = useState([]);
@@ -108,16 +105,30 @@ const Attendance = () => {
             }, {});
 
             setAttendanceDataList(Object.values(formattedData));
+          } else {
+            setEventName("");
+            setStudentDetails(null);
+            setAttendanceDataList([]);
           }
+        } else {
+          setEventName("");
+          setStudentDetails(null);
+          setAttendanceDataList([]);
         }
-      } catch (error) {
-        console.error("Error fetching attendance data:", error);
+      } catch {
+        setEventName("");
+        setStudentDetails(null);
+        setAttendanceDataList([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    if (eventId && blockId && studentId) {
+      fetchData();
+    } else {
+      setLoading(false);
+    }
   }, [eventId, blockId, studentId]);
 
   if (loading) {
@@ -128,7 +139,7 @@ const Attendance = () => {
     );
   }
 
-  if (attendanceDataList.length === 0) {
+  if (!eventName || !studentDetails || attendanceDataList.length === 0) {
     return (
       <View style={globalStyles.secondaryContainer}>
         <Text style={styles.noEventsText}>No attendance data available.</Text>
@@ -278,14 +289,14 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: theme.fontSizes.large,
-    fontFamily: "SquadaOne",
+    fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
     textAlign: "center",
     marginTop: theme.spacing.large,
   },
   noEventsText: {
     fontSize: theme.fontSizes.medium,
-    fontFamily: "SquadaOne",
+    fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.secondary,
     textAlign: "center",
     marginTop: theme.spacing.medium,
@@ -296,7 +307,7 @@ const styles = StyleSheet.create({
   },
   info: {
     fontSize: theme.fontSizes.large,
-    fontFamily: "SquadaOne",
+    fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
     marginTop: theme.spacing.xsmall,
   },
