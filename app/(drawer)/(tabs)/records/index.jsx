@@ -183,7 +183,9 @@ const Records = () => {
                   <Text style={styles.eventDate}>
                     {Array.isArray(event.event_dates) &&
                     event.event_dates.length > 0
-                      ? event.event_dates.join(", ")
+                      ? event.event_dates
+                          .map((date) => moment(date).format("MMM DD, YYYY"))
+                          .join(", ")
                       : "No dates available"}
                   </Text>
                 </TouchableOpacity>
@@ -205,7 +207,9 @@ const Records = () => {
                   <Text style={styles.eventDate}>
                     {Array.isArray(event.event_dates) &&
                     event.event_dates.length > 0
-                      ? event.event_dates.join(", ")
+                      ? event.event_dates
+                          .map((date) => moment(date).format("MMM DD, YYYY"))
+                          .join(", ")
                       : "No dates available"}
                   </Text>
                 </TouchableOpacity>
@@ -251,7 +255,9 @@ const Records = () => {
                   <Text style={styles.eventDate}>
                     {Array.isArray(event.event_dates) &&
                     event.event_dates.length > 0
-                      ? event.event_dates.join(", ")
+                      ? event.event_dates
+                          .map((date) => moment(date).format("MMM DD, YYYY"))
+                          .join(", ")
                       : "No dates available"}
                   </Text>
                 </TouchableOpacity>
@@ -273,7 +279,9 @@ const Records = () => {
                   <Text style={styles.eventDate}>
                     {Array.isArray(event.event_dates) &&
                     event.event_dates.length > 0
-                      ? event.event_dates.join(", ")
+                      ? event.event_dates
+                          .map((date) => moment(date).format("MMM DD, YYYY"))
+                          .join(", ")
                       : "No dates available"}
                   </Text>
                 </TouchableOpacity>
@@ -340,15 +348,11 @@ const styles = StyleSheet.create({
   noEventsText: {
     fontSize: theme.fontSizes.medium,
     fontFamily: "SquadaOne",
-    color: theme.colors.secondary,
-    textAlign: "center",
-    marginTop: theme.spacing.medium,
+    color: theme.colors.primary,
   },
   loadingText: {
     fontSize: theme.fontSizes.large,
     fontFamily: "SquadaOne",
     color: theme.colors.primary,
-    textAlign: "center",
-    marginTop: theme.spacing.large,
   },
 });
