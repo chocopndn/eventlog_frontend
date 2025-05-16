@@ -14,6 +14,8 @@ import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import images from "../../../../constants/images";
 
+import CustomSearch from "../../../../components/CustomSearch";
+
 const StudentsList = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,14 +33,14 @@ const StudentsList = () => {
 
         if (response.success) {
           const { data } = response;
-          setStudents(data.students || []);
+          const studentList = data.students || [];
+          setStudents(studentList);
         } else {
           setError(new Error(response.message));
         }
-
-        setLoading(false);
       } catch (error) {
         setError(error);
+      } finally {
         setLoading(false);
       }
     };
@@ -64,13 +66,34 @@ const StudentsList = () => {
   if (loading) {
     return (
       <View style={globalStyles.secondaryContainer}>
-        <Text>Loading...</Text>
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={globalStyles.secondaryContainer}>
+        <Text style={styles.errorText}>Error: {error.message}</Text>
+      </View>
+    );
+  }
+
+  if (students.length === 0) {
+    return (
+      <View style={globalStyles.secondaryContainer}>
+        <Text style={styles.noStudentsText}>
+          No students found for this block.
+        </Text>
       </View>
     );
   }
 
   return (
     <View style={globalStyles.secondaryContainer}>
+      <View style={{ width: "100%", paddingHorizontal: theme.spacing.medium }}>
+        <CustomSearch />
+      </View>
       <ScrollView style={{ width: "100%" }}>
         {students.map((student) => (
           <TouchableOpacity
@@ -103,6 +126,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.medium,
     borderColor: theme.colors.primary,
     alignItems: "center",
+    marginTop: theme.spacing.medium,
+    marginHorizontal: theme.spacing.medium,
   },
   studentName: {
     fontFamily: theme.fontFamily.SquadaOne,
@@ -121,5 +146,26 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     justifyContent: "center",
+  },
+  loadingText: {
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.large,
+    color: theme.colors.primary,
+    textAlign: "center",
+    marginTop: theme.spacing.large,
+  },
+  errorText: {
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.medium,
+    color: theme.colors.error,
+    textAlign: "center",
+    marginTop: theme.spacing.medium,
+  },
+  noStudentsText: {
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.large,
+    color: theme.colors.secondary,
+    textAlign: "center",
+    marginTop: theme.spacing.large,
   },
 });
