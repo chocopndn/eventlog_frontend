@@ -147,7 +147,6 @@ const Records = () => {
 
   return (
     <View style={globalStyles.secondaryContainer}>
-      {/* Always show search bar */}
       <View style={styles.searchContainer}>
         <CustomSearch
           placeholder="Search records"
