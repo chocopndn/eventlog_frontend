@@ -27,6 +27,8 @@ const Records = () => {
   const [filteredPastEvents, setFilteredPastEvents] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [originalOngoing, setOriginalOngoing] = useState([]);
+  const [originalPast, setOriginalPast] = useState([]);
 
   useEffect(() => {
     const fetchRoleId = async () => {
@@ -45,45 +47,25 @@ const Records = () => {
         setLoading(true);
         let ongoingEvents = [];
         let pastEvents = [];
+
         if (roleId === 1 || roleId === 2) {
           const storedUser = await getStoredUser();
           if (!storedUser || !storedUser.id_number) return;
           const idNumber = storedUser.id_number;
+
           const ongoingApiResponse = await fetchUserOngoingEvents(idNumber);
           const pastApiResponse = await fetchUserPastEvents(idNumber);
+
           ongoingEvents = ongoingApiResponse?.events || [];
           pastEvents = pastApiResponse?.events || [];
         } else if (roleId === 3) {
           const ongoingApiResponse = await fetchAllOngoingEvents();
           const pastApiResponse = await fetchAllPastEvents();
+
           ongoingEvents = ongoingApiResponse?.events || [];
           pastEvents = pastApiResponse?.events || [];
         }
-        const flattenedRecords = [...ongoingEvents, ...pastEvents].flatMap(
-          (record) => {
-            const { event_id, event_name, attendance } = record;
-            if (
-              !event_id ||
-              !event_name ||
-              !attendance ||
-              !Array.isArray(attendance)
-            ) {
-              return [];
-            }
-            const attendanceMap = attendance[0];
-            if (!attendanceMap || typeof attendanceMap !== "object") {
-              return [];
-            }
-            return Object.entries(attendanceMap).map(([event_date, times]) => ({
-              event_id,
-              event_name,
-              attendance: [{ [event_date]: times }],
-            }));
-          }
-        );
-        try {
-          await saveRecords(flattenedRecords);
-        } catch (error) {}
+
         const groupedEvents = {};
         [...ongoingEvents, ...pastEvents].forEach((record) => {
           const { event_id, event_name, event_date } = record;
@@ -96,6 +78,7 @@ const Records = () => {
           }
           groupedEvents[event_id].event_dates.push(event_date);
         });
+
         const allEvents = [
           ...Object.values(groupedEvents).filter((event) =>
             ongoingEvents.some((e) => e.event_id === event.event_id)
@@ -104,22 +87,25 @@ const Records = () => {
             pastEvents.some((e) => e.event_id === event.event_id)
           ),
         ];
+
+        const ongoingList = Object.values(groupedEvents).filter((event) =>
+          ongoingEvents.some((e) => e.event_id === event.event_id)
+        );
+        const pastList = Object.values(groupedEvents).filter((event) =>
+          pastEvents.some((e) => e.event_id === event.event_id)
+        );
+
         setAllEvents(allEvents);
-        setFilteredOngoingEvents(
-          Object.values(groupedEvents).filter((event) =>
-            ongoingEvents.some((e) => e.event_id === event.event_id)
-          )
-        );
-        setFilteredPastEvents(
-          Object.values(groupedEvents).filter((event) =>
-            pastEvents.some((e) => e.event_id === event.event_id)
-          )
-        );
+        setOriginalOngoing(ongoingList);
+        setOriginalPast(pastList);
+        setFilteredOngoingEvents(ongoingList);
+        setFilteredPastEvents(pastList);
       } catch (error) {
       } finally {
         setLoading(false);
       }
     };
+
     if (roleId !== null) {
       fetchData();
     }
@@ -127,17 +113,24 @@ const Records = () => {
 
   useEffect(() => {
     try {
-      const filteredEvents = allEvents.filter((event) =>
-        event.event_name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      const ongoing = filteredEvents.filter((event) =>
-        filteredOngoingEvents.some((e) => e.event_id === event.event_id)
-      );
-      const past = filteredEvents.filter((event) =>
-        filteredPastEvents.some((e) => e.event_id === event.event_id)
-      );
-      setFilteredOngoingEvents(ongoing);
-      setFilteredPastEvents(past);
+      if (!searchTerm.trim()) {
+        setFilteredOngoingEvents(originalOngoing);
+        setFilteredPastEvents(originalPast);
+      } else {
+        const filteredEvents = allEvents.filter((event) =>
+          event.event_name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setFilteredOngoingEvents(
+          filteredEvents.filter((event) =>
+            originalOngoing.some((e) => e.event_id === event.event_id)
+          )
+        );
+        setFilteredPastEvents(
+          filteredEvents.filter((event) =>
+            originalPast.some((e) => e.event_id === event.event_id)
+          )
+        );
+      }
     } catch (error) {}
   }, [searchTerm]);
 
@@ -152,151 +145,141 @@ const Records = () => {
   const hasEvents =
     filteredOngoingEvents.length > 0 || filteredPastEvents.length > 0;
 
-  if (roleId === 1 || roleId === 2) {
-    return (
-      <View style={globalStyles.secondaryContainer}>
-        {hasEvents && (
-          <View style={styles.searchContainer}>
-            <CustomSearch
-              placeholder="Search records"
-              onSearch={(text) => setSearchTerm(text)}
-            />
+  return (
+    <View style={globalStyles.secondaryContainer}>
+      {/* Always show search bar */}
+      <View style={styles.searchContainer}>
+        <CustomSearch
+          placeholder="Search records"
+          onSearch={(text) => setSearchTerm(text)}
+        />
+      </View>
+
+      <ScrollView
+        style={{ flex: 1, width: "100%", marginBottom: 20 }}
+        contentContainerStyle={styles.scrollview}
+        showsVerticalScrollIndicator={false}
+      >
+        {roleId === 1 || roleId === 2 ? (
+          <>
+            {filteredOngoingEvents.length > 0 && (
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Ongoing Events</Text>
+                {filteredOngoingEvents.map((event, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.eventContainer}
+                    onPress={() =>
+                      router.push(
+                        `/records/Attendance?eventId=${event.event_id}`
+                      )
+                    }
+                  >
+                    <Text style={styles.eventTitle}>{event.event_name}</Text>
+                    <Text style={styles.eventDate}>
+                      {Array.isArray(event.event_dates) &&
+                      event.event_dates.length > 0
+                        ? event.event_dates
+                            .map((date) => moment(date).format("MMM DD, YYYY"))
+                            .join(", ")
+                        : "No dates available"}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+            {filteredPastEvents.length > 0 && (
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Past Events</Text>
+                {filteredPastEvents.map((event, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.eventContainer}
+                    onPress={() =>
+                      router.push(
+                        `/records/Attendance?eventId=${event.event_id}`
+                      )
+                    }
+                  >
+                    <Text style={styles.eventTitle}>{event.event_name}</Text>
+                    <Text style={styles.eventDate}>
+                      {Array.isArray(event.event_dates) &&
+                      event.event_dates.length > 0
+                        ? event.event_dates
+                            .map((date) => moment(date).format("MMM DD, YYYY"))
+                            .join(", ")
+                        : "No dates available"}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </>
+        ) : roleId === 3 ? (
+          <>
+            {filteredOngoingEvents.length > 0 && (
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Ongoing Events</Text>
+                {filteredOngoingEvents.map((event, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.eventContainer}
+                    onPress={() =>
+                      router.push(
+                        `/records/BlockList?eventId=${event.event_id}`
+                      )
+                    }
+                  >
+                    <Text style={styles.eventTitle}>{event.event_name}</Text>
+                    <Text style={styles.eventDate}>
+                      {Array.isArray(event.event_dates) &&
+                      event.event_dates.length > 0
+                        ? event.event_dates
+                            .map((date) => moment(date).format("MMM DD, YYYY"))
+                            .join(", ")
+                        : "No dates available"}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+            {filteredPastEvents.length > 0 && (
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Past Events</Text>
+                {filteredPastEvents.map((event, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.eventContainer}
+                    onPress={() =>
+                      router.push(
+                        `/records/BlockList?eventId=${event.event_id}`
+                      )
+                    }
+                  >
+                    <Text style={styles.eventTitle}>{event.event_name}</Text>
+                    <Text style={styles.eventDate}>
+                      {Array.isArray(event.event_dates) &&
+                      event.event_dates.length > 0
+                        ? event.event_dates
+                            .map((date) => moment(date).format("MMM DD, YYYY"))
+                            .join(", ")
+                        : "No dates available"}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </>
+        ) : null}
+
+        {!hasEvents && (
+          <View style={styles.noEventsContainer}>
+            <Text style={styles.noEventsText}>No events available.</Text>
           </View>
         )}
-        <ScrollView
-          style={{ flex: 1, width: "100%", marginBottom: 20 }}
-          contentContainerStyle={styles.scrollview}
-          showsVerticalScrollIndicator={false}
-        >
-          {filteredOngoingEvents.length > 0 && (
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Ongoing Events</Text>
-              {filteredOngoingEvents.map((event, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.eventContainer}
-                  onPress={() =>
-                    router.push(`/records/Attendance?eventId=${event.event_id}`)
-                  }
-                >
-                  <Text style={styles.eventTitle}>{event.event_name}</Text>
-                  <Text style={styles.eventDate}>
-                    {Array.isArray(event.event_dates) &&
-                    event.event_dates.length > 0
-                      ? event.event_dates
-                          .map((date) => moment(date).format("MMM DD, YYYY"))
-                          .join(", ")
-                      : "No dates available"}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-          {filteredPastEvents.length > 0 && (
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Past Events</Text>
-              {filteredPastEvents.map((event, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.eventContainer}
-                  onPress={() =>
-                    router.push(`/records/Attendance?eventId=${event.event_id}`)
-                  }
-                >
-                  <Text style={styles.eventTitle}>{event.event_name}</Text>
-                  <Text style={styles.eventDate}>
-                    {Array.isArray(event.event_dates) &&
-                    event.event_dates.length > 0
-                      ? event.event_dates
-                          .map((date) => moment(date).format("MMM DD, YYYY"))
-                          .join(", ")
-                      : "No dates available"}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-          {!hasEvents && (
-            <View style={styles.noEventsContainer}>
-              <Text style={styles.noEventsText}>No events available.</Text>
-            </View>
-          )}
-        </ScrollView>
-      </View>
-    );
-  } else if (roleId === 3) {
-    return (
-      <View style={globalStyles.secondaryContainer}>
-        {hasEvents && (
-          <View style={styles.searchContainer}>
-            <CustomSearch
-              placeholder="Search records"
-              onSearch={(text) => setSearchTerm(text)}
-            />
-          </View>
-        )}
-        <ScrollView
-          style={{ flex: 1, width: "100%", marginBottom: 20 }}
-          contentContainerStyle={styles.scrollview}
-          showsVerticalScrollIndicator={false}
-        >
-          {filteredOngoingEvents.length > 0 && (
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Ongoing Events</Text>
-              {filteredOngoingEvents.map((event, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.eventContainer}
-                  onPress={() =>
-                    router.push(`/records/BlockList?eventId=${event.event_id}`)
-                  }
-                >
-                  <Text style={styles.eventTitle}>{event.event_name}</Text>
-                  <Text style={styles.eventDate}>
-                    {Array.isArray(event.event_dates) &&
-                    event.event_dates.length > 0
-                      ? event.event_dates
-                          .map((date) => moment(date).format("MMM DD, YYYY"))
-                          .join(", ")
-                      : "No dates available"}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-          {filteredPastEvents.length > 0 && (
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Past Events</Text>
-              {filteredPastEvents.map((event, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.eventContainer}
-                  onPress={() =>
-                    router.push(`/records/BlockList?eventId=${event.event_id}`)
-                  }
-                >
-                  <Text style={styles.eventTitle}>{event.event_name}</Text>
-                  <Text style={styles.eventDate}>
-                    {Array.isArray(event.event_dates) &&
-                    event.event_dates.length > 0
-                      ? event.event_dates
-                          .map((date) => moment(date).format("MMM DD, YYYY"))
-                          .join(", ")
-                      : "No dates available"}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-          {!hasEvents && (
-            <View style={styles.noEventsContainer}>
-              <Text style={styles.noEventsText}>No events available.</Text>
-            </View>
-          )}
-        </ScrollView>
-      </View>
-    );
-  }
+      </ScrollView>
+    </View>
+  );
 };
 
 export default Records;
