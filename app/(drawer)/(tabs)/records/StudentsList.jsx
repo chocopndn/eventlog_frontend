@@ -18,6 +18,7 @@ import CustomSearch from "../../../../components/CustomSearch";
 
 const StudentsList = () => {
   const [students, setStudents] = useState([]);
+  const [filteredStudents, setFilteredStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { eventId, blockId } = useLocalSearchParams();
@@ -35,6 +36,7 @@ const StudentsList = () => {
           const { data } = response;
           const studentList = data.students || [];
           setStudents(studentList);
+          setFilteredStudents(studentList);
         } else {
           setError(new Error(response.message));
         }
@@ -51,6 +53,22 @@ const StudentsList = () => {
       setLoading(false);
     }
   }, [eventId, blockId]);
+
+  const handleSearch = (text) => {
+    if (!text.trim()) {
+      setFilteredStudents(students);
+      return;
+    }
+
+    const searchTermLower = text.toLowerCase();
+    const filtered = students.filter(
+      (student) =>
+        student.name.toLowerCase().includes(searchTermLower) ||
+        student.student_id.toLowerCase().includes(searchTermLower)
+    );
+
+    setFilteredStudents(filtered);
+  };
 
   const handleStudentPress = (student) => {
     router.push({
@@ -92,24 +110,35 @@ const StudentsList = () => {
   return (
     <View style={globalStyles.secondaryContainer}>
       <View style={{ width: "100%", paddingHorizontal: theme.spacing.medium }}>
-        <CustomSearch />
+        <CustomSearch
+          onSearch={handleSearch}
+          placeholder="Search by name or ID"
+        />
       </View>
       <ScrollView style={{ width: "100%" }}>
-        {students.map((student) => (
-          <TouchableOpacity
-            key={student.student_id}
-            style={styles.studentContainer}
-            onPress={() => handleStudentPress(student)}
-          >
-            <View style={styles.studentInfo}>
-              <Text style={styles.studentName}>{student.name}</Text>
-              <Text style={styles.studentId}>{student.student_id}</Text>
-            </View>
-            <View style={styles.imageContainer}>
-              <Image source={images.arrowRight} style={styles.icon} />
-            </View>
-          </TouchableOpacity>
-        ))}
+        {filteredStudents.length === 0 ? (
+          <View style={styles.noResultsContainer}>
+            <Text style={styles.noResultsText}>
+              No students match your search
+            </Text>
+          </View>
+        ) : (
+          filteredStudents.map((student) => (
+            <TouchableOpacity
+              key={student.student_id}
+              style={styles.studentContainer}
+              onPress={() => handleStudentPress(student)}
+            >
+              <View style={styles.studentInfo}>
+                <Text style={styles.studentName}>{student.name}</Text>
+                <Text style={styles.studentId}>{student.student_id}</Text>
+              </View>
+              <View style={styles.imageContainer}>
+                <Image source={images.arrowRight} style={styles.icon} />
+              </View>
+            </TouchableOpacity>
+          ))
+        )}
       </ScrollView>
     </View>
   );
@@ -128,6 +157,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: theme.spacing.medium,
     marginHorizontal: theme.spacing.medium,
+  },
+  studentInfo: {
+    flex: 1,
   },
   studentName: {
     fontFamily: theme.fontFamily.SquadaOne,
@@ -167,5 +199,15 @@ const styles = StyleSheet.create({
     color: theme.colors.secondary,
     textAlign: "center",
     marginTop: theme.spacing.large,
+  },
+  noResultsContainer: {
+    alignItems: "center",
+    marginTop: theme.spacing.large,
+    padding: theme.spacing.medium,
+  },
+  noResultsText: {
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.large,
+    color: theme.colors.secondary,
   },
 });
