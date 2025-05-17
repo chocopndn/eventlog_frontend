@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
 } from "react-native";
 import React, { useState, useEffect } from "react";
-import { getRoleID } from "../../../../database/queries";
 import {
   fetchAllPastEvents,
   fetchAllOngoingEvents,
@@ -23,8 +22,8 @@ const Records = () => {
   const [filteredPastEvents, setFilteredPastEvents] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
-  const [originalOngoing, setOriginalOngoing] = useState([]);
-  const [originalPast, setOriginalPast] = useState([]);
+  const [initialOngoing, setInitialOngoing] = useState([]);
+  const [initialPast, setInitialPast] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,17 +52,17 @@ const Records = () => {
 
         const allEvents = Object.values(groupedEvents);
 
-        const ongoingList = Object.values(groupedEvents).filter((event) =>
+        const ongoingList = allEvents.filter((event) =>
           ongoingEvents.some((e) => e.event_id === event.event_id)
         );
 
-        const pastList = Object.values(groupedEvents).filter((event) =>
+        const pastList = allEvents.filter((event) =>
           pastEvents.some((e) => e.event_id === event.event_id)
         );
 
         setAllEvents(allEvents);
-        setOriginalOngoing(ongoingList);
-        setOriginalPast(pastList);
+        setInitialOngoing(ongoingList);
+        setInitialPast(pastList);
         setFilteredOngoingEvents(ongoingList);
         setFilteredPastEvents(pastList);
       } catch (error) {
@@ -79,8 +78,8 @@ const Records = () => {
   useEffect(() => {
     try {
       if (!searchTerm.trim()) {
-        setFilteredOngoingEvents(originalOngoing);
-        setFilteredPastEvents(originalPast);
+        setFilteredOngoingEvents(initialOngoing);
+        setFilteredPastEvents(initialPast);
       } else {
         const filteredEvents = allEvents.filter((event) =>
           event.event_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -88,12 +87,12 @@ const Records = () => {
 
         setFilteredOngoingEvents(
           filteredEvents.filter((event) =>
-            originalOngoing.some((e) => e.event_id === event.event_id)
+            initialOngoing.some((e) => e.event_id === event.event_id)
           )
         );
         setFilteredPastEvents(
           filteredEvents.filter((event) =>
-            originalPast.some((e) => e.event_id === event.event_id)
+            initialPast.some((e) => e.event_id === event.event_id)
           )
         );
       }

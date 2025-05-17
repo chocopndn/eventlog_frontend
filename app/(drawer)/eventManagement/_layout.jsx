@@ -5,7 +5,7 @@ import theme from "../../../constants/theme";
 const EventManagementLayout = () => {
   return (
     <Stack>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="index" options={{ headerShown: false, title: "" }} />
 
       <Stack.Screen
         name="events/index"
@@ -109,6 +109,39 @@ const EventManagementLayout = () => {
       />
       <Stack.Screen
         name="records/index"
+        options={{
+          headerShadowVisible: false,
+          headerTintColor: theme.colors.primary,
+          headerStyle: {
+            backgroundColor: theme.colors.secondary,
+          },
+          title: "",
+        }}
+      />
+      <Stack.Screen
+        name="records/BlockList"
+        options={{
+          headerShadowVisible: false,
+          headerTintColor: theme.colors.primary,
+          headerStyle: {
+            backgroundColor: theme.colors.secondary,
+          },
+          title: "",
+        }}
+      />
+      <Stack.Screen
+        name="records/StudentsList"
+        options={{
+          headerShadowVisible: false,
+          headerTintColor: theme.colors.primary,
+          headerStyle: {
+            backgroundColor: theme.colors.secondary,
+          },
+          title: "",
+        }}
+      />
+      <Stack.Screen
+        name="records/Attendance"
         options={{
           headerShadowVisible: false,
           headerTintColor: theme.colors.primary,
