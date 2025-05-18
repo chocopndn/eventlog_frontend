@@ -6,14 +6,14 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, router } from "expo-router";
 import { fetchBlocksOfEvents } from "../../../../services/api/records";
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import CustomButton from "../../../../components/CustomButton";
 import CustomDropdown from "../../../../components/CustomDropdown";
 import CustomSearch from "../../../../components/CustomSearch";
-import { router } from "expo-router";
+import PrintFilterModal from "../../../../components/PrintFilterModal";
 
 const BlockList = () => {
   const { eventId, blockId } = useLocalSearchParams();
@@ -26,6 +26,7 @@ const BlockList = () => {
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedYearLevel, setSelectedYearLevel] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showPrintModal, setShowPrintModal] = useState(false);
 
   useEffect(() => {
     if (!eventId) {
@@ -232,8 +233,19 @@ const BlockList = () => {
       </ScrollView>
 
       <View style={styles.buttonContainer}>
-        <CustomButton title="Print" onPress={() => {}} />
+        <CustomButton title="Print" onPress={() => setShowPrintModal(true)} />
       </View>
+
+      {showPrintModal && (
+        <PrintFilterModal
+          isVisible={showPrintModal}
+          onClose={() => setShowPrintModal(false)}
+          eventId={eventId}
+          showBlock={true}
+          showDepartment={true}
+          showYearLevel={true}
+        />
+      )}
     </View>
   );
 };
