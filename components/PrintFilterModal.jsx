@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Modal, View, Text, StyleSheet } from "react-native";
 import CustomButton from "../components/CustomButton";
 import theme from "../constants/theme";
@@ -7,33 +7,59 @@ import CustomDropdown from "../components/CustomDropdown";
 const PrintFilterModal = ({
   visible,
   onClose,
+  onPrint,
   showDepartment = false,
   showBlock = false,
   showYearLevel = false,
+  departments = [],
+  blocks = [],
+  yearLevels = [],
 }) => {
-  const showAny = showDepartment || showBlock || showYearLevel;
+  const [selectedDepartment, setSelectedDepartment] = useState(null);
+  const [selectedBlock, setSelectedBlock] = useState(null);
+  const [selectedYearLevel, setSelectedYearLevel] = useState(null);
 
-  const renderDepartment = showAny ? showDepartment : true;
+  const handlePrint = () => {
+    onPrint({
+      departmentId: selectedDepartment,
+      blockId: selectedBlock,
+      yearLevelId: selectedYearLevel,
+    });
+    onClose();
+  };
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
           <Text style={styles.title}>Print Options</Text>
+
           <View style={styles.dropdownContainer}>
-            {renderDepartment && (
+            {showDepartment && (
               <CustomDropdown
                 title="Department"
                 placeholder="Select Department"
+                data={departments}
+                selectedValue={selectedDepartment}
+                onValueChange={setSelectedDepartment}
               />
             )}
             {showBlock && (
-              <CustomDropdown title="Block" placeholder="Select Block" />
+              <CustomDropdown
+                title="Block"
+                placeholder="Select Block"
+                data={blocks}
+                selectedValue={selectedBlock}
+                onValueChange={setSelectedBlock}
+              />
             )}
             {showYearLevel && (
               <CustomDropdown
                 title="Year Level"
                 placeholder="Select Year Level"
+                data={yearLevels}
+                selectedValue={selectedYearLevel}
+                onValueChange={setSelectedYearLevel}
               />
             )}
           </View>
@@ -42,7 +68,7 @@ const PrintFilterModal = ({
             <View style={styles.buttonContainer}>
               <CustomButton
                 title="Print"
-                onPress={onClose}
+                onPress={handlePrint}
                 style={styles.customButton}
                 textStyle={styles.customButtonText}
               />
@@ -87,17 +113,15 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: theme.colors.primary,
   },
-  text: {
-    fontSize: 16,
-    marginBottom: 20,
-  },
   buttonWrapper: {
     width: "90%",
     flexDirection: "row",
     justifyContent: "space-between",
+    marginTop: 20,
   },
   dropdownContainer: {
     width: "90%",
+    gap: 12,
   },
   buttonContainer: {
     width: "45%",
