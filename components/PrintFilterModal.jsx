@@ -28,6 +28,9 @@ const PrintFilterModal = ({
     onClose();
   };
 
+  // Remove the "All Departments" item from the department dropdown
+  const filteredDepartments = departments.filter((dept) => dept.value !== "");
+
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.overlay}>
@@ -39,7 +42,7 @@ const PrintFilterModal = ({
               <CustomDropdown
                 title="Departments"
                 placeholder="Select Departments"
-                data={departments}
+                data={filteredDepartments}
                 value={selectedDepartments}
                 onSelect={setSelectedDepartments}
                 multiSelect
