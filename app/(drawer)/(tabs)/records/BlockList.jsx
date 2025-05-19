@@ -7,7 +7,10 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
-import { fetchBlocksOfEvents } from "../../../../services/api/records";
+import {
+  fetchBlocksOfEvents,
+  fetchAttendanceSummaryPerBlock,
+} from "../../../../services/api/records";
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import CustomButton from "../../../../components/CustomButton";
@@ -107,6 +110,18 @@ const BlockList = () => {
         ]);
 
         console.log("Component state updated");
+
+        // Log attendance summary for each block
+        for (const block of mappedBlocks) {
+          const attendanceSummary = await fetchAttendanceSummaryPerBlock(
+            event_id,
+            block.block_id
+          );
+          console.log(
+            `Attendance summary for block ${block.block_id}:`,
+            attendanceSummary
+          );
+        }
       } catch (error) {
         console.error("Error loading event data:", error);
         setAllBlocks([]);
@@ -215,6 +230,13 @@ const BlockList = () => {
 
     console.log("Filtered blocks for PDF:", filteredBlocks);
 
+    // Fetch attendance summary for each filtered block
+    const attendanceSummaries = await Promise.all(
+      filteredBlocks.map((block) =>
+        fetchAttendanceSummaryPerBlock(Number(eventId), block.block_id)
+      )
+    );
+
     const html = `
       <html>
         <head>
@@ -227,35 +249,40 @@ const BlockList = () => {
           </style>
         </head>
         <body>
-          <h1>${eventTitle} - Block List</h1>
-          <p><strong>Department:</strong> ${
-            departments.find((dept) => dept.value === filters?.departmentId)
-              ?.label || "All"
-          }</p>
-          <p><strong>Year Level:</strong> ${
-            yearLevels.find((year) => year.value === filters?.yearLevelId)
-              ?.label || "All"
-          }</p>
-          <p><strong>Block:</strong> ${
-            filteredBlocks.find(
-              (block) => block.block_id === parseInt(filters?.blockId)
-            )?.display_name || "All"
-          }</p>
-          <table>
-            <thead>
-              <tr><th>#</th><th>Block Name</th></tr>
-            </thead>
-            <tbody>
-              ${filteredBlocks
-                .map(
-                  (block, index) =>
-                    `<tr><td>${index + 1}</td><td>${
-                      block.display_name
-                    }</td></tr>`
-                )
-                .join("")}
-            </tbody>
-          </table>
+          <h1>${eventTitle}</h1>
+          ${filteredBlocks
+            .map((block, index) => {
+              const summary =
+                attendanceSummaries[index]?.data?.attendance_summary || [];
+              return `
+                <h2>${block.display_name}</h2>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Student ID</th>
+                      <th>Student Name</th>
+                      <th>Present Count</th>
+                      <th>Absent Count</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${summary
+                      .map(
+                        (student) => `
+                          <tr>
+                            <td>${student.student_id}</td>
+                            <td>${student.student_name}</td>
+                            <td>${student.present_count}</td>
+                            <td>${student.absent_count}</td>
+                          </tr>
+                        `
+                      )
+                      .join("")}
+                  </tbody>
+                </table>
+              `;
+            })
+            .join("")}
         </body>
       </html>
     `;
@@ -267,7 +294,7 @@ const BlockList = () => {
 
       console.log("PDF generated at:", uri);
 
-      const pdfName = `${eventTitle}_BlockList.pdf`;
+      const pdfName = `${eventTitle}.pdf`;
       const pdfPath = `${FileSystem.documentDirectory}${pdfName}`;
 
       await FileSystem.moveAsync({
