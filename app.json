@@ -65,7 +65,10 @@
       "url": "https://u.expo.dev/53a32d78-9ca7-4ea5-9a69-308a59bbceaa"
     },
     "ios": {
-      "bundleIdentifier": "com.chocopndn.eventlog"
+      "bundleIdentifier": "com.chocopndn.eventlog",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     }
   }
 }
