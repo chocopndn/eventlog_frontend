@@ -6,6 +6,7 @@ import images from "../../../../constants/images";
 import { useLocalSearchParams } from "expo-router";
 import moment from "moment";
 import { fetchStudentAttendanceByEventAndBlock } from "../../../../services/api/records";
+import CustomButton from "../../../../components/CustomButton";
 
 const SessionLog = ({ label, data }) => (
   <View style={styles.sessionContainer}>
@@ -153,52 +154,66 @@ const Attendance = () => {
     );
   }
 
+  // Dummy print handler — replace with real logic later
+  const handlePrint = () => {
+    alert("Printing functionality goes here!");
+  };
+
   return (
     <View style={globalStyles.secondaryContainer}>
       <View style={styles.attendanceWrapper}>
         <Text style={styles.eventTitle}>{eventName}</Text>
-        <ScrollView
-          contentContainerStyle={styles.scrollviewContainer}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.infoContainer}>
-            <Text style={styles.info}>
-              Name: {studentDetails?.name || "Unknown"}
-            </Text>
-            <Text style={styles.info}>ID: {studentDetails?.id || "N/A"}</Text>
-            <Text style={styles.info}>
-              Course/Block: {studentDetails?.courseBlock || "N/A"}
-            </Text>
-          </View>
-          {attendanceDataList.map((attendanceData, index) => (
-            <View key={index} style={styles.attendanceContainer}>
-              <View style={styles.dateContainer}>
-                <Text style={styles.date}>{attendanceData.date}</Text>
-              </View>
-              <View style={styles.sessionRow}>
-                <View
-                  style={{
-                    borderRightWidth: 3,
-                    borderColor: theme.colors.primary,
-                    flex: 1,
-                  }}
-                >
-                  <SessionLog label="Morning" data={attendanceData.morning} />
-                </View>
 
-                {/* Conditionally render afternoon section */}
-                {attendanceData.afternoon.hasPM && (
-                  <View style={{ flex: 1 }}>
-                    <SessionLog
-                      label="Afternoon"
-                      data={attendanceData.afternoon}
-                    />
-                  </View>
-                )}
-              </View>
+        {/* Main content container */}
+        <View style={styles.fullContainer}>
+          <ScrollView
+            contentContainerStyle={styles.scrollviewContainer}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.infoContainer}>
+              <Text style={styles.info}>
+                Name: {studentDetails?.name || "Unknown"}
+              </Text>
+              <Text style={styles.info}>ID: {studentDetails?.id || "N/A"}</Text>
+              <Text style={styles.info}>
+                Course/Block: {studentDetails?.courseBlock || "N/A"}
+              </Text>
             </View>
-          ))}
-        </ScrollView>
+            {attendanceDataList.map((attendanceData, index) => (
+              <View key={index} style={styles.attendanceContainer}>
+                <View style={styles.dateContainer}>
+                  <Text style={styles.date}>{attendanceData.date}</Text>
+                </View>
+                <View style={styles.sessionRow}>
+                  <View
+                    style={{
+                      borderRightWidth: 3,
+                      borderColor: theme.colors.primary,
+                      flex: 1,
+                    }}
+                  >
+                    <SessionLog label="Morning" data={attendanceData.morning} />
+                  </View>
+
+                  {/* Conditionally render afternoon section */}
+                  {attendanceData.afternoon.hasPM && (
+                    <View style={{ flex: 1 }}>
+                      <SessionLog
+                        label="Afternoon"
+                        data={attendanceData.afternoon}
+                      />
+                    </View>
+                  )}
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+
+          {/* Custom Button with paddingHorizontal */}
+          <View style={styles.buttonContainer}>
+            <CustomButton title="Print" onPress={handlePrint} />
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -207,6 +222,14 @@ const Attendance = () => {
 export default Attendance;
 
 const styles = StyleSheet.create({
+  fullContainer: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
+  buttonContainer: {
+    paddingHorizontal: theme.spacing.medium,
+    paddingVertical: theme.spacing.small,
+  },
   attendanceWrapper: {
     flex: 1,
     width: "100%",
@@ -222,6 +245,7 @@ const styles = StyleSheet.create({
   },
   scrollviewContainer: {
     paddingHorizontal: theme.spacing.medium,
+    paddingBottom: theme.spacing.large,
   },
   dateContainer: {
     justifyContent: "center",
