@@ -89,6 +89,11 @@ const Attendance = () => {
               const formattedDate = moment(dateData.date).format(
                 "MMMM D, YYYY"
               );
+
+              const hasPM =
+                Boolean(dateData.attendance.pm_in) ||
+                Boolean(dateData.attendance.pm_out);
+
               acc[formattedDate] = {
                 date: formattedDate,
                 morning: {
@@ -98,6 +103,7 @@ const Attendance = () => {
                 afternoon: {
                   timeIn: dateData.attendance.pm_in ? "present" : "absent",
                   timeOut: dateData.attendance.pm_out ? "present" : "absent",
+                  hasPM,
                 },
               };
               return acc;
@@ -114,7 +120,8 @@ const Attendance = () => {
           setStudentDetails(null);
           setAttendanceDataList([]);
         }
-      } catch {
+      } catch (error) {
+        console.error("Error fetching attendance data:", error);
         setEventName("");
         setStudentDetails(null);
         setAttendanceDataList([]);
@@ -178,12 +185,16 @@ const Attendance = () => {
                 >
                   <SessionLog label="Morning" data={attendanceData.morning} />
                 </View>
-                <View style={{ flex: 1 }}>
-                  <SessionLog
-                    label="Afternoon"
-                    data={attendanceData.afternoon}
-                  />
-                </View>
+
+                {/* Conditionally render afternoon section */}
+                {attendanceData.afternoon.hasPM && (
+                  <View style={{ flex: 1 }}>
+                    <SessionLog
+                      label="Afternoon"
+                      data={attendanceData.afternoon}
+                    />
+                  </View>
+                )}
               </View>
             </View>
           ))}
