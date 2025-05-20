@@ -5,7 +5,6 @@ import globalStyles from "../../../../constants/globalStyles";
 import images from "../../../../constants/images";
 import { useLocalSearchParams } from "expo-router";
 import moment from "moment";
-
 import { fetchStudentAttendanceByEventAndBlock } from "../../../../services/api/records";
 
 const SessionLog = ({ label, data }) => (
@@ -151,19 +150,19 @@ const Attendance = () => {
     <View style={globalStyles.secondaryContainer}>
       <View style={styles.attendanceWrapper}>
         <Text style={styles.eventTitle}>{eventName}</Text>
-        <View style={styles.infoContainer}>
-          <Text style={styles.info}>
-            Name: {studentDetails?.name || "Unknown"}
-          </Text>
-          <Text style={styles.info}>ID: {studentDetails?.id || "N/A"}</Text>
-          <Text style={styles.info}>
-            Course/Block: {studentDetails?.courseBlock || "N/A"}
-          </Text>
-        </View>
         <ScrollView
           contentContainerStyle={styles.scrollviewContainer}
           showsVerticalScrollIndicator={false}
         >
+          <View style={styles.infoContainer}>
+            <Text style={styles.info}>
+              Name: {studentDetails?.name || "Unknown"}
+            </Text>
+            <Text style={styles.info}>ID: {studentDetails?.id || "N/A"}</Text>
+            <Text style={styles.info}>
+              Course/Block: {studentDetails?.courseBlock || "N/A"}
+            </Text>
+          </View>
           {attendanceDataList.map((attendanceData, index) => (
             <View key={index} style={styles.attendanceContainer}>
               <View style={styles.dateContainer}>

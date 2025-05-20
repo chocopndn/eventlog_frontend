@@ -18,7 +18,6 @@ import CustomSearch from "../../../../components/CustomSearch";
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import { router } from "expo-router";
-import { saveRecords } from "../../../../database/queries/records";
 
 const Records = () => {
   const [roleId, setRoleId] = useState(null);
@@ -29,14 +28,14 @@ const Records = () => {
   const [loading, setLoading] = useState(true);
   const [originalOngoing, setOriginalOngoing] = useState([]);
   const [originalPast, setOriginalPast] = useState([]);
+  const [studentId, setStudentId] = useState(null);
+  const [blockId, setBlockId] = useState(null);
 
   useEffect(() => {
     const fetchRoleId = async () => {
-      try {
-        const roleId = await getRoleID();
-        if (!roleId) return;
-        setRoleId(roleId);
-      } catch (error) {}
+      const roleId = await getRoleID();
+      if (!roleId) return;
+      setRoleId(roleId);
     };
     fetchRoleId();
   }, []);
@@ -47,21 +46,23 @@ const Records = () => {
         setLoading(true);
         let ongoingEvents = [];
         let pastEvents = [];
+        let idNumber = null;
+        let blockNumber = null;
 
         if (roleId === 1 || roleId === 2) {
           const storedUser = await getStoredUser();
           if (!storedUser || !storedUser.id_number) return;
-          const idNumber = storedUser.id_number;
-
+          idNumber = storedUser.id_number;
+          blockNumber = storedUser.block_id || null;
+          setStudentId(idNumber);
+          setBlockId(blockNumber);
           const ongoingApiResponse = await fetchUserOngoingEvents(idNumber);
           const pastApiResponse = await fetchUserPastEvents(idNumber);
-
           ongoingEvents = ongoingApiResponse?.events || [];
           pastEvents = pastApiResponse?.events || [];
         } else if (roleId === 3) {
           const ongoingApiResponse = await fetchAllOngoingEvents();
           const pastApiResponse = await fetchAllPastEvents();
-
           ongoingEvents = ongoingApiResponse?.events || [];
           pastEvents = pastApiResponse?.events || [];
         }
@@ -79,15 +80,7 @@ const Records = () => {
           groupedEvents[event_id].event_dates.push(event_date);
         });
 
-        const allEvents = [
-          ...Object.values(groupedEvents).filter((event) =>
-            ongoingEvents.some((e) => e.event_id === event.event_id)
-          ),
-          ...Object.values(groupedEvents).filter((event) =>
-            pastEvents.some((e) => e.event_id === event.event_id)
-          ),
-        ];
-
+        const allEvents = Object.values(groupedEvents);
         const ongoingList = Object.values(groupedEvents).filter((event) =>
           ongoingEvents.some((e) => e.event_id === event.event_id)
         );
@@ -170,7 +163,7 @@ const Records = () => {
                     style={styles.eventContainer}
                     onPress={() =>
                       router.push(
-                        `/records/Attendance?eventId=${event.event_id}`
+                        `/records/Attendance?eventId=${event.event_id}&studentId=${studentId}&blockId=${blockId}`
                       )
                     }
                   >
@@ -187,6 +180,7 @@ const Records = () => {
                 ))}
               </View>
             )}
+
             {filteredPastEvents.length > 0 && (
               <View style={styles.sectionContainer}>
                 <Text style={styles.sectionTitle}>Past Events</Text>
@@ -196,7 +190,7 @@ const Records = () => {
                     style={styles.eventContainer}
                     onPress={() =>
                       router.push(
-                        `/records/Attendance?eventId=${event.event_id}`
+                        `/records/Attendance?eventId=${event.event_id}&studentId=${studentId}&blockId=${blockId}`
                       )
                     }
                   >
@@ -242,6 +236,7 @@ const Records = () => {
                 ))}
               </View>
             )}
+
             {filteredPastEvents.length > 0 && (
               <View style={styles.sectionContainer}>
                 <Text style={styles.sectionTitle}>Past Events</Text>
