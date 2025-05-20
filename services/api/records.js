@@ -219,3 +219,34 @@ export const fetchAttendanceSummaryPerBlock = async (eventId, blockId) => {
     throw error;
   }
 };
+
+export const getStudentAttSummary = async (eventId, studentId) => {
+  try {
+    if (!eventId || !studentId) {
+      throw new Error("Missing required parameters: eventId and studentId.");
+    }
+
+    const body = {
+      event_id: eventId,
+      student_id: studentId,
+    };
+
+    console.log(body);
+
+    const response = await axios.post(
+      `${API_URL}/api/attendance/student/summary`,
+      body
+    );
+
+    if (response.data.success) {
+      return response.data;
+    }
+
+    throw new Error(
+      response.data.message || "Failed to fetch attendance summary."
+    );
+  } catch (error) {
+    console.error("❌ Failed to fetch attendance summary:", error.message);
+    throw error;
+  }
+};

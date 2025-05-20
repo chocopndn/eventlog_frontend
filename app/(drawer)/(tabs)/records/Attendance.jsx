@@ -1,12 +1,24 @@
-import { StyleSheet, Text, View, ScrollView, Image } from "react-native";
 import React, { useState, useEffect } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+} from "react-native";
 import theme from "../../../../constants/theme";
 import globalStyles from "../../../../constants/globalStyles";
 import images from "../../../../constants/images";
 import { useLocalSearchParams } from "expo-router";
 import moment from "moment";
-import { fetchStudentAttendanceByEventAndBlock } from "../../../../services/api/records";
 import CustomButton from "../../../../components/CustomButton";
+import * as Print from "expo-print";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
+import CustomModal from "../../../../components/CustomModal";
+import { fetchStudentAttendanceByEventAndBlock } from "../../../../services/api/records";
+import { getStudentAttSummary } from "../../../../services/api/records";
 
 const SessionLog = ({ label, data }) => (
   <View style={styles.sessionContainer}>
@@ -61,6 +73,13 @@ const Attendance = () => {
   const [eventName, setEventName] = useState("");
   const [studentDetails, setStudentDetails] = useState(null);
   const { eventId, blockId, studentId } = useLocalSearchParams();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    title: "",
+    message: "",
+    type: "success",
+    cancelTitle: "OK",
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -71,13 +90,9 @@ const Attendance = () => {
           blockId,
           studentId
         );
-
         if (response.success) {
           const { data } = response;
-          const student = data.students.find(
-            (student) => student.student_id === studentId
-          );
-
+          const student = data.students.find((s) => s.student_id === studentId);
           if (student) {
             setEventName(data.event_name);
             setStudentDetails({
@@ -85,16 +100,13 @@ const Attendance = () => {
               id: student.student_id,
               courseBlock: `${data.course_code} ${data.block_name}`,
             });
-
             const formattedData = student.dates.reduce((acc, dateData) => {
               const formattedDate = moment(dateData.date).format(
                 "MMMM D, YYYY"
               );
-
               const hasPM =
                 Boolean(dateData.attendance.pm_in) ||
                 Boolean(dateData.attendance.pm_out);
-
               acc[formattedDate] = {
                 date: formattedDate,
                 morning: {
@@ -109,7 +121,6 @@ const Attendance = () => {
               };
               return acc;
             }, {});
-
             setAttendanceDataList(Object.values(formattedData));
           } else {
             setEventName("");
@@ -122,7 +133,6 @@ const Attendance = () => {
           setAttendanceDataList([]);
         }
       } catch (error) {
-        console.error("Error fetching attendance data:", error);
         setEventName("");
         setStudentDetails(null);
         setAttendanceDataList([]);
@@ -130,13 +140,103 @@ const Attendance = () => {
         setLoading(false);
       }
     };
-
     if (eventId && blockId && studentId) {
       fetchData();
     } else {
       setLoading(false);
     }
   }, [eventId, blockId, studentId]);
+
+  const handlePrint = async () => {
+    try {
+      setModalConfig({
+        title: "Generating PDF",
+        message: "Please wait...",
+        type: "loading",
+        cancelTitle: null,
+      });
+      setModalVisible(true);
+      const response = await getStudentAttSummary(eventId, studentId);
+      if (!response?.success || !response.data) {
+        throw new Error("Failed to fetch student data.");
+      }
+      const { event_name, student_id, student_name, attendance_summary } =
+        response.data;
+      const htmlContent = `
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            body { font-family: sans-serif; padding: 20px; }
+            h1 { color: #333; text-align: center; }
+            .info { margin-bottom: 15px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #999; padding: 8px; text-align: left; }
+            tr:nth-child(even) { background-color: #f9f9f9; }
+            .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #aaa; }
+          </style>
+        </head>
+        <body>
+          <h1>${event_name || "Unknown Event"}</h1>
+          <div class="info">
+            <p><strong>Name:</strong> ${student_name || "N/A"}</p>
+            <p><strong>ID:</strong> ${student_id || "N/A"}</p>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Present</th>
+                <th>Absent</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${Object.entries(attendance_summary)
+                .map(
+                  ([date, { present_count, absent_count }]) => `
+                  <tr>
+                    <td>${moment(date).format("MMMM D, YYYY")}</td>
+                    <td>${present_count}</td>
+                    <td>${absent_count}</td>
+                  </tr>
+                `
+                )
+                .join("")}
+            </tbody>
+          </table>
+          <div class="footer">
+            Generated on ${moment().format("MMMM D, YYYY hh:mm A")}
+          </div>
+        </body>
+      </html>
+    `;
+      const { uri } = await Print.printToFileAsync({ html: htmlContent });
+      const pdfName = `${student_name || "Student"} - ${
+        event_name || "Event"
+      }.pdf`;
+      const pdfPath = `${FileSystem.documentDirectory}${pdfName}`;
+      await FileSystem.moveAsync({ from: uri, to: pdfPath });
+      await Sharing.shareAsync(pdfPath, {
+        mimeType: "application/pdf",
+        UTI: ".pdf",
+      });
+      setModalConfig({
+        title: "Download Successful",
+        message: "Your PDF has been downloaded successfully.",
+        type: "success",
+        cancelTitle: "OK",
+      });
+    } catch (error) {
+      setModalConfig({
+        title: "Download Failed",
+        message: "An error occurred while generating the PDF.",
+        type: "error",
+        cancelTitle: "OK",
+      });
+    } finally {
+      setModalVisible(true);
+    }
+  };
 
   if (loading) {
     return (
@@ -154,29 +254,20 @@ const Attendance = () => {
     );
   }
 
-  // Dummy print handler — replace with real logic later
-  const handlePrint = () => {
-    alert("Printing functionality goes here!");
-  };
-
   return (
     <View style={globalStyles.secondaryContainer}>
       <View style={styles.attendanceWrapper}>
         <Text style={styles.eventTitle}>{eventName}</Text>
-
-        {/* Main content container */}
         <View style={styles.fullContainer}>
           <ScrollView
             contentContainerStyle={styles.scrollviewContainer}
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.infoContainer}>
+              <Text style={styles.info}>Name: {studentDetails.name}</Text>
+              <Text style={styles.info}>ID: {studentDetails.id}</Text>
               <Text style={styles.info}>
-                Name: {studentDetails?.name || "Unknown"}
-              </Text>
-              <Text style={styles.info}>ID: {studentDetails?.id || "N/A"}</Text>
-              <Text style={styles.info}>
-                Course/Block: {studentDetails?.courseBlock || "N/A"}
+                Course/Block: {studentDetails.courseBlock}
               </Text>
             </View>
             {attendanceDataList.map((attendanceData, index) => (
@@ -187,15 +278,13 @@ const Attendance = () => {
                 <View style={styles.sessionRow}>
                   <View
                     style={{
+                      flex: 1,
                       borderRightWidth: 3,
                       borderColor: theme.colors.primary,
-                      flex: 1,
                     }}
                   >
                     <SessionLog label="Morning" data={attendanceData.morning} />
                   </View>
-
-                  {/* Conditionally render afternoon section */}
                   {attendanceData.afternoon.hasPM && (
                     <View style={{ flex: 1 }}>
                       <SessionLog
@@ -208,13 +297,19 @@ const Attendance = () => {
               </View>
             ))}
           </ScrollView>
-
-          {/* Custom Button with paddingHorizontal */}
           <View style={styles.buttonContainer}>
-            <CustomButton title="Print" onPress={handlePrint} />
+            <CustomButton title="Download" onPress={handlePrint} />
           </View>
         </View>
       </View>
+      <CustomModal
+        visible={modalVisible}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        cancelTitle={modalConfig.cancelTitle}
+        onCancel={() => setModalVisible(false)}
+      />
     </View>
   );
 };
@@ -247,6 +342,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.medium,
     paddingBottom: theme.spacing.large,
   },
+  infoContainer: {
+    paddingHorizontal: theme.spacing.medium,
+    marginBottom: theme.spacing.large,
+  },
+  info: {
+    fontSize: theme.fontSizes.large,
+    fontFamily: theme.fontFamily.SquadaOne,
+    color: theme.colors.primary,
+    marginTop: theme.spacing.xsmall,
+  },
+  attendanceContainer: {
+    borderWidth: 3,
+    borderColor: theme.colors.primary,
+    marginBottom: theme.spacing.medium,
+  },
   dateContainer: {
     justifyContent: "center",
     alignItems: "center",
@@ -259,11 +369,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
     textAlign: "center",
-  },
-  attendanceContainer: {
-    borderWidth: 3,
-    borderColor: theme.colors.primary,
-    marginBottom: theme.spacing.medium,
   },
   sessionRow: {
     flexDirection: "row",
@@ -334,15 +439,5 @@ const styles = StyleSheet.create({
     color: theme.colors.secondary,
     textAlign: "center",
     marginTop: theme.spacing.medium,
-  },
-  infoContainer: {
-    paddingHorizontal: theme.spacing.medium,
-    marginBottom: theme.spacing.large,
-  },
-  info: {
-    fontSize: theme.fontSizes.large,
-    fontFamily: theme.fontFamily.SquadaOne,
-    color: theme.colors.primary,
-    marginTop: theme.spacing.xsmall,
   },
 });
