@@ -233,10 +233,13 @@ const EditEvent = () => {
         const activeBlocks = blocksResponse.filter(
           (block) => block.status === "Active"
         );
-        const formattedBlocks = activeBlocks.map((block) => ({
-          label: block.block_name,
-          value: block.block_id,
-        }));
+        const formattedBlocks = activeBlocks.map((block) => {
+          const label = block.course_code
+            ? `${block.course_code} ${block.block_name}`
+            : block.block_name;
+
+          return { label, value: block.block_id };
+        });
         setBlockOptions(formattedBlocks);
       } catch (error) {
         setModal({
