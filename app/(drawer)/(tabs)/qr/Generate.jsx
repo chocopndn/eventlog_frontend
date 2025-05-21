@@ -136,7 +136,7 @@ const Generate = () => {
 
       <View style={styles.noteContainer}>
         <Text style={styles.note}>
-          NOTE: The instructors/Officers in-charged will scan your QR Code.
+          NOTE: The instructors or officers in-charged will scan your QR Code.
           Approach them immediately.
         </Text>
       </View>
