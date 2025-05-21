@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import TabsComponent from "../../../../components/TabsComponent";
+
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import CustomDropdown from "../../../../components/CustomDropdown";
@@ -233,10 +233,13 @@ const EditEvent = () => {
         const activeBlocks = blocksResponse.filter(
           (block) => block.status === "Active"
         );
-        const formattedBlocks = activeBlocks.map((block) => ({
-          label: block.block_name,
-          value: block.block_id,
-        }));
+        const formattedBlocks = activeBlocks.map((block) => {
+          const label = block.course_code
+            ? `${block.course_code} ${block.block_name}`
+            : block.block_name;
+
+          return { label, value: block.block_id };
+        });
         setBlockOptions(formattedBlocks);
       } catch (error) {
         setModal({
@@ -258,8 +261,6 @@ const EditEvent = () => {
 
   const handleSubmit = async () => {
     try {
-      console.log("Submitting form data:", formData);
-
       if (!formData.event_name_id) {
         console.warn("Validation failed: Event name is required.");
         setModal({
@@ -420,10 +421,8 @@ const EditEvent = () => {
         admin_id_number: formData.created_by,
       };
 
-      console.log("Sending update request with data:", requestData);
       const response = await updateEvent(eventId, requestData);
       if (response?.success) {
-        console.log("Event updated successfully.");
         setModal({
           visible: true,
           title: "Success",
@@ -469,27 +468,22 @@ const EditEvent = () => {
   };
 
   const handleModalClose = () => {
-    console.log("Closing modal...");
     setModal({ ...modal, visible: false });
   };
 
   const handleDateChange = (date) => {
-    console.log("Date changed:", date);
     handleChange("event_date", date);
   };
 
   const openDurationPicker = () => {
-    console.log("Opening duration picker...");
     setIsDurationPickerVisible(true);
   };
 
   const closeDurationPicker = () => {
-    console.log("Closing duration picker...");
     setIsDurationPickerVisible(false);
   };
 
   const handleDurationSelect = (durationInMinutes) => {
-    console.log("Duration selected:", durationInMinutes);
     handleChange("duration", durationInMinutes);
     closeDurationPicker();
   };
@@ -521,7 +515,7 @@ const EditEvent = () => {
   }
 
   return (
-    <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
+    <View style={[globalStyles.secondaryContainer]}>
       <CustomModal
         visible={modal.visible}
         title={modal.title}
@@ -689,7 +683,6 @@ const EditEvent = () => {
         </View>
       </ScrollView>
 
-      <TabsComponent />
       <StatusBar style="auto" />
     </View>
   );
@@ -705,7 +698,7 @@ const styles = StyleSheet.create({
   },
   scrollviewContainer: {
     width: "100%",
-    marginBottom: 90,
+    marginBottom: 20,
     borderWidth: 2,
     borderColor: theme.colors.primary,
     borderTopWidth: 0,
