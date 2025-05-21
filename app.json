@@ -4,7 +4,7 @@
     "scheme": "eventlog",
     "slug": "eventlog",
     "icon": "./assets/images/icon.png",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "plugins": [
       "expo-router",
       [
@@ -41,6 +41,12 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
           "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-document-picker",
+        {
+          "iCloudContainerEnvironment": "Production"
         }
       ]
     ],
