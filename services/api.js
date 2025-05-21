@@ -715,3 +715,32 @@ export const stopSync = () => {
     syncInterval = null;
   }
 };
+
+export const uploadSchoolYearFile = async (fileUri, type) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", {
+      uri: fileUri,
+      name: "student_list.csv",
+      type: "text/csv",
+    });
+
+    const response = await axios.post(
+      `${API_URL}/api/school-years/update`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    if (response.status === 200) {
+      return response.data;
+    } else {
+      throw new Error(response.data.error || "Failed to upload file");
+    }
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
