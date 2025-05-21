@@ -744,3 +744,32 @@ export const uploadSchoolYearFile = async (fileUri, type) => {
     throw new Error(error.message);
   }
 };
+
+export const changeSchoolYear = async (fileUri) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", {
+      uri: fileUri,
+      name: "student_list.csv",
+      type: "text/csv",
+    });
+
+    const response = await axios.post(
+      `${API_URL}/api/school-years/change-school-year`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    if (response.status === 200) {
+      return response.data;
+    } else {
+      throw new Error(response.data.error || "Failed to change school year");
+    }
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
