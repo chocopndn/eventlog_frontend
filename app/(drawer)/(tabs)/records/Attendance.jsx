@@ -22,15 +22,10 @@ import { getStudentAttSummary } from "../../../../services/api/records";
 
 const SessionLog = ({ label, data }) => {
   const now = moment();
-
   const isAttendanceTimePassed = (time) => {
-    if (!time) {
-      return false;
-    }
+    if (!time) return false;
     const dateStr = data.date;
-    if (!dateStr) {
-      return false;
-    }
+    if (!dateStr) return false;
     const timeMoment = moment(`${dateStr}T${time}`, "YYYY-MM-DDTHH:mm:ss");
     return timeMoment.isSameOrBefore(now);
   };
@@ -81,6 +76,7 @@ const SessionLog = ({ label, data }) => {
           </View>
         </View>
       </View>
+
       {data?.schedule?.pm_in && data?.schedule?.pm_out && (
         <View style={styles.logContainer}>
           <View style={styles.timeContainer}>
@@ -177,17 +173,12 @@ const Attendance = () => {
 
   const handlePrint = async () => {
     try {
-      setModalConfig({
-        title: "Generating PDF",
-        message: "Please wait...",
-        type: "loading",
-        cancelTitle: null,
-      });
-      setModalVisible(true);
       const response = await getStudentAttSummary(eventId, studentId);
+
       if (!response?.success || !response.data) {
         throw new Error("Failed to fetch student data for PDF generation.");
       }
+
       const { event_name, student_id, student_name, attendance_summary } =
         response.data;
 
@@ -210,6 +201,9 @@ const Attendance = () => {
           <div class="info">
             <p><strong>Name:</strong> ${student_name || "N/A"}</p>
             <p><strong>ID:</strong> ${student_id || "N/A"}</p>
+            <p><strong>Course/Block:</strong> ${
+              studentDetails?.courseBlock || "N/A"
+            }</p>
           </div>
           <table>
             <thead>
@@ -239,16 +233,20 @@ const Attendance = () => {
         </body>
       </html>
     `;
+
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
+
       const pdfName = `${student_name || "Student"} - ${
         event_name || "Event"
       }.pdf`;
       const pdfPath = `${FileSystem.documentDirectory}${pdfName}`;
       await FileSystem.moveAsync({ from: uri, to: pdfPath });
+
       await Sharing.shareAsync(pdfPath, {
         mimeType: "application/pdf",
         UTI: ".pdf",
       });
+
       setModalConfig({
         title: "Download Successful",
         message: "Your PDF has been downloaded successfully.",
@@ -301,34 +299,32 @@ const Attendance = () => {
                 Course/Block: {studentDetails.courseBlock}
               </Text>
             </View>
-            {attendanceDataList.map((attendanceData, index) => {
-              return (
-                <View key={index} style={styles.attendanceContainer}>
-                  <View style={styles.dateContainer}>
-                    <Text style={styles.date}>{attendanceData.date}</Text>
-                  </View>
-                  <SessionLog
-                    label="Morning"
-                    data={{
-                      date: attendanceData.date,
-                      schedule: attendanceData.schedule,
-                      attendance: attendanceData.attendance,
-                    }}
-                  />
-                  {attendanceData.schedule?.pm_in &&
-                    attendanceData.schedule?.pm_out && (
-                      <SessionLog
-                        label="Afternoon"
-                        data={{
-                          date: attendanceData.date,
-                          schedule: attendanceData.schedule,
-                          attendance: attendanceData.attendance,
-                        }}
-                      />
-                    )}
+            {attendanceDataList.map((attendanceData, index) => (
+              <View key={index} style={styles.attendanceContainer}>
+                <View style={styles.dateContainer}>
+                  <Text style={styles.date}>{attendanceData.date}</Text>
                 </View>
-              );
-            })}
+                <SessionLog
+                  label="Morning"
+                  data={{
+                    date: attendanceData.date,
+                    schedule: attendanceData.schedule,
+                    attendance: attendanceData.attendance,
+                  }}
+                />
+                {attendanceData.schedule?.pm_in &&
+                  attendanceData.schedule?.pm_out && (
+                    <SessionLog
+                      label="Afternoon"
+                      data={{
+                        date: attendanceData.date,
+                        schedule: attendanceData.schedule,
+                        attendance: attendanceData.attendance,
+                      }}
+                    />
+                  )}
+              </View>
+            ))}
           </ScrollView>
           <View style={styles.buttonContainer}>
             <CustomButton title="Download" onPress={handlePrint} />
