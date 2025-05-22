@@ -773,3 +773,15 @@ export const changeSchoolYear = async (fileUri) => {
     throw new Error(error.message);
   }
 };
+
+export const getCurrentSchoolYear = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/api/school-years/current`);
+    if (response.data.success) {
+      return response.data;
+    }
+    throw new Error("Failed to get current school year");
+  } catch (error) {
+    throw error;
+  }
+};
