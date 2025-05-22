@@ -1,9 +1,10 @@
-import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, Text, ActivityIndicator, Alert } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
 import {
   uploadSchoolYearFile,
   changeSchoolYear,
+  getCurrentSchoolYear,
 } from "../../../../services/api";
 import CustomButton from "../../../../components/CustomButton";
 import globalStyles from "../../../../constants/globalStyles";
@@ -59,6 +60,29 @@ export default function SchoolYearScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState("");
   const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [currentSchoolYear, setCurrentSchoolYear] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch current school year on mount
+  useEffect(() => {
+    const fetchCurrentSchoolYear = async () => {
+      try {
+        const response = await getCurrentSchoolYear(); // From your API
+        if (response.success && response.data) {
+          setCurrentSchoolYear(response.data);
+        } else {
+          setCurrentSchoolYear(null);
+        }
+      } catch (error) {
+        console.error("Failed to fetch current school year:", error);
+        setCurrentSchoolYear(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCurrentSchoolYear();
+  }, []);
 
   const handleChangeSchoolYear = () => {
     setModalType("changeSchoolYear");
@@ -96,6 +120,19 @@ export default function SchoolYearScreen() {
   return (
     <View style={globalStyles.secondaryContainer}>
       <View style={styles.buttonWrapper}>
+        <View style={styles.currentSyContainer}>
+          <Text style={styles.label}>Current School Year</Text>
+          {loading ? (
+            <ActivityIndicator size="small" color={theme.colors.primary} />
+          ) : currentSchoolYear ? (
+            <Text style={styles.currentSy}>
+              {currentSchoolYear.school_year} - {currentSchoolYear.semester}
+            </Text>
+          ) : (
+            <Text style={styles.currentSy}>No active school year</Text>
+          )}
+        </View>
+
         <View style={styles.buttonContainer}>
           <CustomButton
             title="Change School Year"
@@ -151,5 +188,19 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     paddingBottom: theme.spacing.medium,
+  },
+  label: {
+    color: theme.colors.primary,
+    fontFamily: theme.fontFamily.SquadaOne,
+    fontSize: theme.fontSizes.huge,
+  },
+  currentSyContainer: {
+    alignItems: "center",
+    marginBottom: theme.spacing.large,
+  },
+  currentSy: {
+    color: theme.colors.primary,
+    fontFamily: theme.fontFamily.Arial,
+    fontSize: theme.fontSizes.extraLarge,
   },
 });
