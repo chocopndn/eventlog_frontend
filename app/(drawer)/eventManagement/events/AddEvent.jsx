@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import TabsComponent from "../../../../components/TabsComponent";
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import CustomDropdown from "../../../../components/CustomDropdown";
@@ -41,7 +40,6 @@ const AddEvent = () => {
     event_date: null,
     duration: 0,
     created_by: "",
-    status: "Pending", // Default status is "Pending"
   });
   const [eventNames, setEventNames] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
@@ -65,13 +63,7 @@ const AddEvent = () => {
         if (!storedUserData || !storedUserData.id_number) {
           throw new Error("Invalid or missing user ID.");
         }
-        // Set status to "Approved" if role_id is 4, otherwise default to "Pending"
-        const status = storedUserData.role_id === 4 ? "Approved" : "Pending";
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          created_by: storedUserData.id_number,
-          status: status, // Update status here
-        }));
+        handleChange("created_by", storedUserData.id_number);
       } catch (error) {
         setModal({
           visible: true,
@@ -147,7 +139,6 @@ const AddEvent = () => {
         setLoadingDepartments(false);
       }
     };
-
     initializeData();
     fetchEventNamesData();
     fetchDepartmentData();
@@ -169,10 +160,13 @@ const AddEvent = () => {
         const activeBlocks = blocksResponse.filter(
           (block) => block.status === "Active"
         );
+
+        // ✅ Update this line to show course code + block name
         const formattedBlocks = activeBlocks.map((block) => ({
-          label: `${block.course_code} ${block.block_name}`, // Combine course_code and block_name
+          label: `${block.course_code || ""}  ${block.block_name}`,
           value: block.block_id,
         }));
+
         setBlockOptions(formattedBlocks);
       } catch (error) {
         setModal({
@@ -248,9 +242,11 @@ const AddEvent = () => {
         });
         return;
       }
+
       const formattedDates = Array.isArray(formData.event_date)
         ? formData.event_date.flat().filter(Boolean)
         : [];
+
       if (formattedDates.length === 0) {
         setModal({
           visible: true,
@@ -260,6 +256,7 @@ const AddEvent = () => {
         });
         return;
       }
+
       if (
         !(
           formData.am_in ||
@@ -276,10 +273,12 @@ const AddEvent = () => {
         });
         return;
       }
+
       const convertToMinutes = (timeString) => {
         const [hours, minutes] = timeString.split(":").map(Number);
         return hours * 60 + minutes;
       };
+
       if (formData.am_in && formData.am_out) {
         const amInMinutes = convertToMinutes(formData.am_in);
         const amOutMinutes = convertToMinutes(formData.am_out);
@@ -294,6 +293,7 @@ const AddEvent = () => {
           return;
         }
       }
+
       if (formData.pm_in && formData.pm_out) {
         const pmInMinutes = convertToMinutes(formData.pm_in);
         const pmOutMinutes = convertToMinutes(formData.pm_out);
@@ -308,6 +308,7 @@ const AddEvent = () => {
           return;
         }
       }
+
       if (formData.duration < 30) {
         setModal({
           visible: true,
@@ -317,6 +318,7 @@ const AddEvent = () => {
         });
         return;
       }
+
       const requestData = {
         event_name_id: formData.event_name_id,
         venue: formData.venue,
@@ -329,9 +331,10 @@ const AddEvent = () => {
         pm_out: formData.pm_out,
         duration: formData.duration,
         admin_id_number: formData.created_by,
-        status: formData.status, // Include the status in the request payload
       };
+
       const response = await addEvent(requestData);
+
       if (response?.success) {
         setModal({
           visible: true,
@@ -356,7 +359,6 @@ const AddEvent = () => {
           event_date: null,
           duration: 0,
           created_by: formData.created_by,
-          status: "Pending", // Reset status to default after submission
         });
       } else {
         let errorMessage =
@@ -437,7 +439,7 @@ const AddEvent = () => {
   }
 
   return (
-    <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
+    <View style={[globalStyles.secondaryContainer]}>
       <CustomModal
         visible={modal.visible}
         title={modal.title}
@@ -523,7 +525,7 @@ const AddEvent = () => {
             <View style={styles.timeWrapper}>
               <View style={styles.timeContainer}>
                 <TimePickerComponent
-                  title="AM Time In"
+                  title="Time In"
                   mode="single"
                   onTimeChange={(time) => handleChange("am_in", time)}
                   selectedValue={formData.am_in}
@@ -532,7 +534,7 @@ const AddEvent = () => {
               <View style={styles.timeContainer}>
                 {formData.am_in && (
                   <TimePickerComponent
-                    title="AM Time Out"
+                    title="Time Out"
                     mode="single"
                     onTimeChange={(time) => handleChange("am_out", time)}
                     selectedValue={formData.am_out}
@@ -545,7 +547,7 @@ const AddEvent = () => {
             <View style={styles.timeWrapper}>
               <View style={styles.timeContainer}>
                 <TimePickerComponent
-                  title="PM Time In"
+                  title="Time In"
                   mode="single"
                   onTimeChange={(time) => handleChange("pm_in", time)}
                   selectedValue={formData.pm_in}
@@ -554,7 +556,7 @@ const AddEvent = () => {
               <View style={styles.timeContainer}>
                 {formData.pm_in && (
                   <TimePickerComponent
-                    title="PM Time Out"
+                    title="Time Out"
                     mode="single"
                     onTimeChange={(time) => handleChange("pm_out", time)}
                     selectedValue={formData.pm_out}
@@ -569,9 +571,9 @@ const AddEvent = () => {
               <Text style={styles.durationButtonText}>
                 Set Duration:{" "}
                 {formData.duration > 0
-                  ? `${Math.floor(formData.duration / 60)} hrs ${
-                      formData.duration % 60
-                    } mins`
+                  ? `${Math.floor(formData.duration / 60)} ${
+                      Math.floor(formData.duration / 60) === 1 ? "hr" : "hrs"
+                    } ${formData.duration % 60} mins`
                   : ""}
               </Text>
             </TouchableOpacity>
@@ -590,7 +592,6 @@ const AddEvent = () => {
           </View>
         </View>
       </ScrollView>
-      <TabsComponent />
       <StatusBar style="auto" />
     </View>
   );
@@ -606,7 +607,7 @@ const styles = StyleSheet.create({
   },
   scrollviewContainer: {
     width: "100%",
-    marginBottom: 90,
+    marginBottom: 20,
     borderWidth: 2,
     borderColor: theme.colors.primary,
     borderTopWidth: 0,

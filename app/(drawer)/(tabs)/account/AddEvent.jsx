@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import CustomDropdown from "../../../../components/CustomDropdown";
@@ -74,20 +73,16 @@ const AddEvent = () => {
         });
       }
     };
-
     const fetchEventNamesData = async () => {
       setIsLoading(true);
       try {
         const eventNamesData = await fetchEventNames();
-
         if (!Array.isArray(eventNamesData)) {
           throw new Error("Invalid data format from API.");
         }
-
         const activeEventNamesData = eventNamesData.filter(
           (name) => name.status === "Active"
         );
-
         const formattedEventNames = activeEventNamesData.map((name) => ({
           label: name.label || name.name,
           value: name.value || name.id,
@@ -104,30 +99,24 @@ const AddEvent = () => {
         setIsLoading(false);
       }
     };
-
     const fetchDepartmentData = async () => {
       setLoadingDepartments(true);
       setErrorDepartments(null);
       try {
         const response = await fetchDepartments();
-
         if (!response || !Array.isArray(response.departments)) {
           throw new Error(
             "Invalid data format from API: Expected 'departments' array."
           );
         }
-
         const departmentsData = response.departments;
-
         const activeDepartmentsData = departmentsData.filter(
           (dept) => dept.status === "Active"
         );
-
         const formattedDepartments = activeDepartmentsData.map((dept) => ({
           label: dept.department_name,
           value: dept.department_id,
         }));
-
         if (
           formattedDepartments.some(
             (dept) => !dept.label || dept.value === undefined
@@ -135,7 +124,6 @@ const AddEvent = () => {
         ) {
           throw new Error("Invalid department data.");
         }
-
         setDepartmentOptions(formattedDepartments);
       } catch (err) {
         setErrorDepartments(err);
@@ -149,7 +137,6 @@ const AddEvent = () => {
         setLoadingDepartments(false);
       }
     };
-
     initializeData();
     fetchEventNamesData();
     fetchDepartmentData();
@@ -171,10 +158,13 @@ const AddEvent = () => {
         const activeBlocks = blocksResponse.filter(
           (block) => block.status === "Active"
         );
+
+        // ✅ Update this line to show course code + block name
         const formattedBlocks = activeBlocks.map((block) => ({
-          label: block.block_name,
+          label: `${block.course_code || ""}  ${block.block_name}`,
           value: block.block_id,
         }));
+
         setBlockOptions(formattedBlocks);
       } catch (error) {
         setModal({
@@ -205,7 +195,6 @@ const AddEvent = () => {
         });
         return;
       }
-
       if (formData.department_ids.length === 0) {
         setModal({
           visible: true,
@@ -215,7 +204,6 @@ const AddEvent = () => {
         });
         return;
       }
-
       if (formData.block_ids.length === 0) {
         setModal({
           visible: true,
@@ -225,7 +213,6 @@ const AddEvent = () => {
         });
         return;
       }
-
       if (!formData.venue) {
         setModal({
           visible: true,
@@ -235,7 +222,6 @@ const AddEvent = () => {
         });
         return;
       }
-
       if (!formData.description.trim()) {
         setModal({
           visible: true,
@@ -245,7 +231,6 @@ const AddEvent = () => {
         });
         return;
       }
-
       if (!formData.event_date) {
         setModal({
           visible: true,
@@ -295,9 +280,7 @@ const AddEvent = () => {
       if (formData.am_in && formData.am_out) {
         const amInMinutes = convertToMinutes(formData.am_in);
         const amOutMinutes = convertToMinutes(formData.am_out);
-
         const amTimeDifference = amOutMinutes - amInMinutes;
-
         if (amTimeDifference < 60) {
           setModal({
             visible: true,
@@ -312,9 +295,7 @@ const AddEvent = () => {
       if (formData.pm_in && formData.pm_out) {
         const pmInMinutes = convertToMinutes(formData.pm_in);
         const pmOutMinutes = convertToMinutes(formData.pm_out);
-
         const pmTimeDifference = pmOutMinutes - pmInMinutes;
-
         if (pmTimeDifference < 60) {
           setModal({
             visible: true,
@@ -360,11 +341,9 @@ const AddEvent = () => {
           type: "success",
           onPress: () => router.back(),
         });
-
         setTimeout(() => {
           router.back();
         }, 1500);
-
         setFormData({
           event_name_id: "",
           department_ids: [],
@@ -395,14 +374,12 @@ const AddEvent = () => {
     } catch (error) {
       let errorMessage =
         "Failed to add the event. Please double-check your information and try again.";
-
       if (error?.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.message === "Network request failed") {
         errorMessage =
           "There was a problem connecting to the server. Please check your internet connection and try again.";
       }
-
       setModal({
         visible: true,
         title: "Error",
@@ -546,7 +523,7 @@ const AddEvent = () => {
             <View style={styles.timeWrapper}>
               <View style={styles.timeContainer}>
                 <TimePickerComponent
-                  title="AM Time In"
+                  title="Time In"
                   mode="single"
                   onTimeChange={(time) => handleChange("am_in", time)}
                   selectedValue={formData.am_in}
@@ -555,7 +532,7 @@ const AddEvent = () => {
               <View style={styles.timeContainer}>
                 {formData.am_in && (
                   <TimePickerComponent
-                    title="AM Time Out"
+                    title="Time Out"
                     mode="single"
                     onTimeChange={(time) => handleChange("am_out", time)}
                     selectedValue={formData.am_out}
@@ -568,7 +545,7 @@ const AddEvent = () => {
             <View style={styles.timeWrapper}>
               <View style={styles.timeContainer}>
                 <TimePickerComponent
-                  title="PM Time In"
+                  title="Time In"
                   mode="single"
                   onTimeChange={(time) => handleChange("pm_in", time)}
                   selectedValue={formData.pm_in}
@@ -577,7 +554,7 @@ const AddEvent = () => {
               <View style={styles.timeContainer}>
                 {formData.pm_in && (
                   <TimePickerComponent
-                    title="PM Time Out"
+                    title="Time Out"
                     mode="single"
                     onTimeChange={(time) => handleChange("pm_out", time)}
                     selectedValue={formData.pm_out}
@@ -592,9 +569,9 @@ const AddEvent = () => {
               <Text style={styles.durationButtonText}>
                 Set Duration:{" "}
                 {formData.duration > 0
-                  ? `${Math.floor(formData.duration / 60)} hrs ${
-                      formData.duration % 60
-                    } mins`
+                  ? `${Math.floor(formData.duration / 60)} ${
+                      Math.floor(formData.duration / 60) === 1 ? "hr" : "hrs"
+                    } ${formData.duration % 60} mins`
                   : ""}
               </Text>
             </TouchableOpacity>
