@@ -20,52 +20,101 @@ import CustomModal from "../../../../components/CustomModal";
 import { fetchStudentAttendanceByEventAndBlock } from "../../../../services/api/records";
 import { getStudentAttSummary } from "../../../../services/api/records";
 
-const SessionLog = ({ label, data }) => (
-  <View style={styles.sessionContainer}>
-    <View style={styles.morningTextContainer}>
-      <Text style={styles.morningText}>{label}</Text>
-    </View>
-    <View style={styles.logContainer}>
-      <View style={styles.timeContainer}>
-        <View
-          style={[
-            styles.timeLabelContainer,
-            { borderRightWidth: 0, borderLeftWidth: 0 },
-          ]}
-        >
-          <Text style={styles.timeLabel}>Time In</Text>
+const SessionLog = ({ label, data }) => {
+  const now = moment();
+
+  const isAttendanceTimePassed = (time) => {
+    if (!time) {
+      return false;
+    }
+    const dateStr = data.date;
+    if (!dateStr) {
+      return false;
+    }
+    const timeMoment = moment(`${dateStr}T${time}`, "YYYY-MM-DDTHH:mm:ss");
+    return timeMoment.isSameOrBefore(now);
+  };
+
+  const renderAttendanceStatus = (time, attendance) => {
+    if (isAttendanceTimePassed(time)) {
+      return (
+        <Image
+          source={attendance ? images.present : images.absent}
+          style={attendance ? styles.presentIcon : styles.absentIcon}
+        />
+      );
+    }
+    return null;
+  };
+
+  return (
+    <View style={styles.sessionContainer}>
+      <View style={styles.morningTextContainer}>
+        <Text style={styles.morningText}>{label}</Text>
+      </View>
+      <View style={styles.logContainer}>
+        <View style={styles.timeContainer}>
+          <View
+            style={[
+              styles.timeLabelContainer,
+              { borderRightWidth: 0, borderLeftWidth: 0 },
+            ]}
+          >
+            <Text style={styles.timeLabel}>Time In</Text>
+          </View>
+          <View style={[styles.imageContainer, { borderLeftWidth: 0 }]}>
+            {renderAttendanceStatus(
+              data?.schedule?.am_in,
+              data?.attendance?.am_in
+            )}
+          </View>
         </View>
-        <View style={[styles.imageContainer, { borderLeftWidth: 0 }]}>
-          <Image
-            source={data?.timeIn === "present" ? images.present : images.absent}
-            style={
-              data?.timeIn === "present"
-                ? styles.presentIcon
-                : styles.absentIcon
-            }
-          />
+        <View style={styles.timeContainer}>
+          <View style={[styles.timeLabelContainer, { borderRightWidth: 0 }]}>
+            <Text style={styles.timeLabel}>Time Out</Text>
+          </View>
+          <View style={[styles.imageContainer, { borderRightWidth: 0 }]}>
+            {renderAttendanceStatus(
+              data?.schedule?.am_out,
+              data?.attendance?.am_out
+            )}
+          </View>
         </View>
       </View>
-      <View style={styles.timeContainer}>
-        <View style={[styles.timeLabelContainer, { borderRightWidth: 0 }]}>
-          <Text style={styles.timeLabel}>Time Out</Text>
+      {data?.schedule?.pm_in && data?.schedule?.pm_out && (
+        <View style={styles.logContainer}>
+          <View style={styles.timeContainer}>
+            <View
+              style={[
+                styles.timeLabelContainer,
+                { borderRightWidth: 0, borderLeftWidth: 0 },
+              ]}
+            >
+              <Text style={styles.timeLabel}>Time In</Text>
+            </View>
+            <View style={[styles.imageContainer, { borderLeftWidth: 0 }]}>
+              {renderAttendanceStatus(
+                data?.schedule?.pm_in,
+                data?.attendance?.pm_in
+              )}
+            </View>
+          </View>
+          <View style={styles.timeContainer}>
+            <View style={[styles.timeLabelContainer, { borderRightWidth: 0 }]}>
+              <Text style={styles.timeLabel}>Time Out</Text>
+            </View>
+            <View style={[styles.imageContainer, { borderRightWidth: 0 }]}>
+              {renderAttendanceStatus(
+                data?.schedule?.pm_out,
+                data?.attendance?.pm_out
+              )}
+            </View>
+          </View>
         </View>
-        <View style={[styles.imageContainer, { borderRightWidth: 0 }]}>
-          <Image
-            source={
-              data?.timeOut === "present" ? images.present : images.absent
-            }
-            style={
-              data?.timeOut === "present"
-                ? styles.presentIcon
-                : styles.absentIcon
-            }
-          />
-        </View>
-      </View>
+      )}
     </View>
-  </View>
-);
+  );
+};
 
 const Attendance = () => {
   const [attendanceDataList, setAttendanceDataList] = useState([]);
@@ -100,28 +149,7 @@ const Attendance = () => {
               id: student.student_id,
               courseBlock: `${data.course_code} ${data.block_name}`,
             });
-            const formattedData = student.dates.reduce((acc, dateData) => {
-              const formattedDate = moment(dateData.date).format(
-                "MMMM D, YYYY"
-              );
-              const hasPM =
-                Boolean(dateData.attendance.pm_in) ||
-                Boolean(dateData.attendance.pm_out);
-              acc[formattedDate] = {
-                date: formattedDate,
-                morning: {
-                  timeIn: dateData.attendance.am_in ? "present" : "absent",
-                  timeOut: dateData.attendance.am_out ? "present" : "absent",
-                },
-                afternoon: {
-                  timeIn: dateData.attendance.pm_in ? "present" : "absent",
-                  timeOut: dateData.attendance.pm_out ? "present" : "absent",
-                  hasPM,
-                },
-              };
-              return acc;
-            }, {});
-            setAttendanceDataList(Object.values(formattedData));
+            setAttendanceDataList(student.dates);
           } else {
             setEventName("");
             setStudentDetails(null);
@@ -158,10 +186,11 @@ const Attendance = () => {
       setModalVisible(true);
       const response = await getStudentAttSummary(eventId, studentId);
       if (!response?.success || !response.data) {
-        throw new Error("Failed to fetch student data.");
+        throw new Error("Failed to fetch student data for PDF generation.");
       }
       const { event_name, student_id, student_name, attendance_summary } =
         response.data;
+
       const htmlContent = `
       <html>
         <head>
@@ -191,11 +220,11 @@ const Attendance = () => {
               </tr>
             </thead>
             <tbody>
-              ${Object.entries(attendance_summary)
+              ${Object.entries(attendance_summary || {})
                 .map(
                   ([date, { present_count, absent_count }]) => `
                   <tr>
-                    <td>${moment(date).format("MMMM D, YYYY")}</td>
+                    <td>${moment(date).format("MMMM D,YYYY")}</td>
                     <td>${present_count}</td>
                     <td>${absent_count}</td>
                   </tr>
@@ -205,7 +234,7 @@ const Attendance = () => {
             </tbody>
           </table>
           <div class="footer">
-            Generated on ${moment().format("MMMM D, YYYY hh:mm A")}
+            Generated on ${moment().format("MMMM D,YYYY hh:mm A")}
           </div>
         </body>
       </html>
@@ -229,7 +258,9 @@ const Attendance = () => {
     } catch (error) {
       setModalConfig({
         title: "Download Failed",
-        message: "An error occurred while generating the PDF.",
+        message: `An error occurred while generating the PDF: ${
+          error.message || "Unknown error"
+        }`,
         type: "error",
         cancelTitle: "OK",
       });
@@ -270,32 +301,34 @@ const Attendance = () => {
                 Course/Block: {studentDetails.courseBlock}
               </Text>
             </View>
-            {attendanceDataList.map((attendanceData, index) => (
-              <View key={index} style={styles.attendanceContainer}>
-                <View style={styles.dateContainer}>
-                  <Text style={styles.date}>{attendanceData.date}</Text>
-                </View>
-                <View style={styles.sessionRow}>
-                  <View
-                    style={{
-                      flex: 1,
-                      borderRightWidth: 3,
-                      borderColor: theme.colors.primary,
-                    }}
-                  >
-                    <SessionLog label="Morning" data={attendanceData.morning} />
+            {attendanceDataList.map((attendanceData, index) => {
+              return (
+                <View key={index} style={styles.attendanceContainer}>
+                  <View style={styles.dateContainer}>
+                    <Text style={styles.date}>{attendanceData.date}</Text>
                   </View>
-                  {attendanceData.afternoon.hasPM && (
-                    <View style={{ flex: 1 }}>
+                  <SessionLog
+                    label="Morning"
+                    data={{
+                      date: attendanceData.date,
+                      schedule: attendanceData.schedule,
+                      attendance: attendanceData.attendance,
+                    }}
+                  />
+                  {attendanceData.schedule?.pm_in &&
+                    attendanceData.schedule?.pm_out && (
                       <SessionLog
                         label="Afternoon"
-                        data={attendanceData.afternoon}
+                        data={{
+                          date: attendanceData.date,
+                          schedule: attendanceData.schedule,
+                          attendance: attendanceData.attendance,
+                        }}
                       />
-                    </View>
-                  )}
+                    )}
                 </View>
-              </View>
-            ))}
+              );
+            })}
           </ScrollView>
           <View style={styles.buttonContainer}>
             <CustomButton title="Download" onPress={handlePrint} />
@@ -369,10 +402,6 @@ const styles = StyleSheet.create({
     fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.primary,
     textAlign: "center",
-  },
-  sessionRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
   },
   sessionContainer: {
     flex: 1,
