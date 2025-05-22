@@ -4,8 +4,6 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { getRoleID } from "../../../../database/queries";
 
-const screenWidth = Dimensions.get("screen").width;
-
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import images from "../../../../constants/images";
