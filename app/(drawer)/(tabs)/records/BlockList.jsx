@@ -60,6 +60,7 @@ const BlockList = () => {
           })) || [];
         setAllBlocks(mappedBlocks);
         setBlocks(mappedBlocks);
+
         const uniqueDepartments = [
           ...new Set(mappedBlocks.map((b) => b.department_id)),
         ];
@@ -72,6 +73,7 @@ const BlockList = () => {
           { label: "All Departments", value: "" },
           ...deptOptions,
         ]);
+
         const uniqueYearLevels = [
           ...new Set(mappedBlocks.map((b) => b.year_level_id)),
         ];
@@ -147,12 +149,42 @@ const BlockList = () => {
         blockIds.length === 0 || blockIds.includes(String(block.block_id));
       return departmentMatch && yearLevelMatch && blockMatch;
     });
+
     if (filteredBlocks.length === 0) {
       alert("No blocks match the selected filters.");
       return;
     }
 
     try {
+      const startDate = new Date(2025, 4, 20);
+      const endDate = new Date(2025, 4, 26);
+
+      const formatDate = (date) => {
+        return date.toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        });
+      };
+
+      let dateString = "";
+      if (
+        startDate.getDate() === endDate.getDate() &&
+        startDate.getMonth() === endDate.getMonth() &&
+        startDate.getFullYear() === endDate.getFullYear()
+      ) {
+        dateString = `${formatDate(startDate)}`;
+      } else if (
+        startDate.getMonth() === endDate.getMonth() &&
+        startDate.getFullYear() === endDate.getFullYear()
+      ) {
+        dateString = `${startDate.toLocaleDateString("en-US", {
+          month: "long",
+        })} ${startDate.getDate()}–${endDate.getDate()}, ${startDate.getFullYear()}`;
+      } else {
+        dateString = `${formatDate(startDate)} – ${formatDate(endDate)}`;
+      }
+
       const attendanceSummaries = await Promise.all(
         filteredBlocks.map((block) =>
           fetchAttendanceSummaryPerBlock(Number(eventId), block.block_id)
@@ -165,13 +197,14 @@ const BlockList = () => {
             <meta charset="utf-8" />
             <style>
               body { font-family: sans-serif; padding: 20px; }
-              h1 { color: #333; }
+              h1, h3 { color: #333; }
               table { width: 100%; border-collapse: collapse; margin-top: 20px; }
               th, td { border: 1px solid #999; padding: 8px; text-align: left; }
             </style>
           </head>
           <body>
             <h1>${eventTitle}</h1>
+            <h3>Date: ${dateString}</h3> <!-- ✅ Date added here -->
             ${filteredBlocks
               .map((block, index) => {
                 const summary =
@@ -239,12 +272,14 @@ const BlockList = () => {
   return (
     <View style={globalStyles.secondaryContainer}>
       <Text style={styles.eventTitle}>{eventTitle}</Text>
+
       <View style={styles.container}>
         <CustomSearch
           placeholder="Search blocks..."
           onSearch={(text) => setSearchQuery(text)}
         />
       </View>
+
       <View style={styles.container}>
         <View style={styles.filterContainer}>
           <View style={{ width: "48%" }}>
@@ -269,6 +304,7 @@ const BlockList = () => {
           </View>
         </View>
       </View>
+
       <ScrollView contentContainerStyle={styles.scrollviewContainer}>
         {loading ? (
           <Text style={styles.noDataText}>Loading blocks...</Text>
@@ -305,6 +341,7 @@ const BlockList = () => {
           </View>
         )}
       </ScrollView>
+
       <View style={styles.buttonContainer}>
         <CustomButton
           title="Download"
@@ -317,6 +354,7 @@ const BlockList = () => {
           }}
         />
       </View>
+
       <PrintFilterModal
         visible={showPrintModal}
         onClose={() => setShowPrintModal(false)}
@@ -328,6 +366,7 @@ const BlockList = () => {
         blocks={allBlocks}
         yearLevels={yearLevels}
       />
+
       <CustomModal
         visible={modalVisible}
         title={modalConfig.title}
