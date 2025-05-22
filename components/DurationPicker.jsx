@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,15 @@ import {
   TouchableOpacity,
   Pressable,
 } from "react-native";
-import WheelPickerExpo from "react-native-wheel-picker-expo";
+import { Picker } from "@react-native-picker/picker";
 import theme from "../constants/theme";
+
+const DURATIONS = [
+  { label: "30 mins", value: 30 },
+  { label: "1 hr", value: 60 },
+  { label: "1 hr 30 mins", value: 90 },
+  { label: "2 hrs", value: 120 },
+];
 
 const DurationPicker = ({
   visible,
@@ -16,32 +23,22 @@ const DurationPicker = ({
   onDurationSelect,
   selectedDuration,
 }) => {
-  const initialHours = visible ? Math.floor(selectedDuration / 60) : 0;
-  const initialMinutes = visible
-    ? Math.round((selectedDuration % 60) / 5) * 5
-    : 0;
-
-  const [hours, setHours] = useState(initialHours);
-  const [minutes, setMinutes] = useState(initialMinutes);
-  const isInitialRender = useRef(true);
+  const [selectedValue, setSelectedValue] = useState(30);
 
   useEffect(() => {
     if (visible) {
-      const newHours = Math.floor(selectedDuration / 60);
-      const newMinutes = Math.round((selectedDuration % 60) / 5) * 5;
-      if (newHours !== hours || newMinutes !== minutes) {
-        setHours(newHours);
-        setMinutes(newMinutes);
-      }
-      isInitialRender.current = false;
-    } else {
-      isInitialRender.current = true;
+      const closest = DURATIONS.reduce((prev, curr) =>
+        Math.abs(curr.value - selectedDuration) <
+        Math.abs(prev.value - selectedDuration)
+          ? curr
+          : prev
+      );
+      setSelectedValue(closest.value);
     }
   }, [visible, selectedDuration]);
 
   const handleDone = () => {
-    const totalMinutes = hours * 60 + minutes;
-    onDurationSelect(totalMinutes);
+    onDurationSelect(selectedValue);
     onClose();
   };
 
@@ -51,38 +48,23 @@ const DurationPicker = ({
         <View style={styles.modalContainer}>
           <Text style={styles.title}>Select Duration</Text>
 
-          <View style={styles.pickerRow}>
-            <WheelPickerExpo
-              key={`hours-picker-${visible}`}
-              items={Array.from({ length: 24 }, (_, i) => ({
-                label: `${i} hrs`,
-                value: i,
-              }))}
-              selectedValue={hours}
-              initialSelectedIndex={
-                visible && isInitialRender.current ? hours : undefined
-              }
-              onChange={({ item }) => setHours(item.value)}
-              height={150}
-              width={100}
-              backgroundColor={theme.colors.secondary}
-            />
-            <Text style={styles.separator}>:</Text>
-            <WheelPickerExpo
-              key={`minutes-picker-${visible}`}
-              items={Array.from({ length: 12 }, (_, i) => ({
-                label: `${i * 5} mins`,
-                value: i * 5,
-              }))}
-              selectedValue={minutes}
-              initialSelectedIndex={
-                visible && isInitialRender.current ? minutes / 5 : undefined
-              }
-              onChange={({ item }) => setMinutes(item.value)}
-              height={150}
-              width={100}
-              backgroundColor={theme.colors.secondary}
-            />
+          <View style={styles.pickerContainer}>
+            <Pressable onPress={(e) => e.stopPropagation()}>
+              <Picker
+                selectedValue={selectedValue}
+                onValueChange={(itemValue) => setSelectedValue(itemValue)}
+                style={styles.picker}
+                itemStyle={styles.pickerItem}
+              >
+                {DURATIONS.map((duration) => (
+                  <Picker.Item
+                    key={duration.value}
+                    label={duration.label}
+                    value={duration.value}
+                  />
+                ))}
+              </Picker>
+            </Pressable>
           </View>
 
           <TouchableOpacity style={styles.doneButton} onPress={handleDone}>
@@ -112,16 +94,17 @@ const styles = StyleSheet.create({
     fontFamily: theme.fontFamily.Arial,
     marginBottom: 10,
   },
-  pickerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+  pickerContainer: {
+    width: "100%",
   },
-  separator: {
-    fontSize: 20,
-    fontWeight: "bold",
+  picker: {
+    width: "100%",
+    height: 150,
+  },
+  pickerItem: {
+    fontSize: theme.fontSizes.large,
     color: theme.colors.primary,
-    marginHorizontal: 10,
+    fontFamily: theme.fontFamily.Arial,
   },
   doneButton: {
     marginTop: theme.spacing.large,
