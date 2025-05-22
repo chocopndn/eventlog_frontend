@@ -53,7 +53,7 @@ const AcademicManagement = () => {
         accessibilityLabel="Navigate to Roles"
       >
         <View style={styles.screenContainer}>
-          <Text style={styles.screenTitle}>School Years</Text>
+          <Text style={styles.screenTitle}>School Year</Text>
         </View>
       </TouchableOpacity>
 
