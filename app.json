@@ -3,7 +3,7 @@
     "name": "EVENTLOG",
     "scheme": "eventlog",
     "slug": "eventlog",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/adaptive-icon.png",
     "version": "1.2.0",
     "plugins": [
       "expo-router",
@@ -16,6 +16,18 @@
             "./assets/fonts/ArialBold.ttf",
             "./assets/fonts/ArialItalic.ttf"
           ]
+        }
+      ],
+       [
+       "expo-splash-screen",
+        {
+          "backgroundColor": "#232323",
+          "image": "./assets/images/splash-icon.png",
+          "dark": {
+            "image": "./assets/images/splash-icon-dark.png",
+            "backgroundColor": "#000000"
+          },
+          "imageWidth": 200
         }
       ],
       [
@@ -48,7 +60,8 @@
         {
           "iCloudContainerEnvironment": "Production"
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "extra": {
       "router": {
