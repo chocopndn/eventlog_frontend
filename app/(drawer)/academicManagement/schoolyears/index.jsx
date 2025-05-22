@@ -106,6 +106,7 @@ export default function SchoolYearScreen() {
           <CustomButton
             title="Update Student List"
             onPress={handleUpdateStudentList}
+            type="secondary"
           />
         </View>
       </View>
