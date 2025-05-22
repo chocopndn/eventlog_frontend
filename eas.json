@@ -9,7 +9,11 @@
       "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://192.168.179.97:3000",
+        "EXPO_PUBLIC_QR_SECRET_KEY": "eventlog"
+      }
     },
     "production": {
       "autoIncrement": true
