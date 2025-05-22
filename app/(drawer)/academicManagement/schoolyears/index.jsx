@@ -15,11 +15,11 @@ const pickDocument = async (
   type,
   setUploading,
   setMessage,
-  setSuccessModalVisible
+  setSuccessModalVisible,
+  fetchCurrentSchoolYear
 ) => {
   try {
     const result = await DocumentPicker.getDocumentAsync({ type: "text/csv" });
-    console.log("Document Picker Result:", result);
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const selectedFile = result.assets[0];
@@ -30,20 +30,20 @@ const pickDocument = async (
         let response;
         if (type === "changeSchoolYear") {
           response = await changeSchoolYear(selectedFile.uri);
+
+          await fetchCurrentSchoolYear();
           setMessage("School year changed successfully!");
         } else {
           response = await uploadSchoolYearFile(selectedFile.uri, type);
           setMessage("Upload successful!");
         }
 
-        console.log("Response:", response);
         setSuccessModalVisible(true);
       } catch (error) {
         console.error("Error uploading file:", error);
         setMessage("Error uploading file.");
       }
     } else {
-      console.log("File picking cancelled.");
       setMessage("File picking cancelled.");
     }
   } catch (error) {
@@ -63,24 +63,24 @@ export default function SchoolYearScreen() {
   const [currentSchoolYear, setCurrentSchoolYear] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch current school year on mount
-  useEffect(() => {
-    const fetchCurrentSchoolYear = async () => {
-      try {
-        const response = await getCurrentSchoolYear(); // From your API
-        if (response.success && response.data) {
-          setCurrentSchoolYear(response.data);
-        } else {
-          setCurrentSchoolYear(null);
-        }
-      } catch (error) {
-        console.error("Failed to fetch current school year:", error);
+  const fetchCurrentSchoolYear = async () => {
+    try {
+      setLoading(true);
+      const response = await getCurrentSchoolYear();
+      if (response.success && response.data) {
+        setCurrentSchoolYear(response.data);
+      } else {
         setCurrentSchoolYear(null);
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Failed to fetch current school year:", error);
+      setCurrentSchoolYear(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchCurrentSchoolYear();
   }, []);
 
@@ -91,12 +91,7 @@ export default function SchoolYearScreen() {
 
   const handleUpdateStudentList = () => {
     setModalType("updateStudentList");
-    pickDocument(
-      "updateStudentList",
-      setUploading,
-      setMessage,
-      setSuccessModalVisible
-    );
+    setModalVisible(true);
   };
 
   const handleModalConfirm = () => {
@@ -107,7 +102,18 @@ export default function SchoolYearScreen() {
           "changeSchoolYear",
           setUploading,
           setMessage,
-          setSuccessModalVisible
+          setSuccessModalVisible,
+          fetchCurrentSchoolYear
+        );
+      }, 300);
+    } else if (modalType === "updateStudentList") {
+      setTimeout(() => {
+        pickDocument(
+          "updateStudentList",
+          setUploading,
+          setMessage,
+          setSuccessModalVisible,
+          fetchCurrentSchoolYear
         );
       }, 300);
     }
@@ -172,7 +178,7 @@ export default function SchoolYearScreen() {
         message={
           modalType === "changeSchoolYear"
             ? "The school year has been changed successfully."
-            : "The CSV file has been uploaded successfully."
+            : "The student list has been updated successfully."
         }
         type="success"
         cancelTitle="CLOSE"
