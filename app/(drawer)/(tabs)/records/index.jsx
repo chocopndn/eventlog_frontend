@@ -4,6 +4,7 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import { getRoleID, getStoredUser } from "../../../../database/queries";
@@ -30,6 +31,7 @@ const Records = () => {
   const [originalPast, setOriginalPast] = useState([]);
   const [studentId, setStudentId] = useState(null);
   const [blockId, setBlockId] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     const fetchRoleId = async () => {
@@ -94,6 +96,7 @@ const Records = () => {
         setFilteredOngoingEvents(ongoingList);
         setFilteredPastEvents(pastList);
       } catch (error) {
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
@@ -124,8 +127,69 @@ const Records = () => {
           )
         );
       }
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error filtering events:", error);
+    }
   }, [searchTerm]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      let ongoingEvents = [];
+      let pastEvents = [];
+      let idNumber = null;
+      let blockNumber = null;
+
+      if (roleId === 1 || roleId === 2) {
+        const storedUser = await getStoredUser();
+        if (!storedUser || !storedUser.id_number) return;
+        idNumber = storedUser.id_number;
+        blockNumber = storedUser.block_id || null;
+        setStudentId(idNumber);
+        setBlockId(blockNumber);
+        const ongoingApiResponse = await fetchUserOngoingEvents(idNumber);
+        const pastApiResponse = await fetchUserPastEvents(idNumber);
+        ongoingEvents = ongoingApiResponse?.events || [];
+        pastEvents = pastApiResponse?.events || [];
+      } else if (roleId === 3) {
+        const ongoingApiResponse = await fetchAllOngoingEvents();
+        const pastApiResponse = await fetchAllPastEvents();
+        ongoingEvents = ongoingApiResponse?.events || [];
+        pastEvents = pastApiResponse?.events || [];
+      }
+
+      const groupedEvents = {};
+      [...ongoingEvents, ...pastEvents].forEach((record) => {
+        const { event_id, event_name, event_date } = record;
+        if (!groupedEvents[event_id]) {
+          groupedEvents[event_id] = {
+            event_id,
+            event_name,
+            event_dates: [],
+          };
+        }
+        groupedEvents[event_id].event_dates.push(event_date);
+      });
+
+      const allEvents = Object.values(groupedEvents);
+      const ongoingList = Object.values(groupedEvents).filter((event) =>
+        ongoingEvents.some((e) => e.event_id === event.event_id)
+      );
+      const pastList = Object.values(groupedEvents).filter((event) =>
+        pastEvents.some((e) => e.event_id === event.event_id)
+      );
+
+      setAllEvents(allEvents);
+      setOriginalOngoing(ongoingList);
+      setOriginalPast(pastList);
+      setFilteredOngoingEvents(ongoingList);
+      setFilteredPastEvents(pastList);
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -146,11 +210,13 @@ const Records = () => {
           onSearch={(text) => setSearchTerm(text)}
         />
       </View>
-
       <ScrollView
         style={{ flex: 1, width: "100%", marginBottom: 20 }}
         contentContainerStyle={styles.scrollview}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+        }
       >
         {roleId === 1 || roleId === 2 ? (
           <>
@@ -180,7 +246,6 @@ const Records = () => {
                 ))}
               </View>
             )}
-
             {filteredPastEvents.length > 0 && (
               <View style={styles.sectionContainer}>
                 <Text style={styles.sectionTitle}>Past Events</Text>
@@ -236,7 +301,6 @@ const Records = () => {
                 ))}
               </View>
             )}
-
             {filteredPastEvents.length > 0 && (
               <View style={styles.sectionContainer}>
                 <Text style={styles.sectionTitle}>Past Events</Text>
@@ -265,7 +329,6 @@ const Records = () => {
             )}
           </>
         ) : null}
-
         {!hasEvents && (
           <View style={styles.noEventsContainer}>
             <Text style={styles.noEventsText}>No events available.</Text>
