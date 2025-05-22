@@ -223,7 +223,7 @@ const BlockList = () => {
       </ScrollView>
 
       <View style={styles.buttonContainer}>
-        <CustomButton title="Print" onPress={() => {}} />
+        <CustomButton title="Download" onPress={() => {}} />
       </View>
     </View>
   );
