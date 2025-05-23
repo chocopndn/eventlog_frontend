@@ -397,8 +397,7 @@ const Scan = () => {
         }
 
         if (alreadyLogged) {
-          const errorMsg = `Attendance for ${friendlyTypeDescription} has already been logged.`;
-          logError("Attendance Validation", errorMsg, { attendanceData });
+          const errorMsg = `Attendance has already been logged.`;
           setErrorMessage(errorMsg);
           setErrorModalVisible(true);
           return;
