@@ -327,7 +327,7 @@ const BlockList = () => {
                   style={styles.blockContainer}
                   onPress={() =>
                     router.push({
-                      pathname: "/records/StudentsList",
+                      pathname: "eventManagement/records/StudentsList",
                       params: { eventId: eventId, blockId: block.block_id },
                     })
                   }
