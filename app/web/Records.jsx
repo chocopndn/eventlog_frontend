@@ -2,24 +2,21 @@ import { StyleSheet, Text, View, ScrollView, Platform } from "react-native";
 import React, { useEffect, useState, useMemo } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { useFonts } from "expo-font";
-
 import WebHeader from "../../components/WebHeader";
 import globalStyles from "../../constants/globalStyles";
 import CustomSearch from "../../components/CustomSearch";
 import CustomDropdown from "../../components/CustomDropdown";
 import CustomButton from "../../components/CustomButton";
 import theme from "../../constants/theme";
-
 import ArialFont from "../../assets/fonts/Arial.ttf";
 import ArialBoldFont from "../../assets/fonts/ArialBold.ttf";
 import ArialItalicFont from "../../assets/fonts/ArialItalic.ttf";
 import SquadaOneFont from "../../assets/fonts/SquadaOne.ttf";
-
 import { fetchAttendanceSummaryOfEvent } from "../../services/api/records";
+import { fetchDepartments, fetchYearLevels } from "../../services/api";
 
 const Records = () => {
   const { eventId } = useLocalSearchParams();
-
   const [fontsLoaded, fontError] = useFonts({
     Arial: require("../../assets/fonts/Arial.ttf"),
     ArialBold: require("../../assets/fonts/ArialBold.ttf"),
@@ -32,15 +29,18 @@ const Records = () => {
   const [eventInfo, setEventInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedYearLevel, setSelectedYearLevel] = useState("");
 
+  // State for department/year level options
+  const [departments, setDepartments] = useState([]);
+  const [yearLevels, setYearLevels] = useState([]);
+
+  // Load web fonts
   useEffect(() => {
     if (Platform.OS === "web") {
       console.log("Records: Registering fonts for web...");
-
       const style = document.createElement("style");
       style.textContent = `
         @font-face {
@@ -66,7 +66,6 @@ const Records = () => {
           font-display: swap;
         }
       `;
-
       const existingStyle = document.getElementById("records-custom-fonts");
       if (!existingStyle) {
         style.id = "records-custom-fonts";
@@ -104,20 +103,18 @@ const Records = () => {
     }
   }, [fontsLoaded, fontError]);
 
+  // Fetch attendance data and extract dropdown options from the response
   useEffect(() => {
     const fetchAttendanceData = async () => {
       if (!eventId) {
         console.warn("No eventId provided");
         return;
       }
-
       setLoading(true);
       setError(null);
-
       try {
         console.log("Fetching attendance data for eventId:", eventId);
         const response = await fetchAttendanceSummaryOfEvent(eventId);
-
         const students = response?.data?.students || [];
         const eventDetails = {
           id: response?.data?.event_id,
@@ -127,8 +124,77 @@ const Records = () => {
 
         setAttendanceData(students);
         setEventInfo(eventDetails);
+
+        // Extract unique departments and year levels from student data
+        const uniqueDepartments = new Map();
+        const uniqueYearLevels = new Map();
+
+        students.forEach((student) => {
+          // Collect departments
+          if (student.department_code && student.department_name) {
+            uniqueDepartments.set(student.department_code, {
+              label: `${student.department_code} - ${student.department_name}`,
+              value: student.department_code,
+            });
+          }
+
+          // Collect year levels from the response data
+          if (student.year_level_id && student.year_level_name) {
+            uniqueYearLevels.set(student.year_level_id, {
+              label: student.year_level_name,
+              value: String(student.year_level_id),
+            });
+          }
+        });
+
+        // If we have departments and year_levels arrays from the API response, use those instead
+        if (
+          response?.data?.departments &&
+          Array.isArray(response.data.departments)
+        ) {
+          response.data.departments.forEach((dept) => {
+            uniqueDepartments.set(dept.code, {
+              label: `${dept.code} - ${dept.name}`,
+              value: dept.code,
+            });
+          });
+        }
+
+        if (
+          response?.data?.year_levels &&
+          Array.isArray(response.data.year_levels)
+        ) {
+          response.data.year_levels.forEach((year) => {
+            uniqueYearLevels.set(year.id, {
+              label: year.name,
+              value: String(year.id),
+            });
+          });
+        }
+
+        // Create department options
+        const departmentOptions = [
+          { label: "All Departments", value: "" },
+          ...Array.from(uniqueDepartments.values()).sort((a, b) =>
+            a.label.localeCompare(b.label)
+          ),
+        ];
+
+        // Create year level options
+        const yearLevelOptions = [
+          { label: "All Year Levels", value: "" },
+          ...Array.from(uniqueYearLevels.values()).sort((a, b) =>
+            a.label.localeCompare(b.label)
+          ),
+        ];
+
+        setDepartments(departmentOptions);
+        setYearLevels(yearLevelOptions);
+
         console.log("Attendance data fetched successfully:", students);
         console.log("Event info:", eventDetails);
+        console.log("Departments from data:", departmentOptions);
+        console.log("Year levels from data:", yearLevelOptions);
       } catch (err) {
         console.error("Failed to fetch attendance data:", err);
         setError(err.message || "Failed to fetch attendance data");
@@ -142,8 +208,78 @@ const Records = () => {
     }
   }, [eventId, fontsReady]);
 
+  // Separate useEffect for API-based dropdowns (fallback)
+  useEffect(() => {
+    const loadOptionsFromAPI = async () => {
+      try {
+        // Only fetch from API if we don't have data from attendance response
+        if (departments.length <= 1) {
+          // Only "All Departments"
+          console.log("Fetching departments from API as fallback...");
+          const deptResponse = await fetchDepartments();
+          console.log("API Department response:", deptResponse);
+
+          if (deptResponse?.data && Array.isArray(deptResponse.data)) {
+            const deptOptions = deptResponse.data.map((dept, index) => ({
+              label: String(
+                dept.name ||
+                  dept.department_name ||
+                  dept.code ||
+                  `Department ${index + 1}`
+              ),
+              value: String(dept.code || dept.id || index),
+            }));
+
+            const departmentOptions = [
+              { label: "All Departments", value: "" },
+              ...deptOptions,
+            ];
+
+            setDepartments(departmentOptions);
+            console.log("API-based departments:", departmentOptions);
+          }
+        }
+
+        if (yearLevels.length <= 1) {
+          // Only "All Year Levels"
+          console.log("Fetching year levels from API as fallback...");
+          const yearResponse = await fetchYearLevels();
+          console.log("API Year response:", yearResponse);
+
+          if (yearResponse?.data && Array.isArray(yearResponse.data)) {
+            const yearOptions = yearResponse.data.map((year, index) => ({
+              label: `Year ${
+                year.level || year.year_level || year.name || index + 1
+              }`,
+              value: String(
+                year.level || year.year_level || year.id || index + 1
+              ),
+            }));
+
+            const yearLevelOptions = [
+              { label: "All Year Levels", value: "" },
+              ...yearOptions,
+            ];
+
+            setYearLevels(yearLevelOptions);
+            console.log("API-based year levels:", yearLevelOptions);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching dropdown data from API:", error);
+      }
+    };
+
+    // Run this after attendance data is loaded and if dropdowns are still empty
+    if (fontsReady && attendanceData.length > 0) {
+      loadOptionsFromAPI();
+    }
+  }, [attendanceData, fontsReady]);
+
+  // Enhanced filtering logic with proper field matching
   const filteredData = useMemo(() => {
     return attendanceData.filter((student) => {
+      // Search filter
       const matchesSearch =
         !searchQuery ||
         (student.full_name &&
@@ -158,52 +294,39 @@ const Records = () => {
         (student.block_name &&
           student.block_name.toLowerCase().includes(searchQuery.toLowerCase()));
 
+      // Department filter - match against department_code
       const matchesDepartment =
         !selectedDepartment ||
+        selectedDepartment === "" ||
+        selectedDepartment === "error" ||
         (student.department_code &&
-          student.department_code === selectedDepartment);
+          String(student.department_code) === String(selectedDepartment));
 
+      // Year level filter - match against year_level_id field from attendance data
       const matchesYearLevel =
         !selectedYearLevel ||
-        (student.year_level &&
-          student.year_level.toString() === selectedYearLevel);
+        selectedYearLevel === "" ||
+        selectedYearLevel === "error" ||
+        (student.year_level_id &&
+          String(student.year_level_id) === String(selectedYearLevel));
 
       return matchesSearch && matchesDepartment && matchesYearLevel;
     });
   }, [attendanceData, searchQuery, selectedDepartment, selectedYearLevel]);
 
-  const departments = useMemo(() => {
-    const depts = [
-      ...new Set(
-        attendanceData.map((student) => student.department_code).filter(Boolean)
-      ),
-    ];
-    return depts.map((dept) => ({ label: dept, value: dept }));
-  }, [attendanceData]);
-
-  const yearLevels = useMemo(() => {
-    const years = [
-      ...new Set(
-        attendanceData.map((student) => student.year_level).filter(Boolean)
-      ),
-    ];
-    return years
-      .sort()
-      .map((year) => ({ label: `Year ${year}`, value: year.toString() }));
-  }, [attendanceData]);
-
   const handleSearch = (query) => {
     setSearchQuery(query);
   };
 
-  const handleDepartmentChange = (value) => {
-    setSelectedDepartment(value);
+  const handleDepartmentChange = (item) => {
+    setSelectedDepartment(item.value);
   };
 
-  const handleYearLevelChange = (value) => {
-    setSelectedYearLevel(value);
+  const handleYearLevelChange = (item) => {
+    setSelectedYearLevel(item.value);
   };
 
+  // Clear filters function - keeping for potential future use
   const clearFilters = () => {
     setSearchQuery("");
     setSelectedDepartment("");
@@ -278,7 +401,6 @@ const Records = () => {
       ]}
     >
       <WebHeader />
-
       {/* Event Information */}
       {eventInfo && (
         <View style={styles.eventInfoContainer}>
@@ -300,8 +422,10 @@ const Records = () => {
             display="sharp"
             placeholder="Department"
             data={departments}
+            labelField="label"
+            valueField="value"
+            value={selectedDepartment}
             onSelect={handleDepartmentChange}
-            selectedValue={selectedDepartment}
           />
         </View>
         <View
@@ -314,33 +438,19 @@ const Records = () => {
             display="sharp"
             placeholder="Year Level"
             data={yearLevels}
+            labelField="label"
+            valueField="value"
+            value={selectedYearLevel}
             onSelect={handleYearLevelChange}
-            selectedValue={selectedYearLevel}
           />
         </View>
       </View>
 
-      {/* Clear filters button */}
-      {(searchQuery || selectedDepartment || selectedYearLevel) && (
-        <View style={styles.clearFiltersContainer}>
-          <CustomButton
-            title="Clear Filters"
-            onPress={clearFilters}
-            style={styles.clearFiltersButton}
-          />
-        </View>
-      )}
+      {/* Clear filters button - REMOVED */}
 
-      {/* Results count */}
-      {!loading && !error && (
-        <View style={styles.resultsContainer}>
-          <Text style={styles.resultsText}>
-            Showing {filteredData.length} of {attendanceData.length} students
-          </Text>
-        </View>
-      )}
+      {/* Results count - REMOVED */}
 
-      {/* Fixed Table Header */}
+      {/* Table Header */}
       <View style={styles.tableContainer}>
         <View style={styles.listHeader}>
           <View style={[styles.id, styles.headerText]}>
@@ -475,25 +585,6 @@ const styles = StyleSheet.create({
   },
   dropdownContainer: {
     width: "49%",
-  },
-  clearFiltersContainer: {
-    width: "90%",
-    alignItems: "center",
-    marginTop: theme.spacing.medium,
-  },
-  clearFiltersButton: {
-    width: "30%",
-  },
-  resultsContainer: {
-    width: "90%",
-    alignItems: "center",
-    marginTop: theme.spacing.small,
-    marginBottom: theme.spacing.small,
-  },
-  resultsText: {
-    fontFamily: theme.fontFamily.Arial,
-    fontSize: theme.fontSizes.small,
-    color: theme.colors.text || "#666",
   },
   buttonContainer: {
     width: "30%",
