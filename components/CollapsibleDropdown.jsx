@@ -13,6 +13,7 @@ const CollapsibleDropdown = ({
   pm_in,
   pm_out,
   personnel,
+  description,
 }) => {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
@@ -30,6 +31,17 @@ const CollapsibleDropdown = ({
           <View>
             <Text style={styles.contentTitle}>VENUE OF TIME IN/OUT:</Text>
             <Text style={styles.details}>{venue}</Text>
+          </View>
+          <View>
+            <Text
+              style={[
+                styles.contentTitle,
+                { paddingTop: theme.spacing.medium },
+              ]}
+            >
+              DESCRIPTION:
+            </Text>
+            <Text style={styles.details}>{description}</Text>
           </View>
           <View style={styles.timeContainer}>
             <View style={styles.contentContainer}>

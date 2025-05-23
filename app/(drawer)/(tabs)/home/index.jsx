@@ -122,6 +122,7 @@ const Home = () => {
     try {
       console.log("[Home] Calling fetchUpcomingEvents with blockId:", blockId);
       const response = await fetchUpcomingEvents(blockId);
+      console.log(response);
 
       console.log("EVENTS", response);
 
@@ -477,6 +478,7 @@ const Home = () => {
                   pm_in={eventTimes.pmIn}
                   pm_out={eventTimes.pmOut}
                   personnel={event.scan_personnel || "N/A"}
+                  description={event.description || "N/A"}
                 />
               );
             })
