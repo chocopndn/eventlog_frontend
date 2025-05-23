@@ -148,7 +148,6 @@ export const storeEvent = async (event, allApiEventIds = []) => {
       `[storeEvent] Starting to store event: ${event?.event_name} (ID: ${event?.event_id})`
     );
 
-    // Validate inputs first
     if (!event || typeof event !== "object") {
       const error = "Invalid event object provided";
       console.error(`[storeEvent] ${error}`);
@@ -174,7 +173,6 @@ export const storeEvent = async (event, allApiEventIds = []) => {
       return { success: true, skipped: true };
     }
 
-    // Get database instance
     console.log(`[storeEvent] Initializing database...`);
     const db = await initDB();
     if (!db) {
@@ -185,7 +183,6 @@ export const storeEvent = async (event, allApiEventIds = []) => {
 
     console.log(`[storeEvent] Database initialized successfully`);
 
-    // Handle cleanup if no events provided
     if (!allApiEventIds || allApiEventIds.length === 0) {
       console.log(`[storeEvent] No events provided, clearing tables...`);
       await db.runAsync("DELETE FROM event_dates");
@@ -194,17 +191,12 @@ export const storeEvent = async (event, allApiEventIds = []) => {
       return { success: true, cleared: true };
     }
 
-    // REMOVED: Cleanup logic to prevent conflicts when multiple events are being stored
-    // Only clean up if this is explicitly requested or handle it separately
-
-    // Check if event already exists
     console.log(`[storeEvent] Checking if event ${event.event_id} exists...`);
     const existingEvent = await db.getFirstAsync(
       "SELECT id FROM events WHERE id = ?",
       [event.event_id]
     );
 
-    // Prepare event parameters with null handling
     const eventParams = [
       event.event_name || null,
       event.venue || null,
@@ -230,10 +222,10 @@ export const storeEvent = async (event, allApiEventIds = []) => {
       console.log(`[storeEvent] Updating existing event: ${event.event_name}`);
       await db.runAsync(
         `UPDATE events SET 
-          event_name = ?, venue = ?, description = ?, created_by_id = ?, created_by = ?, 
-          status = ?, am_in = ?, am_out = ?, pm_in = ?, pm_out = ?, scan_personnel = ?, 
-          approved_by = ?, approved_by_id = ?, duration = ?
-        WHERE id = ?`,
+         event_name = ?, venue = ?, description = ?, created_by_id = ?, created_by = ?, 
+         status = ?, am_in = ?, am_out = ?, pm_in = ?, pm_out = ?, scan_personnel = ?, 
+         approved_by = ?, approved_by_id = ?, duration = ?
+       WHERE id = ?`,
         [...eventParams, event.event_id]
       );
       console.log(
@@ -243,9 +235,9 @@ export const storeEvent = async (event, allApiEventIds = []) => {
       console.log(`[storeEvent] Inserting new event: ${event.event_name}`);
       await db.runAsync(
         `INSERT INTO events 
-          (id, event_name, venue, description, created_by_id, created_by, status, 
-          am_in, am_out, pm_in, pm_out, scan_personnel, approved_by, approved_by_id, duration) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (id, event_name, venue, description, created_by_id, created_by, status, 
+         am_in, am_out, pm_in, pm_out, scan_personnel, approved_by, approved_by_id, duration) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [event.event_id, ...eventParams]
       );
       console.log(
@@ -253,7 +245,6 @@ export const storeEvent = async (event, allApiEventIds = []) => {
       );
     }
 
-    // Handle event dates - IMPROVED LOGIC
     if (event.event_dates && event.event_date_ids) {
       console.log(
         `[storeEvent] Processing event dates for ${event.event_name}...`
@@ -270,7 +261,6 @@ export const storeEvent = async (event, allApiEventIds = []) => {
       let eventDatesArray = [];
       let eventDateIdsArray = [];
 
-      // Parse event_dates - Handle both arrays and strings
       if (Array.isArray(event.event_dates)) {
         eventDatesArray = event.event_dates;
         console.log(`[storeEvent] event_dates is array:`, eventDatesArray);
@@ -292,16 +282,18 @@ export const storeEvent = async (event, allApiEventIds = []) => {
         );
       }
 
-      // Parse event_date_ids - Handle both arrays and strings
       if (Array.isArray(event.event_date_ids)) {
-        eventDateIdsArray = event.event_date_ids;
+        eventDateIdsArray = event.event_date_ids.map((id) => String(id));
         console.log(`[storeEvent] event_date_ids is array:`, eventDateIdsArray);
       } else if (
         typeof event.event_date_ids === "string" &&
         event.event_date_ids.trim() !== ""
       ) {
         try {
-          eventDateIdsArray = JSON.parse(event.event_date_ids);
+          const parsed = JSON.parse(event.event_date_ids);
+          eventDateIdsArray = Array.isArray(parsed)
+            ? parsed.map((id) => String(id))
+            : [];
           console.log(
             `[storeEvent] event_date_ids parsed from JSON:`,
             eventDateIdsArray
@@ -335,7 +327,6 @@ export const storeEvent = async (event, allApiEventIds = []) => {
           `[storeEvent] Processing ${eventDatesArray.length} event dates...`
         );
 
-        // Delete existing dates for this event first
         console.log(
           `[storeEvent] Deleting existing dates for event ${event.event_id}`
         );
@@ -343,7 +334,7 @@ export const storeEvent = async (event, allApiEventIds = []) => {
           event.event_id,
         ]);
 
-        // Insert all dates for this event
+        let successfulInserts = 0;
         for (let i = 0; i < eventDatesArray.length; i++) {
           const eventDate = eventDatesArray[i];
           const eventDateId = eventDateIdsArray[i];
@@ -358,17 +349,16 @@ export const storeEvent = async (event, allApiEventIds = []) => {
               [eventDateId, event.event_id, eventDate]
             );
             console.log(`[storeEvent] Successfully inserted date ${eventDate}`);
+            successfulInserts++;
           } catch (dateError) {
             console.error(
               `[storeEvent] Error inserting date ${eventDate}:`,
               dateError.message
             );
-            console.error(`[storeEvent] Date error details:`, dateError);
-            // Continue with other dates even if one fails
           }
         }
         console.log(
-          `[storeEvent] Successfully processed ${eventDatesArray.length} event dates for ${event.event_name}`
+          `[storeEvent] Successfully processed ${successfulInserts}/${eventDatesArray.length} event dates for ${event.event_name}`
         );
       } else if (eventDatesArray.length !== eventDateIdsArray.length) {
         console.warn(
@@ -389,21 +379,19 @@ export const storeEvent = async (event, allApiEventIds = []) => {
     }
 
     console.log(
-      `[storeEvent] Successfully stored event: ${event.event_name} (ID: ${event.event_id})`
+      `[storeEvent] ✅ Successfully completed storing event: ${event.event_name} (ID: ${event.event_id})`
     );
     return { success: true };
   } catch (error) {
     const errorMessage = error.message || error.toString();
     console.error(
-      `[storeEvent] Critical error storing event ${
+      `[storeEvent] ❌ Critical error storing event ${
         event?.event_name || "unknown"
       } (ID: ${event?.event_id || "unknown"}):`,
       errorMessage
     );
     console.error(`[storeEvent] Error stack:`, error.stack);
-    console.error(`[storeEvent] Full error object:`, error);
 
-    // Return detailed error information
     return {
       success: false,
       error: errorMessage,
@@ -413,7 +401,6 @@ export const storeEvent = async (event, allApiEventIds = []) => {
   }
 };
 
-// Add a separate cleanup function to handle outdated events
 export const cleanupOutdatedEvents = async (allApiEventIds = []) => {
   if (Platform.OS === "web") {
     return { success: false, error: "Web platform not supported" };
