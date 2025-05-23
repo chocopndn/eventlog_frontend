@@ -4,8 +4,8 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
-import { FontProvider, useFontContext } from "../contexts/FontContext";
 import theme from "../constants/theme";
 import globalStyles from "../constants/globalStyles";
 import images from "../constants/images";
@@ -13,12 +13,91 @@ import CustomButton from "../components/CustomButton";
 import CustomModal from "../components/CustomModal";
 import NetInfo from "@react-native-community/netinfo";
 
+import ArialFont from "../assets/fonts/Arial.ttf";
+import ArialBoldFont from "../assets/fonts/ArialBold.ttf";
+import ArialItalicFont from "../assets/fonts/ArialItalic.ttf";
+import SquadaOneFont from "../assets/fonts/SquadaOne.ttf";
+
 SplashScreen.preventAutoHideAsync();
 
-const AppContent = () => {
-  const { fontsReady } = useFontContext();
+export default function App() {
+  const [fontsLoaded, fontError] = useFonts({
+    Arial: require("../assets/fonts/Arial.ttf"),
+    ArialBold: require("../assets/fonts/ArialBold.ttf"),
+    ArialItalic: require("../assets/fonts/ArialItalic.ttf"),
+    SquadaOne: require("../assets/fonts/SquadaOne.ttf"),
+  });
+
+  const [fontsReady, setFontsReady] = useState(false);
   const [appReady, setAppReady] = useState(false);
   const [isOfflineModalVisible, setIsOfflineModalVisible] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS === "web") {
+      console.log("App: Registering fonts for web...");
+
+      const style = document.createElement("style");
+      style.textContent = `
+        @font-face {
+          font-family: 'Arial';
+          src: url('${ArialFont}') format('truetype');
+          font-display: swap;
+        }
+        @font-face {
+          font-family: 'ArialBold';
+          src: url('${ArialBoldFont}') format('truetype');
+          font-display: swap;
+          font-weight: bold;
+        }
+        @font-face {
+          font-family: 'ArialItalic';
+          src: url('${ArialItalicFont}') format('truetype');
+          font-display: swap;
+          font-style: italic;
+        }
+        @font-face {
+          font-family: 'SquadaOne';
+          src: url('${SquadaOneFont}') format('truetype');
+          font-display: swap;
+        }
+      `;
+
+      const existingStyle = document.getElementById("app-custom-fonts");
+      if (!existingStyle) {
+        style.id = "app-custom-fonts";
+        document.head.appendChild(style);
+        console.log("App: Font CSS added to document");
+      }
+
+      if (document.fonts) {
+        Promise.all([
+          document.fonts.load("16px Arial"),
+          document.fonts.load("16px ArialBold"),
+          document.fonts.load("16px ArialItalic"),
+          document.fonts.load("16px SquadaOne"),
+        ])
+          .then(() => {
+            console.log("App: All fonts loaded successfully");
+            setFontsReady(true);
+          })
+          .catch((error) => {
+            console.warn("App: Font loading failed:", error);
+            setFontsReady(true);
+          });
+      } else {
+        setTimeout(() => {
+          console.log("App: Using fallback font loading method");
+          setFontsReady(true);
+        }, 500);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS !== "web" && fontsLoaded && !fontError) {
+      setFontsReady(true);
+    }
+  }, [fontsLoaded, fontError]);
 
   useEffect(() => {
     const prepareApp = async () => {
@@ -78,7 +157,28 @@ const AppContent = () => {
           { justifyContent: "center", alignItems: "center" },
         ]}
       >
-        <Text style={{ fontFamily: "system", fontSize: 18 }}>Loading...</Text>
+        <Text
+          style={{
+            fontFamily:
+              Platform.OS === "web" ? "system-ui, sans-serif" : "system",
+            fontSize: 18,
+          }}
+        >
+          Loading...
+        </Text>
+        {Platform.OS === "web" && (
+          <Text
+            style={{
+              fontFamily: "system-ui, sans-serif",
+              fontSize: 14,
+              color: "#666",
+              textAlign: "center",
+              marginTop: 10,
+            }}
+          >
+            Preparing application fonts
+          </Text>
+        )}
       </View>
     ) : null;
   }
@@ -115,14 +215,6 @@ const AppContent = () => {
         onClose={closeOfflineModal}
       />
     </SafeAreaView>
-  );
-};
-
-export default function App() {
-  return (
-    <FontProvider>
-      <AppContent />
-    </FontProvider>
   );
 }
 
