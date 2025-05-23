@@ -50,7 +50,9 @@ const AddStudent = () => {
           const activeBlocks = blocksData
             .filter((block) => block.status === "Active")
             .map((block) => ({
-              label: block.block_name || `Block ${block.block_id}`,
+              label: `${block.course_code || "N/A"} - ${
+                block.block_name || `Block ${block.block_id}`
+              }`,
               value: block.block_id,
             }));
           setBlocks(activeBlocks);
@@ -268,7 +270,7 @@ const styles = StyleSheet.create({
   },
   textTitle: {
     fontSize: theme.fontSizes.extraLarge,
-    fontFamily: theme.fontFamily.SquadaOne,
+    fontFamily: theme.fontFamily.SquladaOne,
     color: theme.colors.primary,
   },
 });
