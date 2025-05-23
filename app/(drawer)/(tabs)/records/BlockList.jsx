@@ -271,7 +271,7 @@ const BlockList = () => {
 
       setModalConfig({
         title: "Download Successful",
-        message: "Your PDF has been downloaded successfully.",
+        message: "Your attendance record has been downloaded successfully.",
         type: "success",
         cancelTitle: "OK",
       });
