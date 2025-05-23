@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import { useFocusEffect } from "@react-navigation/native";
 import CryptoJS from "crypto-js";
 import moment from "moment";
 import globalStyles from "../../../../constants/globalStyles";
@@ -22,6 +23,20 @@ const Scan = () => {
   const [confirmationModalVisible, setConfirmationModalVisible] =
     useState(false);
   const [pendingAttendanceData, setPendingAttendanceData] = useState(null);
+  const [cameraKey, setCameraKey] = useState(0); // Add this to force camera remount
+
+  // Reset camera when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      // Force camera to remount by changing key
+      setCameraKey((prev) => prev + 1);
+
+      // Request permission if needed
+      if (permission?.status === "denied") {
+        requestPermission();
+      }
+    }, [permission, requestPermission])
+  );
 
   useEffect(() => {
     if (permission?.status === "denied") {
@@ -238,6 +253,7 @@ const Scan = () => {
       <Text style={styles.note}>Find a QR Code to scan</Text>
       <View style={styles.cameraContainer}>
         <CameraView
+          key={cameraKey} // Add key prop to force remount
           style={styles.camera}
           facing="back"
           barcodeScannerSettings={{
@@ -267,7 +283,6 @@ const Scan = () => {
         cancelTitle="CLOSE"
       />
 
-      {/* Confirmation Modal */}
       <CustomModal
         visible={confirmationModalVisible}
         title="Confirm Attendance"
