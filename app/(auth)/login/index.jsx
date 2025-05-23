@@ -22,6 +22,11 @@ import FormField from "../../../components/FormField";
 import CustomButton from "../../../components/CustomButton";
 import { API_URL } from "../../../config/config";
 
+import ArialFont from "../../../assets/fonts/Arial.ttf";
+import ArialBoldFont from "../../../assets/fonts/ArialBold.ttf";
+import ArialItalicFont from "../../../assets/fonts/ArialItalic.ttf";
+import SquadaOneFont from "../../../assets/fonts/SquadaOne.ttf";
+
 const Login = () => {
   const [fontsLoaded, fontError] = useFonts({
     Arial: require("../../../assets/fonts/Arial.ttf"),
@@ -39,40 +44,75 @@ const Login = () => {
   const [modalTitle, setModalTitle] = useState("");
   const [fontsReady, setFontsReady] = useState(false);
 
-  // Font loading verification for web
   useEffect(() => {
-    if (Platform.OS === "web" && fontsLoaded && !fontError) {
-      // Add extra verification for web
-      const timer = setTimeout(() => {
-        if (typeof document !== "undefined" && document.fonts) {
-          Promise.all([
-            document.fonts.load("1em SquadaOne"),
-            document.fonts.load("1em Arial"),
-            document.fonts.load("1em ArialBold"),
-            document.fonts.load("1em ArialItalic"),
-          ])
-            .then(() => {
-              setFontsReady(true);
-            })
-            .catch((error) => {
-              console.warn("Font loading verification failed:", error);
-              setFontsReady(true); // Proceed anyway
-            });
-        } else {
-          setFontsReady(true);
-        }
-      }, 100);
+    if (Platform.OS === "web") {
+      console.log("Registering fonts for web...");
 
-      return () => clearTimeout(timer);
-    } else if (fontsLoaded && !fontError) {
-      // For non-web platforms
+      const style = document.createElement("style");
+      style.textContent = `
+        @font-face {
+          font-family: 'Arial';
+          src: url('${ArialFont}') format('truetype');
+          font-display: swap;
+        }
+        @font-face {
+          font-family: 'ArialBold';
+          src: url('${ArialBoldFont}') format('truetype');
+          font-display: swap;
+          font-weight: bold;
+        }
+        @font-face {
+          font-family: 'ArialItalic';
+          src: url('${ArialItalicFont}') format('truetype');
+          font-display: swap;
+          font-style: italic;
+        }
+        @font-face {
+          font-family: 'SquadaOne';
+          src: url('${SquadaOneFont}') format('truetype');
+          font-display: swap;
+        }
+      `;
+
+      const existingStyle = document.getElementById("custom-fonts");
+      if (!existingStyle) {
+        style.id = "custom-fonts";
+        document.head.appendChild(style);
+        console.log("Font CSS added to document");
+      }
+
+      if (document.fonts) {
+        Promise.all([
+          document.fonts.load("16px Arial"),
+          document.fonts.load("16px ArialBold"),
+          document.fonts.load("16px ArialItalic"),
+          document.fonts.load("16px SquadaOne"),
+        ])
+          .then(() => {
+            console.log("All fonts loaded successfully");
+            setFontsReady(true);
+          })
+          .catch((error) => {
+            console.warn("Font loading failed:", error);
+            setFontsReady(true);
+          });
+      } else {
+        setTimeout(() => {
+          console.log("Using fallback font loading method");
+          setFontsReady(true);
+        }, 500);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (Platform.OS !== "web" && fontsLoaded && !fontError) {
       setFontsReady(true);
     }
   }, [fontsLoaded, fontError]);
 
   useEffect(() => {
     const loadRememberedCredentials = async () => {
-      // Only load credentials after fonts are ready
       if (!fontsReady) return;
 
       try {
@@ -170,7 +210,6 @@ const Login = () => {
     }
   };
 
-  // Show loading state until fonts are ready
   if (!fontsReady) {
     return (
       <SafeAreaView
@@ -181,13 +220,27 @@ const Login = () => {
       >
         <Text
           style={{
-            fontFamily: "system",
+            fontFamily:
+              Platform.OS === "web" ? "system-ui, sans-serif" : "system",
             fontSize: 18,
             color: theme.colors.secondary,
+            marginBottom: 10,
           }}
         >
           Loading...
         </Text>
+        {Platform.OS === "web" && (
+          <Text
+            style={{
+              fontFamily: "system-ui, sans-serif",
+              fontSize: 14,
+              color: "#666",
+              textAlign: "center",
+            }}
+          >
+            Preparing custom fonts
+          </Text>
+        )}
       </SafeAreaView>
     );
   }

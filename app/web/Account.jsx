@@ -1,7 +1,15 @@
-import { StyleSheet, Text, View, Image, ScrollView } from "react-native";
-import React from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  ScrollView,
+  Platform,
+} from "react-native";
+import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useFonts } from "expo-font";
 import CustomButton from "../../components/CustomButton";
 import globalStyles from "../../constants/globalStyles";
 import theme from "../../constants/theme";
@@ -11,14 +19,165 @@ import useUserAccount from "../../hooks/useUserAccount";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const fullName = AsyncStorage.getItem("full_name");
-const idNumber = AsyncStorage.getItem("id_number");
-const email = AsyncStorage.getItem("email");
-
-console.log(idNumber);
+// Import font files directly for web
+import ArialFont from "../../assets/fonts/Arial.ttf";
+import ArialBoldFont from "../../assets/fonts/ArialBold.ttf";
+import ArialItalicFont from "../../assets/fonts/ArialItalic.ttf";
+import SquadaOneFont from "../../assets/fonts/SquadaOne.ttf";
 
 const Account = () => {
+  const [fontsLoaded, fontError] = useFonts({
+    Arial: require("../../assets/fonts/Arial.ttf"),
+    ArialBold: require("../../assets/fonts/ArialBold.ttf"),
+    ArialItalic: require("../../assets/fonts/ArialItalic.ttf"),
+    SquadaOne: require("../../assets/fonts/SquadaOne.ttf"),
+  });
+
+  const [fontsReady, setFontsReady] = useState(false);
   const { user, handleLogout } = useUserAccount();
+
+  // State for AsyncStorage values
+  const [userInfo, setUserInfo] = useState({
+    fullName: "",
+    idNumber: "",
+    email: "",
+  });
+
+  // Register fonts directly in the document for web
+  useEffect(() => {
+    if (Platform.OS === "web") {
+      console.log("Account: Registering fonts for web...");
+
+      // Create CSS font-face rules directly
+      const style = document.createElement("style");
+      style.textContent = `
+        @font-face {
+          font-family: 'Arial';
+          src: url('${ArialFont}') format('truetype');
+          font-display: swap;
+        }
+        @font-face {
+          font-family: 'ArialBold';
+          src: url('${ArialBoldFont}') format('truetype');
+          font-display: swap;
+          font-weight: bold;
+        }
+        @font-face {
+          font-family: 'ArialItalic';
+          src: url('${ArialItalicFont}') format('truetype');
+          font-display: swap;
+          font-style: italic;
+        }
+        @font-face {
+          font-family: 'SquadaOne';
+          src: url('${SquadaOneFont}') format('truetype');
+          font-display: swap;
+        }
+      `;
+
+      // Add to document head if not already added
+      const existingStyle = document.getElementById("account-custom-fonts");
+      if (!existingStyle) {
+        style.id = "account-custom-fonts";
+        document.head.appendChild(style);
+        console.log("Account: Font CSS added to document");
+      }
+
+      // Force load the fonts
+      if (document.fonts) {
+        Promise.all([
+          document.fonts.load("16px Arial"),
+          document.fonts.load("16px ArialBold"),
+          document.fonts.load("16px ArialItalic"),
+          document.fonts.load("16px SquadaOne"),
+        ])
+          .then(() => {
+            console.log("Account: All fonts loaded successfully");
+            setFontsReady(true);
+          })
+          .catch((error) => {
+            console.warn("Account: Font loading failed:", error);
+            setFontsReady(true); // Proceed anyway
+          });
+      } else {
+        // Fallback for browsers without document.fonts
+        setTimeout(() => {
+          console.log("Account: Using fallback font loading method");
+          setFontsReady(true);
+        }, 500);
+      }
+    }
+  }, []);
+
+  // Font loading verification for non-web platforms
+  useEffect(() => {
+    if (Platform.OS !== "web" && fontsLoaded && !fontError) {
+      setFontsReady(true);
+    }
+  }, [fontsLoaded, fontError]);
+
+  // Load user info from AsyncStorage
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      if (!fontsReady) return; // Wait for fonts to be ready
+
+      try {
+        const [fullName, idNumber, email] = await Promise.all([
+          AsyncStorage.getItem("full_name"),
+          AsyncStorage.getItem("id_number"),
+          AsyncStorage.getItem("email"),
+        ]);
+
+        setUserInfo({
+          fullName: fullName || "N/A",
+          idNumber: idNumber || "N/A",
+          email: email || "N/A",
+        });
+
+        console.log("User Info Loaded:", { fullName, idNumber, email });
+      } catch (error) {
+        console.error("Error loading user info:", error);
+      }
+    };
+
+    loadUserInfo();
+  }, [fontsReady]);
+
+  // Show loading state until fonts are ready
+  if (!fontsReady) {
+    return (
+      <SafeAreaView
+        style={[
+          globalStyles.secondaryContainer,
+          { padding: 0, justifyContent: "center", alignItems: "center" },
+        ]}
+      >
+        <Text
+          style={{
+            fontFamily:
+              Platform.OS === "web" ? "system-ui, sans-serif" : "system",
+            fontSize: 18,
+            color: theme.colors.primary,
+            marginBottom: 10,
+          }}
+        >
+          Loading...
+        </Text>
+        {Platform.OS === "web" && (
+          <Text
+            style={{
+              fontFamily: "system-ui, sans-serif",
+              fontSize: 14,
+              color: "#666",
+              textAlign: "center",
+            }}
+          >
+            Preparing account interface
+          </Text>
+        )}
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[globalStyles.secondaryContainer, { padding: 0 }]}>
@@ -36,16 +195,16 @@ const Account = () => {
         <View style={styles.detailsWrapper}>
           <View style={[styles.detailsContainer, { borderBottomWidth: 0 }]}>
             <Text style={styles.detailsTitle}>Name: </Text>
-            <Text style={styles.details}>{fullName}</Text>
+            <Text style={styles.details}>{userInfo.fullName}</Text>
           </View>
           <View style={[styles.detailsContainer, { borderBottomWidth: 0 }]}>
             <Text style={styles.detailsTitle}>ID Number: </Text>
-            <Text style={styles.details}>{idNumber}</Text>
+            <Text style={styles.details}>{userInfo.idNumber}</Text>
           </View>
 
           <View style={styles.detailsContainer}>
             <Text style={styles.detailsTitle}>Email: </Text>
-            <Text style={styles.details}>{email}</Text>
+            <Text style={styles.details}>{userInfo.email}</Text>
           </View>
         </View>
 
