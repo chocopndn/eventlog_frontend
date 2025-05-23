@@ -33,7 +33,6 @@ const SessionLog = ({ label, data, sessionType = "am" }) => {
       return false;
     }
   };
-
   const renderAttendanceStatus = (time, attendance) => {
     try {
       if (isAttendanceTimePassed(time)) {
@@ -155,7 +154,6 @@ const Attendance = () => {
   const handlePrint = async () => {
     try {
       const response = await getStudentAttSummary(eventId, studentId);
-
       if (!response?.success || !response.data) {
         throw new Error("Failed to fetch student data for PDF generation.");
       }
