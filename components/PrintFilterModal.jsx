@@ -14,6 +14,7 @@ const PrintFilterModal = ({
   departments = [],
   blocks = [],
   yearLevels = [],
+  title = "Download",
 }) => {
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [selectedBlocks, setSelectedBlocks] = useState([]);
@@ -74,7 +75,7 @@ const PrintFilterModal = ({
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.overlay}>
         <View style={styles.modalContainer}>
-          <Text style={styles.title}>Print Options</Text>
+          <Text style={styles.title}>{title}</Text>
 
           <View style={styles.dropdownContainer}>
             {showDepartment && (
