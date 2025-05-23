@@ -159,7 +159,6 @@ const BlockList = () => {
       });
 
       if (filteredBlocks.length === 0) {
-        // Replace alert with modal
         setModalConfig({
           title: "No Blocks Found",
           message: "No blocks match the selected filters.",
@@ -297,7 +296,6 @@ const BlockList = () => {
 
   const handleDownloadPress = () => {
     if (allBlocks.length === 0) {
-      // Replace alert with modal
       setModalConfig({
         title: "No Blocks Available",
         message: "No blocks available to print.",
