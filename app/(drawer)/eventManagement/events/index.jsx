@@ -104,13 +104,9 @@ export default function EventsList() {
     <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
       <Text style={styles.headerText}>EVENTS</Text>
 
-      {approvedOrArchivedEvents.length > 0 && (
-        <View
-          style={{ paddingHorizontal: theme.spacing.medium, width: "100%" }}
-        >
-          <SearchBar placeholder="Search events..." onSearch={setSearchQuery} />
-        </View>
-      )}
+      <View style={{ paddingHorizontal: theme.spacing.medium, width: "100%" }}>
+        <SearchBar placeholder="Search events..." onSearch={setSearchQuery} />
+      </View>
 
       {pendingEventsCount > 0 && (
         <TouchableOpacity
