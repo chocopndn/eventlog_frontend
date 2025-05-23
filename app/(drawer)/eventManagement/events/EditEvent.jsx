@@ -735,6 +735,7 @@ const styles = StyleSheet.create({
   },
   timeContainer: {
     width: "45%",
+    paddingTop: theme.spacing.medium,
   },
   durationButton: {
     padding: theme.spacing.small,
