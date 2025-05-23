@@ -24,8 +24,8 @@ export const storeUser = async (user) => {
           block_id,
           block_name,
           department_id,
-          department_code,
           department_name,
+          department_code,
           course_id,
           course_name,
           course_code,
@@ -37,22 +37,22 @@ export const storeUser = async (user) => {
       await dbInstance.runAsync(insertQuery, [
         user.id_number,
         user.first_name,
-        user.middle_name,
+        user.middle_name || null,
         user.last_name,
-        user.suffix,
+        user.suffix || null,
         user.email,
         user.role_id,
         user.role_name,
-        user.block_id,
-        user.block_name,
-        user.department_id,
-        user.department_code,
-        user.department_name,
-        user.course_id,
-        user.course_name,
-        user.course_code,
-        user.year_level_id,
-        user.year_level_name,
+        user.block_id || null,
+        user.block_name || null,
+        user.department_id || null,
+        user.department_code || null,
+        user.department_name || null,
+        user.course_id || null,
+        user.course_name || null,
+        user.course_code || null,
+        user.year_level_id || null,
+        user.year_level_name || null,
       ]);
     } catch (error) {
       console.error("Error storing user", error);
@@ -138,156 +138,338 @@ export const getStoredUser = async () => {
 };
 
 export const storeEvent = async (event, allApiEventIds = []) => {
+  if (Platform.OS === "web") {
+    console.log("[storeEvent] SQLite not supported on web platform");
+    return { success: false, error: "Web platform not supported" };
+  }
+
   try {
-    const db = await initDB();
-    if (!db) return;
-
-    if (!event || typeof event !== "object") return;
-    if (!Array.isArray(allApiEventIds)) return;
-
-    if (event.status !== "Approved") return;
-
-    if (!allApiEventIds || allApiEventIds.length === 0) {
-      await db.runAsync("DELETE FROM event_dates");
-      await db.runAsync("DELETE FROM events");
-      return;
-    }
-
-    const storedEvents = await db.getAllAsync("SELECT id FROM events");
-    const storedEventIds = storedEvents.map((e) => e.id.toString());
-
-    const idsToDelete = storedEventIds.filter(
-      (id) => !allApiEventIds.includes(id)
+    console.log(
+      `[storeEvent] Starting to store event: ${event?.event_name} (ID: ${event?.event_id})`
     );
 
-    if (idsToDelete.length > 0) {
-      await db.runAsync(
-        `DELETE FROM event_dates WHERE event_id IN (${idsToDelete
-          .map(() => "?")
-          .join(",")})`,
-        idsToDelete
-      );
-      await db.runAsync(
-        `DELETE FROM events WHERE id IN (${idsToDelete
-          .map(() => "?")
-          .join(",")})`,
-        idsToDelete
-      );
+    // Validate inputs first
+    if (!event || typeof event !== "object") {
+      const error = "Invalid event object provided";
+      console.error(`[storeEvent] ${error}`);
+      return { success: false, error };
     }
 
+    if (!Array.isArray(allApiEventIds)) {
+      const error = "allApiEventIds must be an array";
+      console.error(`[storeEvent] ${error}`);
+      return { success: false, error };
+    }
+
+    if (!event.event_id) {
+      const error = "Event ID is required";
+      console.error(`[storeEvent] ${error}`);
+      return { success: false, error };
+    }
+
+    if (event.status !== "Approved") {
+      console.log(
+        `[storeEvent] Event not approved, skipping: ${event.event_name}`
+      );
+      return { success: true, skipped: true };
+    }
+
+    // Get database instance
+    console.log(`[storeEvent] Initializing database...`);
+    const db = await initDB();
+    if (!db) {
+      const error = "Failed to initialize database";
+      console.error(`[storeEvent] ${error}`);
+      return { success: false, error };
+    }
+
+    console.log(`[storeEvent] Database initialized successfully`);
+
+    // Handle cleanup if no events provided
+    if (!allApiEventIds || allApiEventIds.length === 0) {
+      console.log(`[storeEvent] No events provided, clearing tables...`);
+      await db.runAsync("DELETE FROM event_dates");
+      await db.runAsync("DELETE FROM events");
+      console.log(`[storeEvent] All events cleared from database`);
+      return { success: true, cleared: true };
+    }
+
+    // REMOVED: Cleanup logic to prevent conflicts when multiple events are being stored
+    // Only clean up if this is explicitly requested or handle it separately
+
+    // Check if event already exists
+    console.log(`[storeEvent] Checking if event ${event.event_id} exists...`);
     const existingEvent = await db.getFirstAsync(
       "SELECT id FROM events WHERE id = ?",
       [event.event_id]
     );
 
+    // Prepare event parameters with null handling
+    const eventParams = [
+      event.event_name || null,
+      event.venue || null,
+      event.description || null,
+      event.created_by_id || null,
+      event.created_by || null,
+      event.status || null,
+      event.am_in || null,
+      event.am_out || null,
+      event.pm_in || null,
+      event.pm_out || null,
+      event.scan_personnel || null,
+      event.approved_by || null,
+      event.approved_by_id || null,
+      event.duration || null,
+    ];
+
+    console.log(
+      `[storeEvent] Event parameters prepared for ${event.event_name}`
+    );
+
     if (existingEvent) {
+      console.log(`[storeEvent] Updating existing event: ${event.event_name}`);
       await db.runAsync(
         `UPDATE events SET 
           event_name = ?, venue = ?, description = ?, created_by_id = ?, created_by = ?, 
           status = ?, am_in = ?, am_out = ?, pm_in = ?, pm_out = ?, scan_personnel = ?, 
           approved_by = ?, approved_by_id = ?, duration = ?
         WHERE id = ?`,
-        [
-          event.event_name,
-          event.venue,
-          event.description,
-          event.created_by_id,
-          event.created_by,
-          event.status,
-          event.am_in,
-          event.am_out,
-          event.pm_in,
-          event.pm_out,
-          event.scan_personnel,
-          event.approved_by,
-          event.approved_by_id,
-          event.duration,
-          event.event_id,
-        ]
+        [...eventParams, event.event_id]
+      );
+      console.log(
+        `[storeEvent] Successfully updated event: ${event.event_name}`
       );
     } else {
+      console.log(`[storeEvent] Inserting new event: ${event.event_name}`);
       await db.runAsync(
         `INSERT INTO events 
           (id, event_name, venue, description, created_by_id, created_by, status, 
           am_in, am_out, pm_in, pm_out, scan_personnel, approved_by, approved_by_id, duration) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          event.event_id,
-          event.event_name,
-          event.venue,
-          event.description,
-          event.created_by_id,
-          event.created_by,
-          event.status,
-          event.am_in,
-          event.am_out,
-          event.pm_in,
-          event.pm_out,
-          event.scan_personnel,
-          event.approved_by,
-          event.approved_by_id,
-          event.duration,
-        ]
+        [event.event_id, ...eventParams]
+      );
+      console.log(
+        `[storeEvent] Successfully inserted event: ${event.event_name}`
       );
     }
 
+    // Handle event dates - IMPROVED LOGIC
     if (event.event_dates && event.event_date_ids) {
+      console.log(
+        `[storeEvent] Processing event dates for ${event.event_name}...`
+      );
+      console.log(
+        `[storeEvent] Raw event_dates type:`,
+        typeof event.event_dates
+      );
+      console.log(
+        `[storeEvent] Raw event_date_ids type:`,
+        typeof event.event_date_ids
+      );
+
       let eventDatesArray = [];
       let eventDateIdsArray = [];
 
-      if (
+      // Parse event_dates - Handle both arrays and strings
+      if (Array.isArray(event.event_dates)) {
+        eventDatesArray = event.event_dates;
+        console.log(`[storeEvent] event_dates is array:`, eventDatesArray);
+      } else if (
         typeof event.event_dates === "string" &&
         event.event_dates.trim() !== ""
       ) {
         eventDatesArray = event.event_dates
           .split(",")
           .map((date) => date.trim());
-      } else if (Array.isArray(event.event_dates)) {
-        eventDatesArray = event.event_dates;
+        console.log(
+          `[storeEvent] event_dates parsed from string:`,
+          eventDatesArray
+        );
+      } else {
+        console.log(
+          `[storeEvent] event_dates is neither array nor valid string:`,
+          event.event_dates
+        );
       }
 
-      if (
+      // Parse event_date_ids - Handle both arrays and strings
+      if (Array.isArray(event.event_date_ids)) {
+        eventDateIdsArray = event.event_date_ids;
+        console.log(`[storeEvent] event_date_ids is array:`, eventDateIdsArray);
+      } else if (
         typeof event.event_date_ids === "string" &&
         event.event_date_ids.trim() !== ""
       ) {
-        eventDateIdsArray = JSON.parse(event.event_date_ids);
-      } else if (Array.isArray(event.event_date_ids)) {
-        eventDateIdsArray = event.event_date_ids;
+        try {
+          eventDateIdsArray = JSON.parse(event.event_date_ids);
+          console.log(
+            `[storeEvent] event_date_ids parsed from JSON:`,
+            eventDateIdsArray
+          );
+        } catch (parseError) {
+          console.error(
+            `[storeEvent] Error parsing event_date_ids JSON:`,
+            parseError.message
+          );
+          console.log(
+            `[storeEvent] Continuing without event dates due to parse error`
+          );
+          eventDateIdsArray = [];
+        }
+      } else {
+        console.log(
+          `[storeEvent] event_date_ids is neither array nor valid string:`,
+          event.event_date_ids
+        );
       }
 
-      if (eventDatesArray.length === eventDateIdsArray.length) {
-        const existingDates = await db.getAllAsync(
-          "SELECT id, event_date FROM event_dates WHERE event_id = ?",
-          [event.event_id]
-        );
-        const existingDateMap = new Map(
-          existingDates.map((e) => [e.event_date, e.id])
+      console.log(
+        `[storeEvent] Final arrays - Dates: ${eventDatesArray.length}, IDs: ${eventDateIdsArray.length}`
+      );
+
+      if (
+        eventDatesArray.length > 0 &&
+        eventDatesArray.length === eventDateIdsArray.length
+      ) {
+        console.log(
+          `[storeEvent] Processing ${eventDatesArray.length} event dates...`
         );
 
+        // Delete existing dates for this event first
+        console.log(
+          `[storeEvent] Deleting existing dates for event ${event.event_id}`
+        );
+        await db.runAsync("DELETE FROM event_dates WHERE event_id = ?", [
+          event.event_id,
+        ]);
+
+        // Insert all dates for this event
         for (let i = 0; i < eventDatesArray.length; i++) {
           const eventDate = eventDatesArray[i];
           const eventDateId = eventDateIdsArray[i];
 
-          if (existingDateMap.has(eventDate)) {
+          console.log(
+            `[storeEvent] Inserting date ${eventDate} with ID ${eventDateId} for event ${event.event_id}`
+          );
+
+          try {
             await db.runAsync(
-              "UPDATE event_dates SET id = ? WHERE event_id = ? AND event_date = ?",
+              "INSERT INTO event_dates (id, event_id, event_date) VALUES (?, ?, ?)",
               [eventDateId, event.event_id, eventDate]
             );
-          } else {
-            await db.runAsync(
-              "INSERT OR IGNORE INTO event_dates (id, event_id, event_date) VALUES (?, ?, ?)",
-              [eventDateId, event.event_id, eventDate]
+            console.log(`[storeEvent] Successfully inserted date ${eventDate}`);
+          } catch (dateError) {
+            console.error(
+              `[storeEvent] Error inserting date ${eventDate}:`,
+              dateError.message
             );
+            console.error(`[storeEvent] Date error details:`, dateError);
+            // Continue with other dates even if one fails
           }
         }
+        console.log(
+          `[storeEvent] Successfully processed ${eventDatesArray.length} event dates for ${event.event_name}`
+        );
+      } else if (eventDatesArray.length !== eventDateIdsArray.length) {
+        console.warn(
+          `[storeEvent] Mismatch between event_dates (${eventDatesArray.length}) and event_date_ids (${eventDateIdsArray.length}) lengths for event ${event.event_name}`
+        );
+        console.log(
+          `[storeEvent] Continuing without event dates due to mismatch`
+        );
       } else {
-        console.error(
-          "Mismatch between event_dates and event_date_ids lengths"
+        console.log(
+          `[storeEvent] No valid event dates to process for ${event.event_name}`
         );
       }
+    } else {
+      console.log(
+        `[storeEvent] No event dates to process for ${event.event_name} - dates or IDs missing`
+      );
     }
+
+    console.log(
+      `[storeEvent] Successfully stored event: ${event.event_name} (ID: ${event.event_id})`
+    );
+    return { success: true };
   } catch (error) {
-    console.error("Error storing event:", error.message);
+    const errorMessage = error.message || error.toString();
+    console.error(
+      `[storeEvent] Critical error storing event ${
+        event?.event_name || "unknown"
+      } (ID: ${event?.event_id || "unknown"}):`,
+      errorMessage
+    );
+    console.error(`[storeEvent] Error stack:`, error.stack);
+    console.error(`[storeEvent] Full error object:`, error);
+
+    // Return detailed error information
+    return {
+      success: false,
+      error: errorMessage,
+      eventId: event?.event_id,
+      eventName: event?.event_name,
+    };
+  }
+};
+
+// Add a separate cleanup function to handle outdated events
+export const cleanupOutdatedEvents = async (allApiEventIds = []) => {
+  if (Platform.OS === "web") {
+    return { success: false, error: "Web platform not supported" };
+  }
+
+  try {
+    console.log(`[cleanupOutdatedEvents] Starting cleanup...`);
+
+    const db = await initDB();
+    if (!db) {
+      const error = "Failed to initialize database";
+      console.error(`[cleanupOutdatedEvents] ${error}`);
+      return { success: false, error };
+    }
+
+    if (!allApiEventIds || allApiEventIds.length === 0) {
+      console.log(
+        `[cleanupOutdatedEvents] No events provided, clearing all tables...`
+      );
+      await db.runAsync("DELETE FROM event_dates");
+      await db.runAsync("DELETE FROM events");
+      console.log(`[cleanupOutdatedEvents] All events cleared from database`);
+      return { success: true, cleared: true };
+    }
+
+    console.log(`[cleanupOutdatedEvents] Cleaning up outdated events...`);
+    const storedEvents = await db.getAllAsync("SELECT id FROM events");
+    const storedEventIds = storedEvents.map((e) => e.id.toString());
+
+    const idsToDelete = storedEventIds.filter(
+      (id) => !allApiEventIds.includes(parseInt(id))
+    );
+
+    if (idsToDelete.length > 0) {
+      const placeholders = idsToDelete.map(() => "?").join(",");
+      await db.runAsync(
+        `DELETE FROM event_dates WHERE event_id IN (${placeholders})`,
+        idsToDelete
+      );
+      await db.runAsync(
+        `DELETE FROM events WHERE id IN (${placeholders})`,
+        idsToDelete
+      );
+      console.log(
+        `[cleanupOutdatedEvents] Deleted outdated events: ${idsToDelete.join(
+          ", "
+        )}`
+      );
+    } else {
+      console.log(`[cleanupOutdatedEvents] No outdated events to delete`);
+    }
+
+    return { success: true, deletedCount: idsToDelete.length };
+  } catch (error) {
+    console.error(`[cleanupOutdatedEvents] Error:`, error.message);
+    return { success: false, error: error.message };
   }
 };
 

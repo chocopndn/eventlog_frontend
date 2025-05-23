@@ -197,14 +197,14 @@ const BlockList = () => {
             <meta charset="utf-8" />
             <style>
               body { font-family: sans-serif; padding: 20px; }
-              h1, h3 { color: #333; }
-              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-              th, td { border: 1px solid #999; padding: 8px; text-align: left; }
+              h1, h5 { color: #333; }
+              table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+              th, td { border: 1px solid #999; padding: 4px; text-align: left; }
             </style>
           </head>
           <body>
             <h1>${eventTitle}</h1>
-            <h3>Date: ${dateString}</h3> <!-- ✅ Date added here -->
+            <h3>Date: ${dateString}</h3>
             ${filteredBlocks
               .map((block, index) => {
                 const summary =

@@ -62,6 +62,8 @@ export default function PendingEvents() {
     const loadAdminId = async () => {
       try {
         const storedUser = await getStoredUser();
+        console.log("STORED", storedUser);
+
         if (storedUser && storedUser.id_number) {
           setAdminId(storedUser.id_number);
         }

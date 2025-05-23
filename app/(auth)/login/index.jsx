@@ -67,9 +67,20 @@ const Login = () => {
       });
 
       if (response.status === 200) {
+        // Store token and id_number in AsyncStorage
         await AsyncStorage.setItem("userToken", response.data.token);
         await AsyncStorage.setItem("id_number", response.data.user.id_number);
 
+        // Store user data in local SQLite database
+        try {
+          await storeUser(response.data.user);
+          console.log("User data stored successfully in local database");
+        } catch (dbError) {
+          console.error("Error storing user in local database:", dbError);
+          // Continue with login even if local storage fails
+        }
+
+        // Handle remember me functionality
         if (isChecked) {
           await AsyncStorage.setItem("rememberedId", id);
           await AsyncStorage.setItem("rememberedPassword", password);
@@ -79,7 +90,6 @@ const Login = () => {
           await AsyncStorage.removeItem("rememberedPassword");
           await AsyncStorage.removeItem("rememberedChecked");
         }
-        await storeUser(response.data.user);
 
         router.replace("/(tabs)/home");
       } else {

@@ -65,6 +65,8 @@ const EditEvent = () => {
     const initializeData = async () => {
       try {
         const storedUserData = await getStoredUser();
+        console.log(storedUserData);
+
         if (!storedUserData || !storedUserData.id_number) {
           throw new Error("Invalid or missing user ID.");
         }
@@ -614,6 +616,7 @@ const EditEvent = () => {
                   mode="single"
                   onTimeChange={(time) => handleChange("am_in", time)}
                   selectedValue={formData.am_in}
+                  allowPM={false}
                 />
               </View>
               <View style={styles.timeContainer}>
@@ -623,6 +626,7 @@ const EditEvent = () => {
                     mode="single"
                     onTimeChange={(time) => handleChange("am_out", time)}
                     selectedValue={formData.am_out}
+                    allowPM={false}
                   />
                 )}
               </View>
@@ -637,6 +641,7 @@ const EditEvent = () => {
                   mode="single"
                   onTimeChange={(time) => handleChange("pm_in", time)}
                   selectedValue={formData.pm_in}
+                  allowAM={false}
                 />
               </View>
               <View style={styles.timeContainer}>
@@ -646,6 +651,7 @@ const EditEvent = () => {
                     mode="single"
                     onTimeChange={(time) => handleChange("pm_out", time)}
                     selectedValue={formData.pm_out}
+                    allowAM={false}
                   />
                 )}
               </View>
