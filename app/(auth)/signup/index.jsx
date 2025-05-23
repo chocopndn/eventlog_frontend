@@ -80,6 +80,20 @@ const SignUp = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const resetForm = () => {
+    setFormData({
+      id_number: "",
+      first_name: "",
+      middle_name: "",
+      last_name: "",
+      suffix: "",
+      email: "",
+      password: "",
+      confirm_password: "",
+      department_id: null,
+    });
+  };
+
   const handleRegister = async () => {
     if (
       !formData.id_number ||
@@ -120,6 +134,7 @@ const SignUp = () => {
       if (response.data.success) {
         showModal("Registration successful!", "success");
 
+        resetForm();
         setTimeout(() => {
           router.push("/login");
         }, 2000);
@@ -152,24 +167,28 @@ const SignUp = () => {
           iconShow={false}
           title="ID Number"
           placeholder="12345"
+          value={formData.id_number}
           onChangeText={(value) => handleInputChange("id_number", value)}
           titleColor="secondary"
         />
         <FormField
           title="First Name"
           placeholder="Juan Miguel"
+          value={formData.first_name}
           onChangeText={(value) => handleInputChange("first_name", value)}
           titleColor="secondary"
         />
         <FormField
           title="Middle Name"
           placeholder="Reyes"
+          value={formData.middle_name}
           onChangeText={(value) => handleInputChange("middle_name", value)}
           titleColor="secondary"
         />
         <FormField
           title="Last Name"
           placeholder="Santos"
+          value={formData.last_name}
           onChangeText={(value) => handleInputChange("last_name", value)}
           titleColor="secondary"
         />
@@ -177,6 +196,7 @@ const SignUp = () => {
           title="Suffix Name"
           placeholder="Jr"
           optional
+          value={formData.suffix}
           onChangeText={(value) => handleInputChange("suffix", value)}
           titleColor="secondary"
         />
@@ -185,6 +205,7 @@ const SignUp = () => {
           iconShow={false}
           title="Email"
           placeholder="example@email.com"
+          value={formData.email}
           onChangeText={(value) => handleInputChange("email", value)}
           titleColor="secondary"
         />
@@ -197,6 +218,7 @@ const SignUp = () => {
             title="Department"
             titleColor="secondary"
             data={departments}
+            selectedValue={formData.department_id}
             onSelect={(selected) =>
               handleInputChange("department_id", selected.value)
             }
@@ -209,6 +231,7 @@ const SignUp = () => {
           title="Password"
           placeholder="Enter your password"
           secureTextEntry
+          value={formData.password}
           onChangeText={(value) => handleInputChange("password", value)}
           titleColor="secondary"
           errorMessage={
@@ -223,6 +246,7 @@ const SignUp = () => {
           title="Confirm Password"
           placeholder="Confirm your password"
           secureTextEntry
+          value={formData.confirm_password}
           onChangeText={(value) => handleInputChange("confirm_password", value)}
           titleColor="secondary"
         />

@@ -20,27 +20,42 @@ import CustomModal from "../../../../components/CustomModal";
 import { fetchStudentAttendanceByEventAndBlock } from "../../../../services/api/records";
 import { getStudentAttSummary } from "../../../../services/api/records";
 
-const SessionLog = ({ label, data }) => {
-  const now = moment();
+const SessionLog = ({ label, data, sessionType = "am" }) => {
+  const now = moment.now();
   const isAttendanceTimePassed = (time) => {
-    if (!time) return false;
-    const dateStr = data.date;
-    if (!dateStr) return false;
-    const timeMoment = moment(`${dateStr}T${time}`, "YYYY-MM-DDTHH:mm:ss");
-    return timeMoment.isSameOrBefore(now);
+    try {
+      if (!time) return false;
+      const dateStr = data.date;
+      if (!dateStr) return false;
+      const timeMoment = moment(`${dateStr}T${time}`, "YYYY-MM-DDTHH:mm:ss");
+      return timeMoment.isSameOrBefore(now);
+    } catch (error) {
+      return false;
+    }
+  };
+  const renderAttendanceStatus = (time, attendance) => {
+    try {
+      if (isAttendanceTimePassed(time)) {
+        const iconSource = attendance ? images.present : images.absent;
+        const iconStyle = attendance ? styles.presentIcon : styles.absentIcon;
+        return <Image source={iconSource} style={iconStyle} />;
+      }
+      return null;
+    } catch (error) {
+      return null;
+    }
   };
 
-  const renderAttendanceStatus = (time, attendance) => {
-    if (isAttendanceTimePassed(time)) {
-      return (
-        <Image
-          source={attendance ? images.present : images.absent}
-          style={attendance ? styles.presentIcon : styles.absentIcon}
-        />
-      );
-    }
+  const timeInKey = sessionType === "am" ? "am_in" : "pm_in";
+  const timeOutKey = sessionType === "am" ? "am_out" : "pm_out";
+  const scheduleTimeIn = data?.schedule?.[timeInKey];
+  const scheduleTimeOut = data?.schedule?.[timeOutKey];
+  const attendanceTimeIn = data?.attendance?.[timeInKey];
+  const attendanceTimeOut = data?.attendance?.[timeOutKey];
+
+  if (!scheduleTimeIn && !scheduleTimeOut) {
     return null;
-  };
+  }
 
   return (
     <View style={styles.sessionContainer}>
@@ -58,10 +73,7 @@ const SessionLog = ({ label, data }) => {
             <Text style={styles.timeLabel}>Time In</Text>
           </View>
           <View style={[styles.imageContainer, { borderLeftWidth: 0 }]}>
-            {renderAttendanceStatus(
-              data?.schedule?.am_in,
-              data?.attendance?.am_in
-            )}
+            {renderAttendanceStatus(scheduleTimeIn, attendanceTimeIn)}
           </View>
         </View>
         <View style={styles.timeContainer}>
@@ -69,45 +81,10 @@ const SessionLog = ({ label, data }) => {
             <Text style={styles.timeLabel}>Time Out</Text>
           </View>
           <View style={[styles.imageContainer, { borderRightWidth: 0 }]}>
-            {renderAttendanceStatus(
-              data?.schedule?.am_out,
-              data?.attendance?.am_out
-            )}
+            {renderAttendanceStatus(scheduleTimeOut, attendanceTimeOut)}
           </View>
         </View>
       </View>
-
-      {data?.schedule?.pm_in && data?.schedule?.pm_out && (
-        <View style={styles.logContainer}>
-          <View style={styles.timeContainer}>
-            <View
-              style={[
-                styles.timeLabelContainer,
-                { borderRightWidth: 0, borderLeftWidth: 0 },
-              ]}
-            >
-              <Text style={styles.timeLabel}>Time In</Text>
-            </View>
-            <View style={[styles.imageContainer, { borderLeftWidth: 0 }]}>
-              {renderAttendanceStatus(
-                data?.schedule?.pm_in,
-                data?.attendance?.pm_in
-              )}
-            </View>
-          </View>
-          <View style={styles.timeContainer}>
-            <View style={[styles.timeLabelContainer, { borderRightWidth: 0 }]}>
-              <Text style={styles.timeLabel}>Time Out</Text>
-            </View>
-            <View style={[styles.imageContainer, { borderRightWidth: 0 }]}>
-              {renderAttendanceStatus(
-                data?.schedule?.pm_out,
-                data?.attendance?.pm_out
-              )}
-            </View>
-          </View>
-        </View>
-      )}
     </View>
   );
 };
@@ -135,9 +112,11 @@ const Attendance = () => {
           blockId,
           studentId
         );
+
         if (response.success) {
           const { data } = response;
           const student = data.students.find((s) => s.student_id === studentId);
+
           if (student) {
             setEventName(data.event_name);
             setStudentDetails({
@@ -164,6 +143,7 @@ const Attendance = () => {
         setLoading(false);
       }
     };
+
     if (eventId && blockId && studentId) {
       fetchData();
     } else {
@@ -174,7 +154,6 @@ const Attendance = () => {
   const handlePrint = async () => {
     try {
       const response = await getStudentAttSummary(eventId, studentId);
-
       if (!response?.success || !response.data) {
         throw new Error("Failed to fetch student data for PDF generation.");
       }
@@ -218,7 +197,7 @@ const Attendance = () => {
                 .map(
                   ([date, { present_count, absent_count }]) => `
                   <tr>
-                    <td>${moment(date).format("MMMM D,YYYY")}</td>
+                    <td>${moment(date).format("MMMM D, YYYY")}</td>
                     <td>${present_count}</td>
                     <td>${absent_count}</td>
                   </tr>
@@ -228,20 +207,18 @@ const Attendance = () => {
             </tbody>
           </table>
           <div class="footer">
-            Generated on ${moment().format("MMMM D,YYYY hh:mm A")}
+            Generated on ${moment().format("MMMM D, YYYY hh:mm A")}
           </div>
         </body>
       </html>
     `;
 
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
-
       const pdfName = `${student_name || "Student"} - ${
         event_name || "Event"
       }.pdf`;
       const pdfPath = `${FileSystem.documentDirectory}${pdfName}`;
       await FileSystem.moveAsync({ from: uri, to: pdfPath });
-
       await Sharing.shareAsync(pdfPath, {
         mimeType: "application/pdf",
         UTI: ".pdf",
@@ -299,32 +276,52 @@ const Attendance = () => {
                 Course/Block: {studentDetails.courseBlock}
               </Text>
             </View>
-            {attendanceDataList.map((attendanceData, index) => (
-              <View key={index} style={styles.attendanceContainer}>
-                <View style={styles.dateContainer}>
-                  <Text style={styles.date}>{attendanceData.date}</Text>
+            {attendanceDataList.map((attendanceData, index) => {
+              const sessionData = {
+                date: attendanceData.date,
+                schedule: attendanceData.schedule,
+                attendance: attendanceData.attendance,
+              };
+              return (
+                <View key={index} style={styles.attendanceContainer}>
+                  <View style={styles.dateContainer}>
+                    <Text style={styles.date}>
+                      {moment(attendanceData.date).format("MMMM D, YYYY")}
+                    </Text>
+                  </View>
+                  {attendanceData.schedule?.am_in &&
+                    attendanceData.schedule?.am_out && (
+                      <SessionLog
+                        label="Morning"
+                        data={sessionData}
+                        sessionType="am"
+                      />
+                    )}
+                  {attendanceData.schedule?.pm_in &&
+                    attendanceData.schedule?.pm_out && (
+                      <SessionLog
+                        label="Afternoon"
+                        data={sessionData}
+                        sessionType="pm"
+                      />
+                    )}
+                  {!(
+                    attendanceData.schedule?.am_in &&
+                    attendanceData.schedule?.am_out
+                  ) &&
+                    !(
+                      attendanceData.schedule?.pm_in &&
+                      attendanceData.schedule?.pm_out
+                    ) && (
+                      <View style={styles.noSessionContainer}>
+                        <Text style={styles.noSessionText}>
+                          No schedule available for this date
+                        </Text>
+                      </View>
+                    )}
                 </View>
-                <SessionLog
-                  label="Morning"
-                  data={{
-                    date: attendanceData.date,
-                    schedule: attendanceData.schedule,
-                    attendance: attendanceData.attendance,
-                  }}
-                />
-                {attendanceData.schedule?.pm_in &&
-                  attendanceData.schedule?.pm_out && (
-                    <SessionLog
-                      label="Afternoon"
-                      data={{
-                        date: attendanceData.date,
-                        schedule: attendanceData.schedule,
-                        attendance: attendanceData.attendance,
-                      }}
-                    />
-                  )}
-              </View>
-            ))}
+              );
+            })}
           </ScrollView>
           <View style={styles.buttonContainer}>
             <CustomButton title="Download" onPress={handlePrint} />
@@ -435,6 +432,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     borderLeftWidth: 3,
+    borderBottomWidth: 2,
     width: "100%",
     justifyContent: "center",
     alignItems: "center",
@@ -464,5 +462,16 @@ const styles = StyleSheet.create({
     color: theme.colors.secondary,
     textAlign: "center",
     marginTop: theme.spacing.medium,
+  },
+  noSessionContainer: {
+    paddingVertical: theme.spacing.medium,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  noSessionText: {
+    fontSize: theme.fontSizes.medium,
+    fontFamily: theme.fontFamily.SquadaOne,
+    color: theme.colors.secondary,
+    textAlign: "center",
   },
 });

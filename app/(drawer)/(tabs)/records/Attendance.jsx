@@ -197,7 +197,7 @@ const Attendance = () => {
                 .map(
                   ([date, { present_count, absent_count }]) => `
                   <tr>
-                    <td>${moment(date).format("MMMM D,YYYY")}</td>
+                    <td>${moment(date).format("MMMM D, YYYY")}</td>
                     <td>${present_count}</td>
                     <td>${absent_count}</td>
                   </tr>
@@ -207,7 +207,7 @@ const Attendance = () => {
             </tbody>
           </table>
           <div class="footer">
-            Generated on ${moment().format("MMMM D,YYYY hh:mm A")}
+            Generated on ${moment().format("MMMM D, YYYY hh:mm A")}
           </div>
         </body>
       </html>
@@ -285,7 +285,9 @@ const Attendance = () => {
               return (
                 <View key={index} style={styles.attendanceContainer}>
                   <View style={styles.dateContainer}>
-                    <Text style={styles.date}>{attendanceData.date}</Text>
+                    <Text style={styles.date}>
+                      {moment(attendanceData.date).format("MMMM D, YYYY")}
+                    </Text>
                   </View>
                   {attendanceData.schedule?.am_in &&
                     attendanceData.schedule?.am_out && (
