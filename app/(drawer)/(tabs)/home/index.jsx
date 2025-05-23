@@ -91,18 +91,13 @@ const Home = () => {
         return;
       }
 
-      // Always load stored events first
       try {
         const storedEvents = await getStoredEvents();
         setEvents(storedEvents || []);
-      } catch (cacheError) {
-        // Handle error silently
-      }
+      } catch (cacheError) {}
 
-      // If no blockId, still try to fetch events (your API might handle null blockId)
       if (currentBlockId === null) {
         setInitialLoadComplete(true);
-        // Don't return early - continue with API call
       }
 
       let timeoutTriggered = false;
@@ -170,15 +165,6 @@ const Home = () => {
         try {
           const storedEvents = await getStoredEvents();
           setEvents(storedEvents || []);
-          if (failedStores > 0 && failedStores < response.events.length) {
-            setModalTitle("Partial Sync Warning");
-            setModalMessage(
-              `Some events may not be fully synchronized. ${
-                storedEvents?.length || 0
-              } events are available locally.`
-            );
-            setModalVisible(true);
-          }
         } catch (storageError) {
           setEvents(response.events || []);
           setModalTitle("Storage Warning");
@@ -207,12 +193,10 @@ const Home = () => {
         }
         setModalVisible(true);
 
-        // Always try to show stored events, even on API error
         try {
           const storedEvents = await getStoredEvents();
           setEvents(storedEvents || []);
         } catch (cacheError) {
-          // Events already set to empty array or previous stored events above
           if (!modalVisible) {
             setModalTitle("Storage Error");
             setModalMessage(
@@ -234,30 +218,24 @@ const Home = () => {
 
   useEffect(() => {
     const initializeApp = async () => {
-      // Load stored events IMMEDIATELY, before any user data loading
       try {
         const storedEvents = await getStoredEvents();
         if (storedEvents && storedEvents.length > 0) {
           setEvents(storedEvents);
         }
-      } catch (error) {
-        // Handle error silently
-      }
+      } catch (error) {}
 
-      // Set initial load complete immediately so UI renders
       setInitialLoadComplete(true);
 
       const userData = await fetchAndStoreUserData();
 
-      // Always call fetchEvent, it will handle null blockId appropriately
-      await fetchEvent(userData?.block_id || null, true); // Skip user check for initial load
+      await fetchEvent(userData?.block_id || null, true);
     };
 
     initializeApp();
   }, []);
 
   useEffect(() => {
-    // Always fetch events when user data is loaded, regardless of blockId
     if (initialLoadComplete && userDataLoaded) {
       fetchEvent();
     }
@@ -267,7 +245,7 @@ const Home = () => {
     if (refreshing) {
       return;
     }
-    // Always try to refresh, but handle null blockId gracefully
+
     await Promise.allSettled([fetchEvent(), fetchAndStoreUserData()]);
   };
 
