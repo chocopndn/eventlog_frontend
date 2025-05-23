@@ -39,9 +39,13 @@ export default function TabsComponent() {
         <Text style={styles.tabText}>QR Code</Text>
       </TouchableOpacity>
 
-      <View style={styles.logoContainer}>
+      <TouchableOpacity
+        name="center"
+        style={styles.logoContainer}
+        onPress={() => router.push("/(drawer)/center")}
+      >
         <Image source={images.logo} style={styles.logoImage} />
-      </View>
+      </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.tabItem}
@@ -69,9 +73,13 @@ export default function TabsComponent() {
         <Text style={styles.tabText}>Home</Text>
       </TouchableOpacity>
 
-      <View style={styles.logoContainer}>
+      <TouchableOpacity
+        name="center"
+        style={styles.logoContainer}
+        onPress={() => router.push("/(drawer)/center")}
+      >
         <Image source={images.logo} style={styles.logoImage} />
-      </View>
+      </TouchableOpacity>
 
       <TouchableOpacity
         style={styles.tabItem}
