@@ -159,7 +159,14 @@ const BlockList = () => {
       });
 
       if (filteredBlocks.length === 0) {
-        alert("No blocks match the selected filters.");
+        // Replace alert with modal
+        setModalConfig({
+          title: "No Blocks Found",
+          message: "No blocks match the selected filters.",
+          type: "warning",
+          cancelTitle: "OK",
+        });
+        setModalVisible(true);
         return;
       }
 
@@ -290,7 +297,14 @@ const BlockList = () => {
 
   const handleDownloadPress = () => {
     if (allBlocks.length === 0) {
-      alert("No blocks available to print. Please add blocks first.");
+      // Replace alert with modal
+      setModalConfig({
+        title: "No Blocks Available",
+        message: "No blocks available to print.",
+        type: "warning",
+        cancelTitle: "OK",
+      });
+      setModalVisible(true);
       return;
     }
     setShowPrintModal(true);
