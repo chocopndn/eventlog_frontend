@@ -1,4 +1,10 @@
-import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
 import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -69,6 +75,18 @@ const Login = () => {
       if (response.status === 200) {
         await AsyncStorage.setItem("userToken", response.data.token);
         await AsyncStorage.setItem("id_number", response.data.user.id_number);
+        await AsyncStorage.setItem("email", response.data.user.email);
+
+        console.log(response.data.user);
+
+        await AsyncStorage.setItem(
+          "full_name",
+          `${response.data.user.first_name} ${
+            response.data.user.middle_name ?? ""
+          } ${response.data.user.last_name}`
+            .replace(/\s+/g, " ")
+            .trim()
+        );
 
         try {
           await storeUser(response.data.user);
@@ -86,8 +104,11 @@ const Login = () => {
           await AsyncStorage.removeItem("rememberedPassword");
           await AsyncStorage.removeItem("rememberedChecked");
         }
-
-        router.replace("/(tabs)/home");
+        if (Platform.OS !== "web") {
+          router.replace("/(tabs)/home");
+        } else {
+          router.replace("/web");
+        }
       } else {
         setModalTitle("Login Failed");
         setModalMessage(
@@ -150,12 +171,17 @@ const Login = () => {
         <CustomButton type="secondary" title="Login" onPress={handleLogin} />
       </View>
 
-      <View style={styles.registerContainer}>
-        <Text style={styles.registerQ}>Don't have an account?</Text>
-        <TouchableOpacity onPress={() => router.push("/signup")}>
-          <Text style={styles.registerLink}>Register</Text>
-        </TouchableOpacity>
-      </View>
+      {Platform.OS !== "web" && (
+        <>
+          <View style={styles.registerContainer}>
+            <Text style={styles.registerQ}>Don't have an account?</Text>
+            <TouchableOpacity onPress={() => router.push("/signup")}>
+              <Text style={styles.registerLink}>Register</Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
+
       <StatusBar style="auto" />
       <CustomModal
         cancelTitle="CLOSE"
