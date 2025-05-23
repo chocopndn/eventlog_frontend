@@ -32,7 +32,7 @@ const pickDocument = async (
           response = await changeSchoolYear(selectedFile.uri);
 
           await fetchCurrentSchoolYear();
-          setMessage("School year changed successfully!");
+          setMessage("Semester changed successfully!");
         } else {
           response = await uploadSchoolYearFile(selectedFile.uri, type);
           setMessage("Upload successful!");
@@ -73,7 +73,7 @@ export default function SchoolYearScreen() {
         setCurrentSchoolYear(null);
       }
     } catch (error) {
-      console.error("Failed to fetch current school year:", error);
+      console.error("Failed to fetch current semester:", error);
       setCurrentSchoolYear(null);
     } finally {
       setLoading(false);
@@ -141,7 +141,7 @@ export default function SchoolYearScreen() {
 
         <View style={styles.buttonContainer}>
           <CustomButton
-            title="Change School Year"
+            title="Change Semester"
             onPress={handleChangeSchoolYear}
           />
         </View>
@@ -160,12 +160,12 @@ export default function SchoolYearScreen() {
         onCancel={() => setModalVisible(false)}
         title={
           modalType === "changeSchoolYear"
-            ? "Change School Year"
+            ? "Change Semester"
             : "Update Student List"
         }
         message={
           modalType === "changeSchoolYear"
-            ? "Are you sure you want to change the school year and create new blocks based on the uploaded CSV file?"
+            ? "Are you sure you want to change the semester and create new blocks based on the uploaded CSV file?"
             : "Are you sure you want to update the student list based on the uploaded CSV file?"
         }
         confirmTitle="Confirm"
@@ -177,7 +177,7 @@ export default function SchoolYearScreen() {
         title="Success"
         message={
           modalType === "changeSchoolYear"
-            ? "The school year has been changed successfully."
+            ? "The semesterhas been changed successfully."
             : "The student list has been updated successfully."
         }
         type="success"
