@@ -7,13 +7,18 @@ import globalStyles from "../../constants/globalStyles";
 import CustomSearch from "../../components/CustomSearch";
 import CustomDropdown from "../../components/CustomDropdown";
 import CustomButton from "../../components/CustomButton";
+import PrintFilterModal from "../../components/PrintFilterModal";
+import CustomModal from "../../components/CustomModal";
 import theme from "../../constants/theme";
 import ArialFont from "../../assets/fonts/Arial.ttf";
 import ArialBoldFont from "../../assets/fonts/ArialBold.ttf";
 import ArialItalicFont from "../../assets/fonts/ArialItalic.ttf";
 import SquadaOneFont from "../../assets/fonts/SquadaOne.ttf";
 import { fetchAttendanceSummaryOfEvent } from "../../services/api/records";
-import { fetchDepartments, fetchYearLevels } from "../../services/api";
+import { fetchBlocks, fetchDepartments } from "../../services/api";
+import * as Print from "expo-print";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
 
 const Records = () => {
   const { eventId } = useLocalSearchParams();
@@ -33,14 +38,21 @@ const Records = () => {
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedYearLevel, setSelectedYearLevel] = useState("");
 
-  // State for department/year level options
   const [departments, setDepartments] = useState([]);
   const [yearLevels, setYearLevels] = useState([]);
+  const [blocks, setBlocks] = useState([]);
 
-  // Load web fonts
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    title: "",
+    message: "",
+    type: "success",
+    cancelTitle: "OK",
+  });
+
   useEffect(() => {
     if (Platform.OS === "web") {
-      console.log("Records: Registering fonts for web...");
       const style = document.createElement("style");
       style.textContent = `
         @font-face {
@@ -70,7 +82,6 @@ const Records = () => {
       if (!existingStyle) {
         style.id = "records-custom-fonts";
         document.head.appendChild(style);
-        console.log("Records: Font CSS added to document");
       }
 
       if (document.fonts) {
@@ -81,16 +92,13 @@ const Records = () => {
           document.fonts.load("16px SquadaOne"),
         ])
           .then(() => {
-            console.log("Records: All fonts loaded successfully");
             setFontsReady(true);
           })
           .catch((error) => {
-            console.warn("Records: Font loading failed:", error);
             setFontsReady(true);
           });
       } else {
         setTimeout(() => {
-          console.log("Records: Using fallback font loading method");
           setFontsReady(true);
         }, 500);
       }
@@ -103,183 +111,147 @@ const Records = () => {
     }
   }, [fontsLoaded, fontError]);
 
-  // Fetch attendance data and extract dropdown options from the response
   useEffect(() => {
-    const fetchAttendanceData = async () => {
+    const fetchData = async () => {
       if (!eventId) {
-        console.warn("No eventId provided");
         return;
       }
       setLoading(true);
       setError(null);
       try {
-        console.log("Fetching attendance data for eventId:", eventId);
-        const response = await fetchAttendanceSummaryOfEvent(eventId);
-        const students = response?.data?.students || [];
+        const [attendanceResponse, departmentsResponse, blocksResponse] =
+          await Promise.all([
+            fetchAttendanceSummaryOfEvent(eventId),
+            fetchDepartments(),
+            fetchBlocks().catch(() => null),
+          ]);
+
+        const students = attendanceResponse?.data?.students || [];
         const eventDetails = {
-          id: response?.data?.event_id,
-          name: response?.data?.event_name,
-          status: response?.data?.event_status,
+          id: attendanceResponse?.data?.event_id,
+          name:
+            attendanceResponse?.data?.event_name ||
+            attendanceResponse?.data?.event?.name ||
+            attendanceResponse?.data?.event?.event_name ||
+            "Event Attendance Report",
+          status:
+            attendanceResponse?.data?.event_status ||
+            attendanceResponse?.data?.event?.status,
         };
 
         setAttendanceData(students);
         setEventInfo(eventDetails);
 
-        // Extract unique departments and year levels from student data
-        const uniqueDepartments = new Map();
-        const uniqueYearLevels = new Map();
+        const eventBlockIds = attendanceResponse?.data?.block_ids || [];
 
-        students.forEach((student) => {
-          // Collect departments
-          if (student.department_code && student.department_name) {
-            uniqueDepartments.set(student.department_code, {
-              label: `${student.department_code} - ${student.department_name}`,
-              value: student.department_code,
-            });
-          }
-
-          // Collect year levels from the response data
-          if (student.year_level_id && student.year_level_name) {
-            uniqueYearLevels.set(student.year_level_id, {
-              label: student.year_level_name,
-              value: String(student.year_level_id),
-            });
-          }
-        });
-
-        // If we have departments and year_levels arrays from the API response, use those instead
-        if (
-          response?.data?.departments &&
-          Array.isArray(response.data.departments)
-        ) {
-          response.data.departments.forEach((dept) => {
-            uniqueDepartments.set(dept.code, {
-              label: `${dept.code} - ${dept.name}`,
-              value: dept.code,
-            });
-          });
-        }
-
-        if (
-          response?.data?.year_levels &&
-          Array.isArray(response.data.year_levels)
-        ) {
-          response.data.year_levels.forEach((year) => {
-            uniqueYearLevels.set(year.id, {
-              label: year.name,
-              value: String(year.id),
-            });
-          });
-        }
-
-        // Create department options
         const departmentOptions = [
           { label: "All Departments", value: "" },
-          ...Array.from(uniqueDepartments.values()).sort((a, b) =>
-            a.label.localeCompare(b.label)
-          ),
+          ...(departmentsResponse?.data || [])
+            .map((dept) => ({
+              label: `${dept.code} - ${dept.name}`,
+              value: dept.code,
+            }))
+            .sort((a, b) => a.label.localeCompare(b.label)),
         ];
 
-        // Create year level options
         const yearLevelOptions = [
           { label: "All Year Levels", value: "" },
-          ...Array.from(uniqueYearLevels.values()).sort((a, b) =>
-            a.label.localeCompare(b.label)
-          ),
+          ...(attendanceResponse?.data?.year_levels || [])
+            .map((yearLevel) => ({
+              label: yearLevel.name,
+              value: String(yearLevel.id),
+            }))
+            .sort((a, b) => a.label.localeCompare(b.label)),
         ];
+
+        let blockOptions = [];
+
+        if (blocksResponse?.data && Array.isArray(blocksResponse.data)) {
+          blockOptions = blocksResponse.data
+            .filter(
+              (block) =>
+                eventBlockIds.includes(block.id) &&
+                block.name &&
+                block.name.trim() !== ""
+            )
+            .map((block) => {
+              const uniqueBlockKey = block.course_code
+                ? `${block.course_code}_${block.name}`
+                : block.name;
+
+              // Fixed: Ensure the label shows course code + block name consistently
+              const displayLabel = block.course_code
+                ? `${block.course_code} ${block.name}`
+                : block.name;
+
+              return {
+                key: `block-${block.id}`,
+                label: displayLabel, // This is what will be displayed in dropdown
+                value: uniqueBlockKey,
+                id: String(block.id),
+                block_id: String(block.id),
+                block_name: block.name,
+                course_code: block.course_code,
+                course_name: block.course_name,
+                department_id: block.department_id,
+                department_code: block.department_code,
+                year_level_id: block.year_level_id,
+                // Add display_name for consistency
+                display_name: displayLabel,
+                name: displayLabel, // Some components might use 'name' field
+              };
+            })
+            .sort((a, b) => a.label.localeCompare(b.label));
+        } else {
+          blockOptions = (attendanceResponse?.data?.blocks || [])
+            .filter((block) => block.name && block.name.trim() !== "")
+            .map((block) => {
+              const uniqueBlockKey = block.course_code
+                ? `${block.course_code}_${block.name}`
+                : block.name;
+
+              // Fixed: Ensure the label shows course code + block name consistently
+              const displayLabel = block.course_code
+                ? `${block.course_code} ${block.name}`
+                : block.name;
+
+              return {
+                key: `block-${block.id}`,
+                label: displayLabel, // This is what will be displayed in dropdown
+                value: uniqueBlockKey,
+                id: String(block.id),
+                block_id: String(block.id),
+                block_name: block.name,
+                course_code: block.course_code,
+                course_name: block.course_name,
+                department_id: block.department_id,
+                department_code: block.department_code,
+                year_level_id: block.year_level_id,
+                // Add display_name for consistency
+                display_name: displayLabel,
+                name: displayLabel, // Some components might use 'name' field
+              };
+            })
+            .sort((a, b) => a.label.localeCompare(b.label));
+        }
 
         setDepartments(departmentOptions);
         setYearLevels(yearLevelOptions);
-
-        console.log("Attendance data fetched successfully:", students);
-        console.log("Event info:", eventDetails);
-        console.log("Departments from data:", departmentOptions);
-        console.log("Year levels from data:", yearLevelOptions);
+        setBlocks(blockOptions);
       } catch (err) {
-        console.error("Failed to fetch attendance data:", err);
-        setError(err.message || "Failed to fetch attendance data");
+        setError(err.message || "Failed to fetch data");
       } finally {
         setLoading(false);
       }
     };
 
     if (fontsReady) {
-      fetchAttendanceData();
+      fetchData();
     }
   }, [eventId, fontsReady]);
 
-  // Separate useEffect for API-based dropdowns (fallback)
-  useEffect(() => {
-    const loadOptionsFromAPI = async () => {
-      try {
-        // Only fetch from API if we don't have data from attendance response
-        if (departments.length <= 1) {
-          // Only "All Departments"
-          console.log("Fetching departments from API as fallback...");
-          const deptResponse = await fetchDepartments();
-          console.log("API Department response:", deptResponse);
-
-          if (deptResponse?.data && Array.isArray(deptResponse.data)) {
-            const deptOptions = deptResponse.data.map((dept, index) => ({
-              label: String(
-                dept.name ||
-                  dept.department_name ||
-                  dept.code ||
-                  `Department ${index + 1}`
-              ),
-              value: String(dept.code || dept.id || index),
-            }));
-
-            const departmentOptions = [
-              { label: "All Departments", value: "" },
-              ...deptOptions,
-            ];
-
-            setDepartments(departmentOptions);
-            console.log("API-based departments:", departmentOptions);
-          }
-        }
-
-        if (yearLevels.length <= 1) {
-          // Only "All Year Levels"
-          console.log("Fetching year levels from API as fallback...");
-          const yearResponse = await fetchYearLevels();
-          console.log("API Year response:", yearResponse);
-
-          if (yearResponse?.data && Array.isArray(yearResponse.data)) {
-            const yearOptions = yearResponse.data.map((year, index) => ({
-              label: `Year ${
-                year.level || year.year_level || year.name || index + 1
-              }`,
-              value: String(
-                year.level || year.year_level || year.id || index + 1
-              ),
-            }));
-
-            const yearLevelOptions = [
-              { label: "All Year Levels", value: "" },
-              ...yearOptions,
-            ];
-
-            setYearLevels(yearLevelOptions);
-            console.log("API-based year levels:", yearLevelOptions);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching dropdown data from API:", error);
-      }
-    };
-
-    // Run this after attendance data is loaded and if dropdowns are still empty
-    if (fontsReady && attendanceData.length > 0) {
-      loadOptionsFromAPI();
-    }
-  }, [attendanceData, fontsReady]);
-
-  // Enhanced filtering logic with proper field matching
   const filteredData = useMemo(() => {
     return attendanceData.filter((student) => {
-      // Search filter
       const matchesSearch =
         !searchQuery ||
         (student.full_name &&
@@ -294,7 +266,6 @@ const Records = () => {
         (student.block_name &&
           student.block_name.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      // Department filter - match against department_code
       const matchesDepartment =
         !selectedDepartment ||
         selectedDepartment === "" ||
@@ -302,7 +273,6 @@ const Records = () => {
         (student.department_code &&
           String(student.department_code) === String(selectedDepartment));
 
-      // Year level filter - match against year_level_id field from attendance data
       const matchesYearLevel =
         !selectedYearLevel ||
         selectedYearLevel === "" ||
@@ -326,11 +296,373 @@ const Records = () => {
     setSelectedYearLevel(item.value);
   };
 
-  // Clear filters function - keeping for potential future use
-  const clearFilters = () => {
-    setSearchQuery("");
-    setSelectedDepartment("");
-    setSelectedYearLevel("");
+  const generatePrintDocument = async (students, action) => {
+    const html = `
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { color: #333; text-align: center; margin-bottom: 30px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #333; padding: 8px; text-align: center; }
+            th { background-color: #f5f5f5; font-weight: bold; }
+            tr:nth-child(even) { background-color: #f9f9f9; }
+            .summary { margin-bottom: 20px; font-size: 14px; }
+            @media print {
+              body { margin: 0; padding: 10px; }
+              h1 { margin-bottom: 20px; }
+              table { page-break-inside: auto; }
+              tr { page-break-inside: avoid; page-break-after: auto; }
+            }
+          </style>
+        </head>
+        <body>
+          <h1>${
+            eventInfo?.name && eventInfo.name !== "eventloging"
+              ? eventInfo.name
+              : "Event Attendance Report"
+          }</h1>
+          <div class="summary">
+            <strong>Total Students:</strong> ${students.length}<br>
+            <strong>Generated:</strong> ${new Date().toLocaleDateString()}
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>ID Number</th>
+                <th>Student Name</th>
+                <th>Block</th>
+                <th>Department</th>
+                <th>Present</th>
+                <th>Absent</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${students
+                .map((student) => {
+                  // Enhanced block display logic
+                  let blockDisplay = "N/A";
+
+                  // First priority: use the pre-formatted block_display if available
+                  if (student.block_display) {
+                    blockDisplay = student.block_display;
+                  }
+                  // Second priority: format from course_code and block_name
+                  else if (student.course_code && student.block_name) {
+                    blockDisplay = `${student.course_code} ${student.block_name}`;
+                  }
+                  // Third priority: use block_name only
+                  else if (student.block_name) {
+                    blockDisplay = student.block_name;
+                  }
+                  // Fallback: try to find block info from blocks array
+                  else if (student.block_id) {
+                    const studentBlock = blocks.find(
+                      (block) =>
+                        block.block_id === String(student.block_id) ||
+                        block.id === String(student.block_id)
+                    );
+                    if (studentBlock) {
+                      blockDisplay =
+                        studentBlock.course_code && studentBlock.block_name
+                          ? `${studentBlock.course_code} ${studentBlock.block_name}`
+                          : studentBlock.block_name ||
+                            studentBlock.label ||
+                            "N/A";
+                    }
+                  }
+
+                  return `
+                      <tr>
+                        <td>${student.id_number || "N/A"}</td>
+                        <td>${student.full_name || "N/A"}</td>
+                        <td>${blockDisplay}</td>
+                        <td>${student.department_code || "N/A"}</td>
+                        <td>${student.present_count || 0}</td>
+                        <td>${student.absent_count || 0}</td>
+                      </tr>
+                    `;
+                })
+                .join("")}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    if (action === "print") {
+      if (Platform.OS === "web") {
+        // For web platform, print HTML directly without creating PDF
+        const printWindow = window.open("", "_blank", "width=800,height=600");
+        printWindow.document.write(html);
+        printWindow.document.close();
+
+        // Wait for content to load, then print directly
+        printWindow.onload = () => {
+          setTimeout(() => {
+            printWindow.print();
+            // Close the window after printing
+            setTimeout(() => {
+              printWindow.close();
+            }, 1000);
+          }, 500);
+        };
+
+        setModalConfig({
+          title: "Print Successful",
+          message: "Print dialog opened. Please select your printer.",
+          type: "success",
+          cancelTitle: "OK",
+        });
+      } else {
+        // For mobile platforms, print HTML directly without PDF creation
+        try {
+          await Print.printAsync({
+            html,
+            // Force direct printing without PDF generation
+            orientation: Print.Orientation.portrait,
+            margins: {
+              left: 20,
+              top: 20,
+              right: 20,
+              bottom: 20,
+            },
+          });
+
+          setModalConfig({
+            title: "Print Successful",
+            message: "Document sent to printer successfully.",
+            type: "success",
+            cancelTitle: "OK",
+          });
+        } catch (printError) {
+          console.error("Print error:", printError);
+          setModalConfig({
+            title: "Print Failed",
+            message: "Failed to print the document. Please try again.",
+            type: "error",
+            cancelTitle: "OK",
+          });
+        }
+      }
+    } else {
+      // Download functionality - this creates and saves PDF file
+      try {
+        const { uri } = await Print.printToFileAsync({ html });
+        const pdfName = `${
+          eventInfo?.name && eventInfo.name !== "eventloging"
+            ? eventInfo.name.replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, "_")
+            : "Attendance_Report"
+        }_${new Date().toISOString().split("T")[0]}.pdf`;
+
+        if (Platform.OS === "web") {
+          // For web, create a download link
+          const link = document.createElement("a");
+          link.href = uri;
+          link.download = pdfName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          // For mobile, use file system and sharing
+          const pdfPath = `${FileSystem.documentDirectory}${pdfName}`;
+          await FileSystem.moveAsync({ from: uri, to: pdfPath });
+          await Sharing.shareAsync(pdfPath, {
+            UTI: ".pdf",
+            mimeType: "application/pdf",
+          });
+        }
+
+        setModalConfig({
+          title: "Download Successful",
+          message: "Attendance report has been downloaded successfully.",
+          type: "success",
+          cancelTitle: "OK",
+        });
+      } catch (downloadError) {
+        console.error("Download error:", downloadError);
+        setModalConfig({
+          title: "Download Failed",
+          message: "Failed to download the report. Please try again.",
+          type: "error",
+          cancelTitle: "OK",
+        });
+      }
+    }
+
+    setModalVisible(true);
+  };
+
+  const handlePrintDownload = async (filters, action = "download") => {
+    try {
+      const { departmentIds, yearLevelIds, blockIds } = filters;
+
+      console.log("Print filters received:", {
+        departmentIds,
+        yearLevelIds,
+        blockIds,
+      });
+
+      setLoading(true);
+
+      // Start with all attendance data
+      let filteredStudents = [...attendanceData];
+
+      // Apply department filter if departments are selected
+      if (departmentIds && departmentIds.length > 0) {
+        filteredStudents = filteredStudents.filter((student) => {
+          return departmentIds.some(
+            (deptId) =>
+              String(student.department_code) === String(deptId) ||
+              String(student.department_id) === String(deptId)
+          );
+        });
+        console.log(
+          `After department filter: ${filteredStudents.length} students`
+        );
+      }
+
+      // Apply year level filter if year levels are selected
+      if (yearLevelIds && yearLevelIds.length > 0) {
+        filteredStudents = filteredStudents.filter((student) => {
+          return yearLevelIds.some(
+            (yearId) => String(student.year_level_id) === String(yearId)
+          );
+        });
+        console.log(
+          `After year level filter: ${filteredStudents.length} students`
+        );
+      }
+
+      // Apply block filter if blocks are selected
+      if (blockIds && blockIds.length > 0) {
+        filteredStudents = filteredStudents.filter((student) => {
+          return blockIds.some((blockValue) => {
+            // Find the selected block from our blocks array
+            const selectedBlock = blocks.find(
+              (block) =>
+                block.value === blockValue ||
+                block.block_id === blockValue ||
+                block.id === blockValue
+            );
+
+            if (!selectedBlock) return false;
+
+            // Multiple ways to match the student to the selected block
+            const matches =
+              // Match by block_id
+              String(student.block_id) === String(selectedBlock.block_id) ||
+              String(student.block_id) === String(selectedBlock.id) ||
+              // Match by block name and course code combination
+              (student.block_name === selectedBlock.block_name &&
+                student.course_code === selectedBlock.course_code) ||
+              // Match by constructed block key
+              (student.course_code &&
+                student.block_name &&
+                `${student.course_code}_${student.block_name}` ===
+                  selectedBlock.value) ||
+              // Match by block name only (fallback)
+              student.block_name === selectedBlock.block_name;
+
+            return matches;
+          });
+        });
+        console.log(`After block filter: ${filteredStudents.length} students`);
+      }
+
+      // If no students match the filters
+      if (filteredStudents.length === 0) {
+        setModalConfig({
+          title: "No Students Found",
+          message:
+            departmentIds?.length > 0 ||
+            yearLevelIds?.length > 0 ||
+            blockIds?.length > 0
+              ? "No students match the selected filter criteria."
+              : "No students available for this event.",
+          type: "warning",
+          cancelTitle: "OK",
+        });
+        setModalVisible(true);
+        setLoading(false);
+        return;
+      }
+
+      // Enhance filtered students with proper block display formatting
+      filteredStudents = filteredStudents.map((student) => {
+        // Find the corresponding block data for proper formatting
+        const studentBlock = blocks.find(
+          (block) =>
+            block.block_id === String(student.block_id) ||
+            block.id === String(student.block_id)
+        );
+
+        return {
+          ...student,
+          // Ensure course_code is available for proper block display
+          course_code: student.course_code || studentBlock?.course_code || "",
+          block_name: student.block_name || studentBlock?.block_name || "",
+          // Add a formatted block display field
+          block_display:
+            (student.course_code || studentBlock?.course_code) &&
+            (student.block_name || studentBlock?.block_name)
+              ? `${student.course_code || studentBlock?.course_code} ${
+                  student.block_name || studentBlock?.block_name
+                }`
+              : student.block_name || studentBlock?.block_name || "N/A",
+        };
+      });
+
+      console.log(
+        `Final filtered students for PDF: ${filteredStudents.length}`
+      );
+      await generatePrintDocument(filteredStudents, action);
+
+      // Show modal for both print and download actions
+      setModalVisible(true);
+    } catch (error) {
+      console.error("Print/Download error:", error);
+      setModalConfig({
+        title: action === "print" ? "Print Failed" : "Download Failed",
+        message: `An error occurred while ${
+          action === "print" ? "printing" : "generating"
+        } the report: ${error.message}`,
+        type: "error",
+        cancelTitle: "OK",
+      });
+      setModalVisible(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownloadPress = () => {
+    if (attendanceData.length === 0) {
+      setModalConfig({
+        title: "No Data Available",
+        message: "No attendance data available to download.",
+        type: "warning",
+        cancelTitle: "OK",
+      });
+      setModalVisible(true);
+      return;
+    }
+    setShowPrintModal(true);
+  };
+
+  const handlePrintPress = () => {
+    if (attendanceData.length === 0) {
+      setModalConfig({
+        title: "No Data Available",
+        message: "No attendance data available to print.",
+        type: "warning",
+        cancelTitle: "OK",
+      });
+      setModalVisible(true);
+      return;
+    }
+    setShowPrintModal(true);
   };
 
   if (!fontsReady) {
@@ -368,30 +700,41 @@ const Records = () => {
     );
   }
 
-  const renderAttendanceRow = (item, index) => (
-    <View key={index} style={styles.listRow}>
-      <View style={[styles.id, styles.dataCell]}>
-        <Text style={styles.dataTextStyle}>{item.id_number || "N/A"}</Text>
+  const renderAttendanceRow = (item, index) => {
+    const uniqueKey = item.id_number
+      ? `student-${item.id_number}`
+      : `student-${index}`;
+
+    const blockDisplay =
+      item.course_code && item.block_name
+        ? `${item.course_code} ${item.block_name}`
+        : item.block_name || "N/A";
+
+    return (
+      <View key={uniqueKey} style={styles.listRow}>
+        <View style={[styles.id, styles.dataCell]}>
+          <Text style={styles.dataTextStyle}>{item.id_number || "N/A"}</Text>
+        </View>
+        <View style={[styles.name, styles.dataCell]}>
+          <Text style={styles.dataTextStyle}>{item.full_name || "N/A"}</Text>
+        </View>
+        <View style={[styles.block, styles.dataCell]}>
+          <Text style={styles.dataTextStyle}>{blockDisplay}</Text>
+        </View>
+        <View style={[styles.department, styles.dataCell]}>
+          <Text style={styles.dataTextStyle}>
+            {item.department_code || "N/A"}
+          </Text>
+        </View>
+        <View style={[styles.present, styles.dataCell]}>
+          <Text style={styles.dataTextStyle}>{item.present_count || 0}</Text>
+        </View>
+        <View style={[styles.absent, styles.dataCell]}>
+          <Text style={styles.dataTextStyle}>{item.absent_count || 0}</Text>
+        </View>
       </View>
-      <View style={[styles.name, styles.dataCell]}>
-        <Text style={styles.dataTextStyle}>{item.full_name || "N/A"}</Text>
-      </View>
-      <View style={[styles.block, styles.dataCell]}>
-        <Text style={styles.dataTextStyle}>{item.block_name || "N/A"}</Text>
-      </View>
-      <View style={[styles.department, styles.dataCell]}>
-        <Text style={styles.dataTextStyle}>
-          {item.department_code || "N/A"}
-        </Text>
-      </View>
-      <View style={[styles.present, styles.dataCell]}>
-        <Text style={styles.dataTextStyle}>{item.present_count || 0}</Text>
-      </View>
-      <View style={[styles.absent, styles.dataCell]}>
-        <Text style={styles.dataTextStyle}>{item.absent_count || 0}</Text>
-      </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View
@@ -401,7 +744,6 @@ const Records = () => {
       ]}
     >
       <WebHeader />
-      {/* Event Information */}
       {eventInfo && (
         <View style={styles.eventInfoContainer}>
           <Text style={styles.eventTitle}>{eventInfo.name}</Text>
@@ -417,7 +759,7 @@ const Records = () => {
       </View>
 
       <View style={styles.dropdownWrapper}>
-        <View style={styles.dropdownContainer}>
+        <View style={[styles.dropdownContainer, { zIndex: 1002 }]}>
           <CustomDropdown
             display="sharp"
             placeholder="Department"
@@ -426,12 +768,14 @@ const Records = () => {
             valueField="value"
             value={selectedDepartment}
             onSelect={handleDepartmentChange}
+            containerStyle={{ zIndex: 1002 }}
+            dropdownStyle={{ zIndex: 1002 }}
           />
         </View>
         <View
           style={[
             styles.dropdownContainer,
-            { marginLeft: theme.spacing.medium },
+            { marginLeft: theme.spacing.medium, zIndex: 1001 },
           ]}
         >
           <CustomDropdown
@@ -442,15 +786,12 @@ const Records = () => {
             valueField="value"
             value={selectedYearLevel}
             onSelect={handleYearLevelChange}
+            containerStyle={{ zIndex: 1001 }}
+            dropdownStyle={{ zIndex: 1001 }}
           />
         </View>
       </View>
 
-      {/* Clear filters button - REMOVED */}
-
-      {/* Results count - REMOVED */}
-
-      {/* Table Header */}
       <View style={styles.tableContainer}>
         <View style={styles.listHeader}>
           <View style={[styles.id, styles.headerText]}>
@@ -473,19 +814,16 @@ const Records = () => {
           </View>
         </View>
 
-        {/* Scrollable Content */}
         <ScrollView
           style={styles.scrollViewContent}
           contentContainerStyle={styles.scrollView}
         >
-          {/* Loading state */}
           {loading && (
             <View style={styles.statusContainer}>
               <Text style={styles.statusText}>Loading attendance data...</Text>
             </View>
           )}
 
-          {/* Error state */}
           {error && (
             <View style={styles.statusContainer}>
               <Text style={[styles.statusText, { color: theme.colors.error }]}>
@@ -494,7 +832,6 @@ const Records = () => {
             </View>
           )}
 
-          {/* No data state */}
           {!loading && !error && attendanceData.length === 0 && (
             <View style={styles.statusContainer}>
               <Text style={styles.statusText}>
@@ -505,7 +842,6 @@ const Records = () => {
             </View>
           )}
 
-          {/* No filtered results */}
           {!loading &&
             !error &&
             attendanceData.length > 0 &&
@@ -517,10 +853,11 @@ const Records = () => {
               </View>
             )}
 
-          {/* Data rows */}
           {!loading && !error && filteredData.length > 0 && (
             <View style={styles.dataContainer}>
-              {filteredData.map(renderAttendanceRow)}
+              {filteredData.map((item, index) =>
+                renderAttendanceRow(item, index)
+              )}
             </View>
           )}
         </ScrollView>
@@ -531,17 +868,42 @@ const Records = () => {
           <View style={styles.buttonContainer}>
             <CustomButton
               title="DOWNLOAD"
-              disabled={loading || filteredData.length === 0}
+              onPress={handleDownloadPress}
+              disabled={loading || attendanceData.length === 0}
             />
           </View>
           <View style={styles.buttonContainer}>
             <CustomButton
               title="PRINT"
-              disabled={loading || filteredData.length === 0}
+              onPress={handlePrintPress}
+              disabled={loading || attendanceData.length === 0}
             />
           </View>
         </View>
       </View>
+
+      <PrintFilterModal
+        visible={showPrintModal}
+        onClose={() => setShowPrintModal(false)}
+        onPrint={(filters) => handlePrintDownload(filters, "print")}
+        onDownload={(filters) => handlePrintDownload(filters, "download")}
+        showDepartment={true}
+        showYearLevel={true}
+        showBlock={true}
+        departments={departments.filter((dept) => dept.value !== "")}
+        yearLevels={yearLevels.filter((year) => year.value !== "")}
+        blocks={blocks}
+        students={attendanceData}
+      />
+
+      <CustomModal
+        visible={modalVisible}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        cancelTitle={modalConfig.cancelTitle}
+        onCancel={() => setModalVisible(false)}
+      />
     </View>
   );
 };
@@ -582,9 +944,12 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.large,
     width: "90%",
     justifyContent: "center",
+    zIndex: 1000,
   },
   dropdownContainer: {
     width: "49%",
+    zIndex: 1000,
+    elevation: Platform.OS === "android" ? 1000 : undefined,
   },
   buttonContainer: {
     width: "30%",

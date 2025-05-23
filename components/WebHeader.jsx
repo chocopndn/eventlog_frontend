@@ -50,19 +50,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     paddingHorizontal: theme.spacing.medium,
-    height: 180,
+    height: 120,
   },
   leftContainer: {
     flexDirection: "row",
     alignItems: "center",
   },
   logo: {
-    height: 150,
-    width: 150,
+    height: 80,
+    width: 80,
   },
   title: {
     fontFamily: theme.fontFamily.SquadaOne,
-    fontSize: 70,
+    fontSize: 40,
     color: theme.colors.secondary,
     paddingLeft: theme.spacing.medium,
   },
