@@ -159,7 +159,6 @@ const AddEvent = () => {
           (block) => block.status === "Active"
         );
 
-        // ✅ Update this line to show course code + block name
         const formattedBlocks = activeBlocks.map((block) => ({
           label: `${block.course_code || ""}  ${block.block_name}`,
           value: block.block_id,
@@ -523,7 +522,7 @@ const AddEvent = () => {
             <View style={styles.timeWrapper}>
               <View style={styles.timeContainer}>
                 <TimePickerComponent
-                  title="Time In"
+                  title="AM Time In"
                   mode="single"
                   onTimeChange={(time) => handleChange("am_in", time)}
                   selectedValue={formData.am_in}
@@ -533,7 +532,7 @@ const AddEvent = () => {
               <View style={styles.timeContainer}>
                 {formData.am_in && (
                   <TimePickerComponent
-                    title="Time Out"
+                    title="AM Time Out"
                     mode="single"
                     onTimeChange={(time) => handleChange("am_out", time)}
                     selectedValue={formData.am_out}
@@ -547,7 +546,7 @@ const AddEvent = () => {
             <View style={styles.timeWrapper}>
               <View style={styles.timeContainer}>
                 <TimePickerComponent
-                  title="Time In"
+                  title="PM Time In"
                   mode="single"
                   onTimeChange={(time) => handleChange("pm_in", time)}
                   selectedValue={formData.pm_in}
@@ -557,7 +556,7 @@ const AddEvent = () => {
               <View style={styles.timeContainer}>
                 {formData.pm_in && (
                   <TimePickerComponent
-                    title="Time Out"
+                    title="PM Time Out"
                     mode="single"
                     onTimeChange={(time) => handleChange("pm_out", time)}
                     selectedValue={formData.pm_out}
@@ -642,6 +641,7 @@ const styles = StyleSheet.create({
   },
   timeContainer: {
     width: "45%",
+    paddingTop: theme.spacing.medium,
   },
   durationButton: {
     padding: theme.spacing.small,
