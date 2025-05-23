@@ -511,6 +511,18 @@ const Scan = () => {
     });
   };
 
+  const reloadCamera = () => {
+    logInfo("Camera", "Manual camera reload triggered");
+    setCameraKey((prev) => prev + 1);
+    setIsCameraReady(false);
+    setIsScanning(true);
+
+    setSuccessModalVisible(false);
+    setErrorModalVisible(false);
+    setConfirmationModalVisible(false);
+    setPendingAttendanceData(null);
+  };
+
   logInfo("Render", "Rendering main camera view", {
     isCameraReady,
     isScanning,
@@ -542,6 +554,12 @@ const Scan = () => {
           animateShutter={false}
           enableTorch={false}
         />
+
+        <View style={styles.tapToReloadOverlay}>
+          <Text style={styles.tapToReloadText} onPress={reloadCamera}>
+            Tap to reload camera
+          </Text>
+        </View>
       </View>
 
       <CustomModal
@@ -641,5 +659,24 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: theme.spacing.medium,
     fontFamily: theme.fontFamily.SquadaOne,
+  },
+  tapToReloadOverlay: {
+    position: "absolute",
+    bottom: 10,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    zIndex: 2,
+  },
+  tapToReloadText: {
+    color: theme.colors.primary,
+    fontSize: theme.fontSizes.small,
+    fontFamily: theme.fontFamily.Arial,
+    backgroundColor: theme.colors.secondary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 15,
+    textAlign: "center",
+    overflow: "hidden",
   },
 });
