@@ -21,16 +21,12 @@ const PrintFilterModal = ({
   const [filteredBlocks, setFilteredBlocks] = useState(blocks);
 
   useEffect(() => {
-    if (
-      visible &&
-      showBlock &&
-      blocks.length > 0 &&
-      selectedBlocks.length === 0
-    ) {
-      const allBlockIds = blocks.map((block) => String(block.block_id));
-      setSelectedBlocks(allBlockIds);
+    if (visible) {
+      setSelectedDepartments([]);
+      setSelectedBlocks([]);
+      setSelectedYearLevels([]);
     }
-  }, [visible, blocks, showBlock]);
+  }, [visible]);
 
   useEffect(() => {
     let filtered = [...blocks];
@@ -48,15 +44,7 @@ const PrintFilterModal = ({
     }
 
     setFilteredBlocks(filtered);
-
-    const validBlockIds = filtered.map((block) => String(block.block_id));
-    const updatedSelectedBlocks = selectedBlocks.filter((id) =>
-      validBlockIds.includes(id)
-    );
-
-    if (updatedSelectedBlocks.length !== selectedBlocks.length) {
-      setSelectedBlocks(updatedSelectedBlocks);
-    }
+    setSelectedBlocks([]);
   }, [selectedDepartments, selectedYearLevels, blocks]);
 
   const handlePrint = () => {
@@ -100,20 +88,6 @@ const PrintFilterModal = ({
               />
             )}
 
-            {showBlock && (
-              <CustomDropdown
-                title="Blocks"
-                placeholder="Select Blocks"
-                data={filteredBlocks.map((block) => ({
-                  label: block.display_name,
-                  value: String(block.block_id),
-                }))}
-                value={selectedBlocks}
-                onSelect={(values) => setSelectedBlocks(values)}
-                multiSelect
-              />
-            )}
-
             {showYearLevel && (
               <CustomDropdown
                 title="Year Levels"
@@ -121,6 +95,20 @@ const PrintFilterModal = ({
                 data={yearLevels}
                 value={selectedYearLevels}
                 onSelect={(values) => setSelectedYearLevels(values)}
+                multiSelect
+              />
+            )}
+
+            {showBlock && (
+              <CustomDropdown
+                title={`Blocks (${selectedBlocks.length} selected)`}
+                placeholder="Select Blocks"
+                data={filteredBlocks.map((block) => ({
+                  label: block.display_name,
+                  value: String(block.block_id),
+                }))}
+                value={selectedBlocks}
+                onSelect={(values) => setSelectedBlocks(values)}
                 multiSelect
               />
             )}
