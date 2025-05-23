@@ -36,25 +36,23 @@ const Home = () => {
   const [modalTitle, setModalTitle] = useState("");
   const [modalMessage, setModalMessage] = useState("");
   const [userDataLoaded, setUserDataLoaded] = useState(false);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
   const fetchAndStoreUserData = async () => {
     try {
-      console.log("[Home] Fetching user data from local storage...");
-
       const user = await getStoredUser();
       if (!user) {
-        console.warn("[Home] No stored user found.");
         setUserDataLoaded(true);
-        return;
+        setInitialLoadComplete(true);
+        return null;
       }
-
-      console.log("[Home] Stored user fetched:", user);
       setBlockId(user?.block_id || null);
       setRoleId(user?.role_id || null);
       setUserDataLoaded(true);
+      return user;
     } catch (error) {
-      console.error("[Home] Error fetching user data:", error.message || error);
-
+      setUserDataLoaded(true);
+      setInitialLoadComplete(true);
       if (
         error.message?.includes("database") ||
         error.message?.includes("NullPointer")
@@ -65,29 +63,18 @@ const Home = () => {
         );
         setModalVisible(true);
       }
-
-      setUserDataLoaded(true);
+      return null;
     }
   };
 
   const updateUserData = async (updatedUserData) => {
     try {
-      console.log("[Home] Updating user data...");
       const storeResult = await storeUser(updatedUserData);
-
       if (storeResult?.success) {
-        console.log("[Home] User data updated successfully");
         setBlockId(updatedUserData?.block_id || null);
         setRoleId(updatedUserData?.role_id || null);
-      } else {
-        console.error(
-          "[Home] Failed to store user data:",
-          storeResult?.error || "Unknown error"
-        );
       }
     } catch (error) {
-      console.error("[Home] Error updating user data:", error);
-
       if (error.message?.includes("database")) {
         setModalTitle("Storage Error");
         setModalMessage(
@@ -98,218 +85,170 @@ const Home = () => {
     }
   };
 
-  useEffect(() => {
-    fetchAndStoreUserData();
-  }, []);
-
-  const fetchEvent = async () => {
-    let timeoutTriggered = false;
-
-    setRefreshing(true);
-
-    console.log("[Home] Starting event fetch...");
-
-    const timeout = setTimeout(() => {
-      timeoutTriggered = true;
-      console.warn("[Home] Fetch timeout: Taking too long (>7s).");
-      setModalTitle("Connection Issue");
-      setModalMessage(
-        "Fetching events is taking too long. Please check your internet connection."
-      );
-      setModalVisible(true);
-    }, 7000);
-
-    try {
-      console.log("[Home] Calling fetchUpcomingEvents with blockId:", blockId);
-      const response = await fetchUpcomingEvents(blockId);
-      console.log(response);
-
-      console.log("EVENTS", response);
-
-      if (!response?.success) {
-        throw new Error(
-          response?.message || "Failed to fetch events from API."
-        );
-      }
-
-      console.log(
-        "[Home] Fetched events from API:",
-        response.events.length,
-        "event(s)"
-      );
-
-      if (response.events.length === 0) {
-        console.log("[Home] No upcoming events. Clearing local events table.");
-        try {
-          await clearEventsTable();
-        } catch (clearError) {
-          console.error("[Home] Error clearing events table:", clearError);
-        }
-        setEvents([]);
+  const fetchEvent = useCallback(
+    async (currentBlockId = blockId) => {
+      if (!userDataLoaded || currentBlockId === null) {
         return;
       }
 
-      const allApiEventIds = response.events.map((e) => e.event_id);
-      console.log("[Home] Storing events locally...", allApiEventIds);
+      let timeoutTriggered = false;
+      setRefreshing(true);
+
+      const timeout = setTimeout(() => {
+        timeoutTriggered = true;
+        setModalTitle("Connection Issue");
+        setModalMessage(
+          "Fetching events is taking too long. Please check your internet connection."
+        );
+        setModalVisible(true);
+      }, 7000);
 
       try {
-        const cleanupResult = await cleanupOutdatedEvents(allApiEventIds);
-        if (cleanupResult.success) {
-          console.log(
-            `[Home] Cleanup completed: ${
-              cleanupResult.deletedCount || 0
-            } outdated events removed`
+        const response = await fetchUpcomingEvents(currentBlockId);
+        if (!response?.success) {
+          throw new Error(
+            response?.message || "Failed to fetch events from API."
           );
-        } else {
-          console.warn(`[Home] Cleanup failed: ${cleanupResult.error}`);
         }
-      } catch (cleanupError) {
-        console.error("[Home] Error during cleanup:", cleanupError.message);
-      }
 
-      const storePromises = response.events.map(async (event) => {
+        if (response.events.length === 0) {
+          try {
+            await clearEventsTable();
+          } catch (clearError) {}
+          setEvents([]);
+          return;
+        }
+
+        const allApiEventIds = response.events.map((e) => e.event_id);
         try {
-          const result = await storeEvent(event, allApiEventIds);
-          if (result?.success) {
-            console.log(
-              `[Home] Event stored successfully: ${event.event_name} (ID: ${event.event_id})`
-            );
-            return { success: true, eventId: event.event_id };
-          } else {
-            console.error(
-              `[Home] Event storage failed for ID ${event.event_id}:`,
-              result?.error || "Unknown error"
-            );
+          const cleanupResult = await cleanupOutdatedEvents(allApiEventIds);
+        } catch (cleanupError) {}
+
+        const storePromises = response.events.map(async (event) => {
+          try {
+            const result = await storeEvent(event, allApiEventIds);
+            if (result?.success) {
+              return { success: true, eventId: event.event_id };
+            } else {
+              return {
+                success: false,
+                eventId: event.event_id,
+                error: result?.error || "Storage failed",
+              };
+            }
+          } catch (error) {
             return {
               success: false,
               eventId: event.event_id,
-              error: result?.error || "Storage failed",
+              error: error.message || "Unknown error",
             };
           }
-        } catch (error) {
-          console.error(
-            `[Home] Critical error storing event ID ${event.event_id}:`,
-            error.message || error
-          );
-          return {
-            success: false,
-            eventId: event.event_id,
-            error: error.message || "Unknown error",
-          };
-        }
-      });
+        });
 
-      const storeResults = await Promise.allSettled(storePromises);
+        const storeResults = await Promise.allSettled(storePromises);
+        const failedStores = storeResults.filter(
+          (result) =>
+            result.status === "rejected" ||
+            (result.status === "fulfilled" && !result.value.success)
+        ).length;
 
-      const failedStores = storeResults.filter(
-        (result) =>
-          result.status === "rejected" ||
-          (result.status === "fulfilled" && !result.value.success)
-      ).length;
-
-      if (failedStores > 0) {
-        console.warn(`[Home] ${failedStores} events failed to store locally`);
-      }
-
-      try {
-        const storedEvents = await getStoredEvents();
-        console.log(
-          "[Home] Local events loaded:",
-          storedEvents?.length || 0,
-          "event(s)"
-        );
-        setEvents(storedEvents || []);
-
-        if (failedStores > 0 && failedStores < response.events.length) {
-          setModalTitle("Partial Sync Warning");
+        try {
+          const storedEvents = await getStoredEvents();
+          setEvents(storedEvents || []);
+          if (failedStores > 0 && failedStores < response.events.length) {
+            setModalTitle("Partial Sync Warning");
+            setModalMessage(
+              `Some events may not be fully synchronized. ${
+                storedEvents?.length || 0
+              } events are available locally.`
+            );
+            setModalVisible(true);
+          }
+        } catch (storageError) {
+          setEvents(response.events || []);
+          setModalTitle("Storage Warning");
           setModalMessage(
-            `Some events may not be fully synchronized. ${
-              storedEvents?.length || 0
-            } events are available locally.`
+            "Unable to save events locally. Showing current data from server."
           );
           setModalVisible(true);
         }
-      } catch (storageError) {
-        console.error("[Home] Error loading stored events:", storageError);
-
-        setEvents(response.events || []);
-
-        setModalTitle("Storage Warning");
-        setModalMessage(
-          "Unable to save events locally. Showing current data from server."
-        );
-        setModalVisible(true);
-      }
-    } catch (error) {
-      console.error(
-        "[Home] Critical error in fetchEvent:",
-        error.message || error
-      );
-
-      try {
-        const netState = await NetInfo.fetch();
-        if (netState.isConnected === false) {
-          console.warn("[Home] Device is offline.");
-          setModalTitle("No Internet Connection");
-          setModalMessage("You're currently offline. Showing saved events.");
-        } else {
+      } catch (error) {
+        try {
+          const netState = await NetInfo.fetch();
+          if (netState.isConnected === false) {
+            setModalTitle("No Internet Connection");
+            setModalMessage("You're currently offline. Showing saved events.");
+          } else {
+            setModalTitle("Error");
+            setModalMessage(
+              "An unexpected error occurred while fetching events."
+            );
+          }
+        } catch (netError) {
           setModalTitle("Error");
           setModalMessage(
             "An unexpected error occurred while fetching events."
           );
         }
-      } catch (netError) {
-        console.error("[Home] Error checking network state:", netError);
-        setModalTitle("Error");
-        setModalMessage("An unexpected error occurred while fetching events.");
-      }
+        setModalVisible(true);
 
-      setModalVisible(true);
-
-      try {
-        const storedEvents = await getStoredEvents();
-        console.log(
-          "[Home] Showing cached events due to error:",
-          storedEvents?.length || 0,
-          "event(s)"
-        );
-        setEvents(storedEvents || []);
-      } catch (cacheError) {
-        console.error("[Home] Error loading cached events:", cacheError);
-        setEvents([]);
-
-        if (!modalVisible) {
-          setModalTitle("Storage Error");
-          setModalMessage(
-            "Unable to load events from local storage. Please restart the app."
-          );
-          setModalVisible(true);
+        try {
+          const storedEvents = await getStoredEvents();
+          setEvents(storedEvents || []);
+        } catch (cacheError) {
+          setEvents([]);
+          if (!modalVisible) {
+            setModalTitle("Storage Error");
+            setModalMessage(
+              "Unable to load events from local storage. Please restart the app."
+            );
+            setModalVisible(true);
+          }
+        }
+      } finally {
+        clearTimeout(timeout);
+        setRefreshing(false);
+        if (!initialLoadComplete) {
+          setInitialLoadComplete(true);
         }
       }
-    } finally {
-      clearTimeout(timeout);
-      if (!timeoutTriggered) {
-        console.log("[Home] Event fetch completed.");
-      }
-      setRefreshing(false);
-    }
-  };
+    },
+    [blockId, userDataLoaded, modalVisible, initialLoadComplete]
+  );
 
   useEffect(() => {
-    if (blockId !== null) {
-      console.log("[Home] Block ID changed. Fetching events...");
+    const initializeApp = async () => {
+      try {
+        const storedEvents = await getStoredEvents();
+        if (storedEvents && storedEvents.length > 0) {
+          setEvents(storedEvents);
+        }
+      } catch (error) {
+        console.log("Could not load stored events initially");
+      }
+
+      const userData = await fetchAndStoreUserData();
+
+      if (userData?.block_id) {
+        await fetchEvent(userData.block_id);
+      } else {
+        setInitialLoadComplete(true);
+      }
+    };
+
+    initializeApp();
+  }, []);
+
+  useEffect(() => {
+    if (initialLoadComplete && userDataLoaded && blockId !== null) {
       fetchEvent();
     }
-  }, [blockId]);
+  }, [blockId, fetchEvent, initialLoadComplete, userDataLoaded]);
 
   const onRefresh = async () => {
     if (refreshing) {
-      console.warn("[Home] Already refreshing. Ignoring duplicate refresh.");
       return;
     }
-
-    console.log("[Home] User triggered pull-to-refresh.");
-
     await Promise.allSettled([fetchEvent(), fetchAndStoreUserData()]);
   };
 
@@ -321,23 +260,17 @@ const Home = () => {
     ) {
       return "N/A";
     }
-
     try {
       const trimmedTime = timeString.trim();
-
       if (/\b(AM|PM)\b/i.test(trimmedTime)) {
         return trimmedTime.toUpperCase();
       }
-
       const timeParts = trimmedTime.split(":");
       if (timeParts.length < 2) {
-        console.warn(`[formatTime] Invalid time format: ${timeString}`);
         return "N/A";
       }
-
       const hours = parseInt(timeParts[0], 10);
       const minutes = parseInt(timeParts[1], 10);
-
       if (
         isNaN(hours) ||
         isNaN(minutes) ||
@@ -346,20 +279,13 @@ const Home = () => {
         minutes < 0 ||
         minutes > 59
       ) {
-        console.warn(`[formatTime] Invalid time values: ${timeString}`);
         return "N/A";
       }
-
       const ampm = hours >= 12 ? "PM" : "AM";
       const formattedHours = hours % 12 || 12;
       const formattedMinutes = minutes.toString().padStart(2, "0");
-
       return `${formattedHours}:${formattedMinutes} ${ampm}`;
     } catch (error) {
-      console.warn(
-        `[formatTime] Error formatting time "${timeString}":`,
-        error.message
-      );
       return "N/A";
     }
   };
@@ -368,22 +294,16 @@ const Home = () => {
     try {
       const datesString = Array.isArray(dates) ? dates.join(",") : dates;
       if (!datesString || typeof datesString !== "string") {
-        console.warn("[Home] Invalid date input in formatEventDates.");
         return "N/A";
       }
-
       const datesArray = datesString.split(",");
       if (datesArray.length === 0) return "N/A";
-
       const parsedDates = datesArray
         .map((dateStr) => new Date(dateStr))
         .filter((d) => !isNaN(d));
-
       if (parsedDates.length === 0) {
-        console.warn("[Home] No valid dates parsed.");
         return "N/A";
       }
-
       const grouped = parsedDates.reduce((acc, date) => {
         const key = `${date.getFullYear()}-${date.getMonth()}`;
         if (!acc[key]) acc[key] = [];
@@ -392,17 +312,14 @@ const Home = () => {
         acc[key].year = date.getFullYear();
         return acc;
       }, {});
-
       const result = Object.values(grouped)
         .map((group) => {
           const days = group.sort((a, b) => a - b).join(", ");
           return `${group.month} ${days}, ${group.year}`;
         })
         .join(" & ");
-
       return result;
     } catch (error) {
-      console.error("[Home] Error formatting event dates:", error.message);
       return "N/A";
     }
   };
@@ -418,18 +335,14 @@ const Home = () => {
 
   useFocusEffect(
     useCallback(() => {
-      console.log("[Home] Screen focused. Checking role ID...");
       if (userDataLoaded && roleId !== null && roleId !== 1) {
-        console.log("[Home] Role ID not 1. Triggering sync.");
         startSync()
           .then((syncResult) => {
             if (syncResult && syncResult.userData) {
               updateUserData(syncResult.userData);
             }
           })
-          .catch((syncError) => {
-            console.error("[Home] Sync failed:", syncError);
-          });
+          .catch((syncError) => {});
       }
     }, [userDataLoaded, roleId])
   );
@@ -463,10 +376,11 @@ const Home = () => {
             />
           }
         >
-          {events.length > 0 ? (
+          {!initialLoadComplete ? (
+            <Text style={styles.noEventText}>Loading events...</Text>
+          ) : events.length > 0 ? (
             events.map((event, index) => {
               const eventTimes = formatEventTimes(event);
-
               return (
                 <CollapsibleDropdown
                   key={event.event_id || index}
