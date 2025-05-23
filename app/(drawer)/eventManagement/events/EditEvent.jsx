@@ -65,8 +65,6 @@ const EditEvent = () => {
     const initializeData = async () => {
       try {
         const storedUserData = await getStoredUser();
-        console.log(storedUserData);
-
         if (!storedUserData || !storedUserData.id_number) {
           throw new Error("Invalid or missing user ID.");
         }

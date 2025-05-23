@@ -73,7 +73,6 @@ const AddEvent = () => {
         });
       }
     };
-
     const fetchEventNamesData = async () => {
       setIsLoading(true);
       try {
@@ -100,7 +99,6 @@ const AddEvent = () => {
         setIsLoading(false);
       }
     };
-
     const fetchDepartmentData = async () => {
       setLoadingDepartments(true);
       setErrorDepartments(null);
@@ -529,6 +527,7 @@ const AddEvent = () => {
                   mode="single"
                   onTimeChange={(time) => handleChange("am_in", time)}
                   selectedValue={formData.am_in}
+                  allowPM={false}
                 />
               </View>
               <View style={styles.timeContainer}>
@@ -538,6 +537,7 @@ const AddEvent = () => {
                     mode="single"
                     onTimeChange={(time) => handleChange("am_out", time)}
                     selectedValue={formData.am_out}
+                    allowPM={false}
                   />
                 )}
               </View>
@@ -551,6 +551,7 @@ const AddEvent = () => {
                   mode="single"
                   onTimeChange={(time) => handleChange("pm_in", time)}
                   selectedValue={formData.pm_in}
+                  allowAM={false}
                 />
               </View>
               <View style={styles.timeContainer}>
@@ -560,6 +561,7 @@ const AddEvent = () => {
                     mode="single"
                     onTimeChange={(time) => handleChange("pm_out", time)}
                     selectedValue={formData.pm_out}
+                    allowAM={false}
                   />
                 )}
               </View>
