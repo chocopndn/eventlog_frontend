@@ -49,10 +49,14 @@ const BlockList = () => {
         setLoading(true);
         const event_id = Number(eventId);
         const blocksData = await fetchBlocksOfEvents(event_id, "", "");
-        if (!blocksData?.success) throw new Error("Failed to load blocks");
-        setEventTitle(blocksData?.data?.event_title || "Event Title Not Found");
+        if (!blocksData.success) throw new Error("Failed to load blocks");
+
+        const eventTitle =
+          blocksData.data?.event_title || "Event Title Not Found";
+        setEventTitle(eventTitle);
+
         const mappedBlocks =
-          blocksData?.data?.blocks?.map((block) => ({
+          blocksData.data?.blocks?.map((block) => ({
             ...block,
             display_name: block.course_code
               ? `${block.course_code} ${block.block_name}`
@@ -69,10 +73,11 @@ const BlockList = () => {
             ?.course_code,
           value: String(deptId),
         }));
-        setDepartments([
+        const departmentsWithAll = [
           { label: "All Departments", value: "" },
           ...deptOptions,
-        ]);
+        ];
+        setDepartments(departmentsWithAll);
 
         const uniqueYearLevels = [
           ...new Set(mappedBlocks.map((b) => b.year_level_id)),
@@ -103,6 +108,7 @@ const BlockList = () => {
           selectedDepartment || undefined,
           selectedYearLevel || undefined
         );
+
         let mappedBlocks = [];
         if (blocksData?.data?.blocks?.length > 0) {
           mappedBlocks = blocksData.data.blocks.map((block) => ({
@@ -129,6 +135,7 @@ const BlockList = () => {
       setBlocks(allBlocks);
       return;
     }
+
     const lowerQuery = searchQuery.toLowerCase();
     const filtered = allBlocks.filter((block) =>
       (block.display_name || "").toLowerCase().includes(lowerQuery)
@@ -137,36 +144,33 @@ const BlockList = () => {
   }, [searchQuery, allBlocks]);
 
   const handleSavePDF = async (filters) => {
-    const { departmentIds, blockIds, yearLevelIds } = filters;
-    const filteredBlocks = allBlocks.filter((block) => {
-      const departmentMatch =
-        departmentIds.length === 0 ||
-        departmentIds.includes(String(block.department_id));
-      const yearLevelMatch =
-        yearLevelIds.length === 0 ||
-        yearLevelIds.includes(String(block.year_level_id));
-      const blockMatch =
-        blockIds.length === 0 || blockIds.includes(String(block.block_id));
-      return departmentMatch && yearLevelMatch && blockMatch;
-    });
-
-    if (filteredBlocks.length === 0) {
-      alert("No blocks match the selected filters.");
-      return;
-    }
-
     try {
+      const { departmentIds, blockIds, yearLevelIds } = filters;
+      const filteredBlocks = allBlocks.filter((block) => {
+        const departmentMatch =
+          departmentIds.length === 0 ||
+          departmentIds.includes(String(block.department_id));
+        const yearLevelMatch =
+          yearLevelIds.length === 0 ||
+          yearLevelIds.includes(String(block.year_level_id));
+        const blockMatch =
+          blockIds.length === 0 || blockIds.includes(String(block.block_id));
+        return departmentMatch && yearLevelMatch && blockMatch;
+      });
+
+      if (filteredBlocks.length === 0) {
+        alert("No blocks match the selected filters.");
+        return;
+      }
+
       const startDate = new Date(2025, 4, 20);
       const endDate = new Date(2025, 4, 26);
-
-      const formatDate = (date) => {
-        return date.toLocaleDateString("en-US", {
+      const formatDate = (date) =>
+        date.toLocaleDateString("en-US", {
           month: "long",
           day: "numeric",
           year: "numeric",
         });
-      };
-
       let dateString = "";
       if (
         startDate.getDate() === endDate.getDate() &&
@@ -186,9 +190,17 @@ const BlockList = () => {
       }
 
       const attendanceSummaries = await Promise.all(
-        filteredBlocks.map((block) =>
-          fetchAttendanceSummaryPerBlock(Number(eventId), block.block_id)
-        )
+        filteredBlocks.map(async (block) => {
+          try {
+            const summary = await fetchAttendanceSummaryPerBlock(
+              Number(eventId),
+              block.block_id
+            );
+            return summary;
+          } catch (error) {
+            return { data: { attendance_summary: [] } };
+          }
+        })
       );
 
       const html = `
@@ -269,17 +281,30 @@ const BlockList = () => {
     }
   };
 
+  const handleBlockPress = (block) => {
+    router.push({
+      pathname: "/records/StudentsList",
+      params: { eventId: eventId, blockId: block.block_id },
+    });
+  };
+
+  const handleDownloadPress = () => {
+    if (allBlocks.length === 0) {
+      alert("No blocks available to print. Please add blocks first.");
+      return;
+    }
+    setShowPrintModal(true);
+  };
+
   return (
     <View style={globalStyles.secondaryContainer}>
       <Text style={styles.eventTitle}>{eventTitle}</Text>
-
       <View style={styles.container}>
         <CustomSearch
           placeholder="Search blocks..."
           onSearch={(text) => setSearchQuery(text)}
         />
       </View>
-
       <View style={styles.container}>
         <View style={styles.filterContainer}>
           <View style={{ width: "48%" }}>
@@ -304,7 +329,6 @@ const BlockList = () => {
           </View>
         </View>
       </View>
-
       <ScrollView contentContainerStyle={styles.scrollviewContainer}>
         {loading ? (
           <Text style={styles.noDataText}>Loading blocks...</Text>
@@ -325,12 +349,7 @@ const BlockList = () => {
               >
                 <TouchableOpacity
                   style={styles.blockContainer}
-                  onPress={() =>
-                    router.push({
-                      pathname: "/records/StudentsList",
-                      params: { eventId: eventId, blockId: block.block_id },
-                    })
-                  }
+                  onPress={() => handleBlockPress(block)}
                 >
                   <Text style={styles.blockText}>
                     {block.display_name || "Unnamed Block"}
@@ -341,20 +360,9 @@ const BlockList = () => {
           </View>
         )}
       </ScrollView>
-
       <View style={styles.buttonContainer}>
-        <CustomButton
-          title="Download"
-          onPress={() => {
-            if (allBlocks.length === 0) {
-              alert("No blocks available to print. Please add blocks first.");
-              return;
-            }
-            setShowPrintModal(true);
-          }}
-        />
+        <CustomButton title="Download" onPress={handleDownloadPress} />
       </View>
-
       <PrintFilterModal
         visible={showPrintModal}
         onClose={() => setShowPrintModal(false)}
@@ -366,7 +374,6 @@ const BlockList = () => {
         blocks={allBlocks}
         yearLevels={yearLevels}
       />
-
       <CustomModal
         visible={modalVisible}
         title={modalConfig.title}
