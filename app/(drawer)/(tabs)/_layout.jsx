@@ -53,9 +53,13 @@ const TabsLayout = () => {
           </View>
         </TabTrigger>
 
-        <View style={styles.logoContainer}>
+        <TabTrigger
+          name="center"
+          style={styles.logoContainer}
+          href="/(tabs)/center"
+        >
           <Image source={images.logo} style={styles.logoImage} />
-        </View>
+        </TabTrigger>
 
         <TabTrigger name="QR Code" href={getQRRoute()}>
           <View style={styles.tabItem}>
