@@ -6,17 +6,24 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
-import { fetchBlocksOfEvents } from "../../../../services/api/records";
+import { useLocalSearchParams, router } from "expo-router";
+import {
+  fetchBlocksOfEvents,
+  fetchAttendanceSummaryPerBlock,
+} from "../../../../services/api/records";
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import CustomButton from "../../../../components/CustomButton";
 import CustomDropdown from "../../../../components/CustomDropdown";
 import CustomSearch from "../../../../components/CustomSearch";
-import { router } from "expo-router";
+import PrintFilterModal from "../../../../components/PrintFilterModal";
+import * as Print from "expo-print";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
+import CustomModal from "../../../../components/CustomModal";
 
 const BlockList = () => {
-  const { eventId, blockId } = useLocalSearchParams();
+  const { eventId } = useLocalSearchParams();
   const [eventTitle, setEventTitle] = useState("");
   const [allBlocks, setAllBlocks] = useState([]);
   const [blocks, setBlocks] = useState([]);
@@ -26,20 +33,24 @@ const BlockList = () => {
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedYearLevel, setSelectedYearLevel] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    title: "",
+    message: "",
+    type: "success",
+    cancelTitle: "OK",
+  });
 
   useEffect(() => {
     if (!eventId) return;
-
     const loadEventData = async () => {
       try {
         setLoading(true);
         const event_id = Number(eventId);
         const blocksData = await fetchBlocksOfEvents(event_id, "", "");
-
-        if (!blocksData?.success) throw new Error();
-
+        if (!blocksData?.success) throw new Error("Failed to load blocks");
         setEventTitle(blocksData?.data?.event_title || "Event Title Not Found");
-
         const mappedBlocks =
           blocksData?.data?.blocks?.map((block) => ({
             ...block,
@@ -47,51 +58,42 @@ const BlockList = () => {
               ? `${block.course_code} ${block.block_name}`
               : block.block_name,
           })) || [];
-
         setAllBlocks(mappedBlocks);
         setBlocks(mappedBlocks);
 
         const uniqueDepartments = [
-          ...new Set(mappedBlocks.map((block) => block.department_id)),
+          ...new Set(mappedBlocks.map((b) => b.department_id)),
         ];
         const deptOptions = uniqueDepartments.map((deptId) => ({
-          label: mappedBlocks.find((block) => block.department_id === deptId)
+          label: mappedBlocks.find((b) => b.department_id === deptId)
             ?.course_code,
           value: String(deptId),
         }));
-
         setDepartments([
           { label: "All Departments", value: "" },
           ...deptOptions,
         ]);
 
         const uniqueYearLevels = [
-          ...new Set(mappedBlocks.map((block) => block.year_level_id)),
+          ...new Set(mappedBlocks.map((b) => b.year_level_id)),
         ];
         const yearOptions = uniqueYearLevels.map((yearId) => ({
           label: `Year ${yearId}`,
           value: String(yearId),
         }));
-
-        setYearLevels([
-          { label: "All Year Levels", value: "" },
-          ...yearOptions,
-        ]);
-      } catch {
+        setYearLevels(yearOptions);
+      } catch (error) {
         setAllBlocks([]);
         setBlocks([]);
       } finally {
         setLoading(false);
       }
     };
-
     loadEventData();
   }, [eventId]);
 
   useEffect(() => {
-    if (!eventId) return;
-    if (!selectedDepartment && !selectedYearLevel) return;
-
+    if (!eventId || (!selectedDepartment && !selectedYearLevel)) return;
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -101,7 +103,6 @@ const BlockList = () => {
           selectedDepartment || undefined,
           selectedYearLevel || undefined
         );
-
         let mappedBlocks = [];
         if (blocksData?.data?.blocks?.length > 0) {
           mappedBlocks = blocksData.data.blocks.map((block) => ({
@@ -111,17 +112,15 @@ const BlockList = () => {
               : block.block_name,
           }));
         }
-
         setAllBlocks(mappedBlocks);
         setBlocks(mappedBlocks);
-      } catch {
+      } catch (error) {
         setAllBlocks([]);
         setBlocks([]);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [selectedDepartment, selectedYearLevel, eventId]);
 
@@ -130,15 +129,145 @@ const BlockList = () => {
       setBlocks(allBlocks);
       return;
     }
-
     const lowerQuery = searchQuery.toLowerCase();
-    const filtered = allBlocks.filter((block) => {
-      const displayName = block.display_name || "";
-      return displayName.toLowerCase().includes(lowerQuery);
-    });
-
+    const filtered = allBlocks.filter((block) =>
+      (block.display_name || "").toLowerCase().includes(lowerQuery)
+    );
     setBlocks(filtered);
   }, [searchQuery, allBlocks]);
+
+  const handleSavePDF = async (filters) => {
+    const { departmentIds, blockIds, yearLevelIds } = filters;
+    const filteredBlocks = allBlocks.filter((block) => {
+      const departmentMatch =
+        departmentIds.length === 0 ||
+        departmentIds.includes(String(block.department_id));
+      const yearLevelMatch =
+        yearLevelIds.length === 0 ||
+        yearLevelIds.includes(String(block.year_level_id));
+      const blockMatch =
+        blockIds.length === 0 || blockIds.includes(String(block.block_id));
+      return departmentMatch && yearLevelMatch && blockMatch;
+    });
+
+    if (filteredBlocks.length === 0) {
+      alert("No blocks match the selected filters.");
+      return;
+    }
+
+    try {
+      const startDate = new Date(2025, 4, 20);
+      const endDate = new Date(2025, 4, 26);
+
+      const formatDate = (date) => {
+        return date.toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        });
+      };
+
+      let dateString = "";
+      if (
+        startDate.getDate() === endDate.getDate() &&
+        startDate.getMonth() === endDate.getMonth() &&
+        startDate.getFullYear() === endDate.getFullYear()
+      ) {
+        dateString = `${formatDate(startDate)}`;
+      } else if (
+        startDate.getMonth() === endDate.getMonth() &&
+        startDate.getFullYear() === endDate.getFullYear()
+      ) {
+        dateString = `${startDate.toLocaleDateString("en-US", {
+          month: "long",
+        })} ${startDate.getDate()}–${endDate.getDate()}, ${startDate.getFullYear()}`;
+      } else {
+        dateString = `${formatDate(startDate)} – ${formatDate(endDate)}`;
+      }
+
+      const attendanceSummaries = await Promise.all(
+        filteredBlocks.map((block) =>
+          fetchAttendanceSummaryPerBlock(Number(eventId), block.block_id)
+        )
+      );
+
+      const html = `
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <style>
+              body { font-family: sans-serif; padding: 20px; }
+              h1, h5 { color: #333; }
+              table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+              th, td { border: 1px solid #999; padding: 4px; text-align: left; }
+            </style>
+          </head>
+          <body>
+            <h1>${eventTitle}</h1>
+            <h3>Date: ${dateString}</h3>
+            ${filteredBlocks
+              .map((block, index) => {
+                const summary =
+                  attendanceSummaries[index]?.data?.attendance_summary || [];
+                return `
+                  <h2>${block.display_name}</h2>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Student ID</th>
+                        <th>Student Name</th>
+                        <th>Present</th>
+                        <th>Absent</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${summary
+                        .map(
+                          (student) => `
+                            <tr>
+                              <td>${student.student_id}</td>
+                              <td>${student.student_name}</td>
+                              <td>${student.present_count}</td>
+                              <td>${student.absent_count}</td>
+                            </tr>
+                          `
+                        )
+                        .join("")}
+                    </tbody>
+                  </table>
+                `;
+              })
+              .join("")}
+          </body>
+        </html>
+      `;
+
+      const { uri } = await Print.printToFileAsync({ html });
+      const pdfName = `${eventTitle}.pdf`;
+      const pdfPath = `${FileSystem.documentDirectory}${pdfName}`;
+      await FileSystem.moveAsync({ from: uri, to: pdfPath });
+      await Sharing.shareAsync(pdfPath, {
+        UTI: ".pdf",
+        mimeType: "application/pdf",
+      });
+
+      setModalConfig({
+        title: "Download Successful",
+        message: "Your PDF has been downloaded successfully.",
+        type: "success",
+        cancelTitle: "OK",
+      });
+      setModalVisible(true);
+    } catch (error) {
+      setModalConfig({
+        title: "Download Failed",
+        message: "An error occurred while generating the PDF.",
+        type: "error",
+        cancelTitle: "OK",
+      });
+      setModalVisible(true);
+    }
+  };
 
   return (
     <View style={globalStyles.secondaryContainer}>
@@ -147,9 +276,7 @@ const BlockList = () => {
       <View style={styles.container}>
         <CustomSearch
           placeholder="Search blocks..."
-          onSearch={(text) => {
-            setSearchQuery(text);
-          }}
+          onSearch={(text) => setSearchQuery(text)}
         />
       </View>
 
@@ -162,9 +289,7 @@ const BlockList = () => {
               labelField="label"
               valueField="value"
               value={selectedDepartment}
-              onSelect={(item) => {
-                setSelectedDepartment(item.value);
-              }}
+              onSelect={(item) => setSelectedDepartment(item.value)}
             />
           </View>
           <View style={{ width: "48%" }}>
@@ -174,9 +299,7 @@ const BlockList = () => {
               labelField="label"
               valueField="value"
               value={selectedYearLevel}
-              onSelect={(item) => {
-                setSelectedYearLevel(item.value);
-              }}
+              onSelect={(item) => setSelectedYearLevel(item.value)}
             />
           </View>
         </View>
@@ -202,15 +325,12 @@ const BlockList = () => {
               >
                 <TouchableOpacity
                   style={styles.blockContainer}
-                  onPress={() => {
+                  onPress={() =>
                     router.push({
-                      pathname: "eventManagement/records/StudentsList",
-                      params: {
-                        eventId: eventId,
-                        blockId: block.block_id,
-                      },
-                    });
-                  }}
+                      pathname: "/records/StudentsList",
+                      params: { eventId: eventId, blockId: block.block_id },
+                    })
+                  }
                 >
                   <Text style={styles.blockText}>
                     {block.display_name || "Unnamed Block"}
@@ -223,11 +343,43 @@ const BlockList = () => {
       </ScrollView>
 
       <View style={styles.buttonContainer}>
-        <CustomButton title="Download" onPress={() => {}} />
+        <CustomButton
+          title="Download"
+          onPress={() => {
+            if (allBlocks.length === 0) {
+              alert("No blocks available to print. Please add blocks first.");
+              return;
+            }
+            setShowPrintModal(true);
+          }}
+        />
       </View>
+
+      <PrintFilterModal
+        visible={showPrintModal}
+        onClose={() => setShowPrintModal(false)}
+        onPrint={handleSavePDF}
+        showDepartment={true}
+        showBlock={true}
+        showYearLevel={true}
+        departments={departments.filter((dept) => dept.value !== "")}
+        blocks={allBlocks}
+        yearLevels={yearLevels}
+      />
+
+      <CustomModal
+        visible={modalVisible}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        cancelTitle={modalConfig.cancelTitle}
+        onCancel={() => setModalVisible(false)}
+      />
     </View>
   );
 };
+
+export default BlockList;
 
 const styles = StyleSheet.create({
   container: {
@@ -290,5 +442,3 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.medium,
   },
 });
-
-export default BlockList;

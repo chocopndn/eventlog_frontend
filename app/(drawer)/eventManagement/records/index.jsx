@@ -4,8 +4,10 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
 import React, { useState, useEffect } from "react";
+import { getRoleID } from "../../../../database/queries";
 import {
   fetchAllPastEvents,
   fetchAllOngoingEvents,
@@ -17,27 +19,40 @@ import theme from "../../../../constants/theme";
 import { router } from "expo-router";
 
 const Records = () => {
+  const [roleId, setRoleId] = useState(null);
   const [allEvents, setAllEvents] = useState([]);
   const [filteredOngoingEvents, setFilteredOngoingEvents] = useState([]);
   const [filteredPastEvents, setFilteredPastEvents] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
-  const [initialOngoing, setInitialOngoing] = useState([]);
-  const [initialPast, setInitialPast] = useState([]);
+  const [originalOngoing, setOriginalOngoing] = useState([]);
+  const [originalPast, setOriginalPast] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    const fetchRoleId = async () => {
+      const roleId = await getRoleID();
+      if (!roleId) return;
+      setRoleId(roleId);
+    };
+    fetchRoleId();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        let ongoingEvents = [];
+        let pastEvents = [];
 
-        const ongoingApiResponse = await fetchAllOngoingEvents();
-        const pastApiResponse = await fetchAllPastEvents();
-
-        const ongoingEvents = ongoingApiResponse?.events || [];
-        const pastEvents = pastApiResponse?.events || [];
+        if (roleId === 4) {
+          const ongoingApiResponse = await fetchAllOngoingEvents();
+          const pastApiResponse = await fetchAllPastEvents();
+          ongoingEvents = ongoingApiResponse?.events || [];
+          pastEvents = pastApiResponse?.events || [];
+        }
 
         const groupedEvents = {};
-
         [...ongoingEvents, ...pastEvents].forEach((record) => {
           const { event_id, event_name, event_date } = record;
           if (!groupedEvents[event_id]) {
@@ -51,48 +66,47 @@ const Records = () => {
         });
 
         const allEvents = Object.values(groupedEvents);
-
-        const ongoingList = allEvents.filter((event) =>
+        const ongoingList = Object.values(groupedEvents).filter((event) =>
           ongoingEvents.some((e) => e.event_id === event.event_id)
         );
-
-        const pastList = allEvents.filter((event) =>
+        const pastList = Object.values(groupedEvents).filter((event) =>
           pastEvents.some((e) => e.event_id === event.event_id)
         );
 
         setAllEvents(allEvents);
-        setInitialOngoing(ongoingList);
-        setInitialPast(pastList);
+        setOriginalOngoing(ongoingList);
+        setOriginalPast(pastList);
         setFilteredOngoingEvents(ongoingList);
         setFilteredPastEvents(pastList);
       } catch (error) {
-        console.error("Error fetching events:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    if (roleId !== null) {
+      fetchData();
+    }
+  }, [roleId]);
 
   useEffect(() => {
     try {
       if (!searchTerm.trim()) {
-        setFilteredOngoingEvents(initialOngoing);
-        setFilteredPastEvents(initialPast);
+        setFilteredOngoingEvents(originalOngoing);
+        setFilteredPastEvents(originalPast);
       } else {
         const filteredEvents = allEvents.filter((event) =>
           event.event_name.toLowerCase().includes(searchTerm.toLowerCase())
         );
-
         setFilteredOngoingEvents(
           filteredEvents.filter((event) =>
-            initialOngoing.some((e) => e.event_id === event.event_id)
+            originalOngoing.some((e) => e.event_id === event.event_id)
           )
         );
         setFilteredPastEvents(
           filteredEvents.filter((event) =>
-            initialPast.some((e) => e.event_id === event.event_id)
+            originalPast.some((e) => e.event_id === event.event_id)
           )
         );
       }
@@ -100,6 +114,52 @@ const Records = () => {
       console.error("Error filtering events:", error);
     }
   }, [searchTerm]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      let ongoingEvents = [];
+      let pastEvents = [];
+
+      if (roleId === 4) {
+        const ongoingApiResponse = await fetchAllOngoingEvents();
+        const pastApiResponse = await fetchAllPastEvents();
+        ongoingEvents = ongoingApiResponse?.events || [];
+        pastEvents = pastApiResponse?.events || [];
+      }
+
+      const groupedEvents = {};
+      [...ongoingEvents, ...pastEvents].forEach((record) => {
+        const { event_id, event_name, event_date } = record;
+        if (!groupedEvents[event_id]) {
+          groupedEvents[event_id] = {
+            event_id,
+            event_name,
+            event_dates: [],
+          };
+        }
+        groupedEvents[event_id].event_dates.push(event_date);
+      });
+
+      const allEvents = Object.values(groupedEvents);
+      const ongoingList = Object.values(groupedEvents).filter((event) =>
+        ongoingEvents.some((e) => e.event_id === event.event_id)
+      );
+      const pastList = Object.values(groupedEvents).filter((event) =>
+        pastEvents.some((e) => e.event_id === event.event_id)
+      );
+
+      setAllEvents(allEvents);
+      setOriginalOngoing(ongoingList);
+      setOriginalPast(pastList);
+      setFilteredOngoingEvents(ongoingList);
+      setFilteredPastEvents(pastList);
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -124,61 +184,62 @@ const Records = () => {
         style={{ flex: 1, width: "100%", marginBottom: 20 }}
         contentContainerStyle={styles.scrollview}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+        }
       >
-        <>
-          {filteredOngoingEvents.length > 0 && (
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Ongoing Events</Text>
-              {filteredOngoingEvents.map((event, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.eventContainer}
-                  onPress={() =>
-                    router.push(
-                      `/eventManagement/records/BlockList?eventId=${event.event_id}`
-                    )
-                  }
-                >
-                  <Text style={styles.eventTitle}>{event.event_name}</Text>
-                  <Text style={styles.eventDate}>
-                    {Array.isArray(event.event_dates) &&
-                    event.event_dates.length > 0
-                      ? event.event_dates
-                          .map((date) => moment(date).format("MMM DD, YYYY"))
-                          .join(", ")
-                      : "No dates available"}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-          {filteredPastEvents.length > 0 && (
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionTitle}>Past Events</Text>
-              {filteredPastEvents.map((event, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.eventContainer}
-                  onPress={() =>
-                    router.push(
-                      `/eventManagement/records/BlockList?eventId=${event.event_id}`
-                    )
-                  }
-                >
-                  <Text style={styles.eventTitle}>{event.event_name}</Text>
-                  <Text style={styles.eventDate}>
-                    {Array.isArray(event.event_dates) &&
-                    event.event_dates.length > 0
-                      ? event.event_dates
-                          .map((date) => moment(date).format("MMM DD, YYYY"))
-                          .join(", ")
-                      : "No dates available"}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </>
+        {filteredOngoingEvents.length > 0 && (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Ongoing Events</Text>
+            {filteredOngoingEvents.map((event, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.eventContainer}
+                onPress={() =>
+                  router.push(
+                    `eventManagement/records/BlockList?eventId=${event.event_id}`
+                  )
+                }
+              >
+                <Text style={styles.eventTitle}>{event.event_name}</Text>
+                <Text style={styles.eventDate}>
+                  {Array.isArray(event.event_dates) &&
+                  event.event_dates.length > 0
+                    ? event.event_dates
+                        .map((date) => moment(date).format("MMM DD, YYYY"))
+                        .join(", ")
+                    : "No dates available"}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+        {filteredPastEvents.length > 0 && (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Past Events</Text>
+            {filteredPastEvents.map((event, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.eventContainer}
+                onPress={() =>
+                  router.push(
+                    `eventManagement/records/BlockList?eventId=${event.event_id}`
+                  )
+                }
+              >
+                <Text style={styles.eventTitle}>{event.event_name}</Text>
+                <Text style={styles.eventDate}>
+                  {Array.isArray(event.event_dates) &&
+                  event.event_dates.length > 0
+                    ? event.event_dates
+                        .map((date) => moment(date).format("MMM DD, YYYY"))
+                        .join(", ")
+                    : "No dates available"}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
         {!hasEvents && (
           <View style={styles.noEventsContainer}>
             <Text style={styles.noEventsText}>No events available.</Text>

@@ -72,7 +72,7 @@ const StudentsList = () => {
 
   const handleStudentPress = (student) => {
     router.push({
-      pathname: "eventManagement/records/Attendance",
+      pathname: "/records/Attendance",
       params: {
         eventId,
         blockId,
