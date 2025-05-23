@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, Image, View } from "react-native";
+import { StyleSheet, Text, Image, View, Platform } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -28,6 +28,8 @@ export default function App() {
   useEffect(() => {
     const prepareApp = async () => {
       try {
+        if (!fontsLoaded || fontError) return;
+
         const token = await AsyncStorage.getItem("userToken");
         if (token) {
           await SplashScreen.hideAsync();
@@ -35,7 +37,11 @@ export default function App() {
           return;
         }
 
-        if (!fontsLoaded || fontError) return;
+        if (Platform.OS === "web") {
+          await SplashScreen.hideAsync();
+          router.push("/login");
+          return;
+        }
       } catch (error) {
         console.error("Error during app preparation:", error);
       } finally {
