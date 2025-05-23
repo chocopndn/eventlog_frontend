@@ -4,8 +4,8 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFonts } from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
+import { FontProvider, useFontContext } from "../contexts/FontContext";
 import theme from "../constants/theme";
 import globalStyles from "../constants/globalStyles";
 import images from "../constants/images";
@@ -15,20 +15,15 @@ import NetInfo from "@react-native-community/netinfo";
 
 SplashScreen.preventAutoHideAsync();
 
-export default function App() {
-  const [fontsLoaded, fontError] = useFonts({
-    Arial: require("../assets/fonts/Arial.ttf"),
-    ArialBold: require("../assets/fonts/ArialBold.ttf"),
-    ArialItalic: require("../assets/fonts/ArialItalic.ttf"),
-    SquadaOne: require("../assets/fonts/SquadaOne.ttf"),
-  });
+const AppContent = () => {
+  const { fontsReady } = useFontContext();
   const [appReady, setAppReady] = useState(false);
   const [isOfflineModalVisible, setIsOfflineModalVisible] = useState(false);
 
   useEffect(() => {
     const prepareApp = async () => {
       try {
-        if (!fontsLoaded || fontError) return;
+        if (!fontsReady) return;
 
         const token = await AsyncStorage.getItem("userToken");
         if (token) {
@@ -51,7 +46,7 @@ export default function App() {
     };
 
     prepareApp();
-  }, [fontsLoaded, fontError]);
+  }, [fontsReady]);
 
   const handleLoginPress = async () => {
     const netInfoState = await NetInfo.fetch();
@@ -75,8 +70,17 @@ export default function App() {
     setIsOfflineModalVisible(false);
   };
 
-  if (!appReady || !fontsLoaded) {
-    return null;
+  if (!appReady || !fontsReady) {
+    return Platform.OS === "web" ? (
+      <View
+        style={[
+          globalStyles.secondaryContainer,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
+        <Text style={{ fontFamily: "system", fontSize: 18 }}>Loading...</Text>
+      </View>
+    ) : null;
   }
 
   return (
@@ -111,6 +115,14 @@ export default function App() {
         onClose={closeOfflineModal}
       />
     </SafeAreaView>
+  );
+};
+
+export default function App() {
+  return (
+    <FontProvider>
+      <AppContent />
+    </FontProvider>
   );
 }
 

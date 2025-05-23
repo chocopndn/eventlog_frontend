@@ -12,6 +12,7 @@ import Checkbox from "expo-checkbox";
 import axios from "axios";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFonts } from "expo-font";
 import { storeUser } from "../../../database/queries";
 import CustomModal from "../../../components/CustomModal";
 import theme from "../../../constants/theme";
@@ -22,6 +23,13 @@ import CustomButton from "../../../components/CustomButton";
 import { API_URL } from "../../../config/config";
 
 const Login = () => {
+  const [fontsLoaded, fontError] = useFonts({
+    Arial: require("../../../assets/fonts/Arial.ttf"),
+    ArialBold: require("../../../assets/fonts/ArialBold.ttf"),
+    ArialItalic: require("../../../assets/fonts/ArialItalic.ttf"),
+    SquadaOne: require("../../../assets/fonts/SquadaOne.ttf"),
+  });
+
   const [id, setId] = useState("");
   const [password, setPassword] = useState("");
   const [isChecked, setChecked] = useState(false);
@@ -29,9 +37,44 @@ const Login = () => {
   const [modalMessage, setModalMessage] = useState("");
   const [modalType, setModalType] = useState("");
   const [modalTitle, setModalTitle] = useState("");
+  const [fontsReady, setFontsReady] = useState(false);
+
+  // Font loading verification for web
+  useEffect(() => {
+    if (Platform.OS === "web" && fontsLoaded && !fontError) {
+      // Add extra verification for web
+      const timer = setTimeout(() => {
+        if (typeof document !== "undefined" && document.fonts) {
+          Promise.all([
+            document.fonts.load("1em SquadaOne"),
+            document.fonts.load("1em Arial"),
+            document.fonts.load("1em ArialBold"),
+            document.fonts.load("1em ArialItalic"),
+          ])
+            .then(() => {
+              setFontsReady(true);
+            })
+            .catch((error) => {
+              console.warn("Font loading verification failed:", error);
+              setFontsReady(true); // Proceed anyway
+            });
+        } else {
+          setFontsReady(true);
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
+    } else if (fontsLoaded && !fontError) {
+      // For non-web platforms
+      setFontsReady(true);
+    }
+  }, [fontsLoaded, fontError]);
 
   useEffect(() => {
     const loadRememberedCredentials = async () => {
+      // Only load credentials after fonts are ready
+      if (!fontsReady) return;
+
       try {
         const rememberedId = await AsyncStorage.getItem("rememberedId");
         const rememberedPassword = await AsyncStorage.getItem(
@@ -55,7 +98,7 @@ const Login = () => {
       }
     };
     loadRememberedCredentials();
-  }, []);
+  }, [fontsReady]);
 
   const handleLogin = async () => {
     if (!id || !password) {
@@ -126,6 +169,28 @@ const Login = () => {
       setModalVisible(true);
     }
   };
+
+  // Show loading state until fonts are ready
+  if (!fontsReady) {
+    return (
+      <SafeAreaView
+        style={[
+          globalStyles.primaryContainer,
+          { padding: 0, justifyContent: "center", alignItems: "center" },
+        ]}
+      >
+        <Text
+          style={{
+            fontFamily: "system",
+            fontSize: 18,
+            color: theme.colors.secondary,
+          }}
+        >
+          Loading...
+        </Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[globalStyles.primaryContainer, { padding: 0 }]}>
