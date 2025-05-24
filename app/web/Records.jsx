@@ -144,15 +144,38 @@ const Records = () => {
 
         const eventBlockIds = attendanceResponse?.data?.block_ids || [];
 
+        const studentDepartments = [
+          ...new Set(
+            students.map((student) => student.department_code).filter(Boolean)
+          ),
+        ];
+        const apiDepartments = departmentsResponse?.data || [];
+
         const departmentOptions = [
           { label: "All Departments", value: "" },
-          ...(departmentsResponse?.data || [])
+
+          ...studentDepartments.map((deptCode) => {
+            const apiDept = apiDepartments.find(
+              (dept) => dept.code === deptCode
+            );
+            return {
+              label: apiDept ? `${apiDept.code} - ${apiDept.name}` : deptCode,
+              value: deptCode,
+            };
+          }),
+
+          ...apiDepartments
+            .filter((dept) => !studentDepartments.includes(dept.code))
             .map((dept) => ({
               label: `${dept.code} - ${dept.name}`,
               value: dept.code,
-            }))
-            .sort((a, b) => a.label.localeCompare(b.label)),
-        ];
+            })),
+        ].sort((a, b) => a.label.localeCompare(b.label));
+
+        const uniqueDepartmentOptions = departmentOptions.filter(
+          (dept, index, self) =>
+            index === self.findIndex((d) => d.value === dept.value)
+        );
 
         const yearLevelOptions = [
           { label: "All Year Levels", value: "" },
@@ -179,14 +202,13 @@ const Records = () => {
                 ? `${block.course_code}_${block.name}`
                 : block.name;
 
-              // Fixed: Ensure the label shows course code + block name consistently
               const displayLabel = block.course_code
                 ? `${block.course_code} ${block.name}`
                 : block.name;
 
               return {
                 key: `block-${block.id}`,
-                label: displayLabel, // This is what will be displayed in dropdown
+                label: displayLabel,
                 value: uniqueBlockKey,
                 id: String(block.id),
                 block_id: String(block.id),
@@ -196,9 +218,8 @@ const Records = () => {
                 department_id: block.department_id,
                 department_code: block.department_code,
                 year_level_id: block.year_level_id,
-                // Add display_name for consistency
                 display_name: displayLabel,
-                name: displayLabel, // Some components might use 'name' field
+                name: displayLabel,
               };
             })
             .sort((a, b) => a.label.localeCompare(b.label));
@@ -210,14 +231,13 @@ const Records = () => {
                 ? `${block.course_code}_${block.name}`
                 : block.name;
 
-              // Fixed: Ensure the label shows course code + block name consistently
               const displayLabel = block.course_code
                 ? `${block.course_code} ${block.name}`
                 : block.name;
 
               return {
                 key: `block-${block.id}`,
-                label: displayLabel, // This is what will be displayed in dropdown
+                label: displayLabel,
                 value: uniqueBlockKey,
                 id: String(block.id),
                 block_id: String(block.id),
@@ -227,15 +247,14 @@ const Records = () => {
                 department_id: block.department_id,
                 department_code: block.department_code,
                 year_level_id: block.year_level_id,
-                // Add display_name for consistency
                 display_name: displayLabel,
-                name: displayLabel, // Some components might use 'name' field
+                name: displayLabel,
               };
             })
             .sort((a, b) => a.label.localeCompare(b.label));
         }
 
-        setDepartments(departmentOptions);
+        setDepartments(uniqueDepartmentOptions);
         setYearLevels(yearLevelOptions);
         setBlocks(blockOptions);
       } catch (err) {
@@ -341,23 +360,15 @@ const Records = () => {
             <tbody>
               ${students
                 .map((student) => {
-                  // Enhanced block display logic
                   let blockDisplay = "N/A";
 
-                  // First priority: use the pre-formatted block_display if available
                   if (student.block_display) {
                     blockDisplay = student.block_display;
-                  }
-                  // Second priority: format from course_code and block_name
-                  else if (student.course_code && student.block_name) {
+                  } else if (student.course_code && student.block_name) {
                     blockDisplay = `${student.course_code} ${student.block_name}`;
-                  }
-                  // Third priority: use block_name only
-                  else if (student.block_name) {
+                  } else if (student.block_name) {
                     blockDisplay = student.block_name;
-                  }
-                  // Fallback: try to find block info from blocks array
-                  else if (student.block_id) {
+                  } else if (student.block_id) {
                     const studentBlock = blocks.find(
                       (block) =>
                         block.block_id === String(student.block_id) ||
@@ -393,16 +404,13 @@ const Records = () => {
 
     if (action === "print") {
       if (Platform.OS === "web") {
-        // For web platform, print HTML directly without creating PDF
         const printWindow = window.open("", "_blank", "width=800,height=600");
         printWindow.document.write(html);
         printWindow.document.close();
 
-        // Wait for content to load, then print directly
         printWindow.onload = () => {
           setTimeout(() => {
             printWindow.print();
-            // Close the window after printing
             setTimeout(() => {
               printWindow.close();
             }, 1000);
@@ -416,11 +424,9 @@ const Records = () => {
           cancelTitle: "OK",
         });
       } else {
-        // For mobile platforms, print HTML directly without PDF creation
         try {
           await Print.printAsync({
             html,
-            // Force direct printing without PDF generation
             orientation: Print.Orientation.portrait,
             margins: {
               left: 20,
@@ -447,7 +453,6 @@ const Records = () => {
         }
       }
     } else {
-      // Download functionality - this creates and saves PDF file
       try {
         const { uri } = await Print.printToFileAsync({ html });
         const pdfName = `${
@@ -457,7 +462,6 @@ const Records = () => {
         }_${new Date().toISOString().split("T")[0]}.pdf`;
 
         if (Platform.OS === "web") {
-          // For web, create a download link
           const link = document.createElement("a");
           link.href = uri;
           link.download = pdfName;
@@ -465,7 +469,6 @@ const Records = () => {
           link.click();
           document.body.removeChild(link);
         } else {
-          // For mobile, use file system and sharing
           const pdfPath = `${FileSystem.documentDirectory}${pdfName}`;
           await FileSystem.moveAsync({ from: uri, to: pdfPath });
           await Sharing.shareAsync(pdfPath, {
@@ -506,10 +509,8 @@ const Records = () => {
 
       setLoading(true);
 
-      // Start with all attendance data
       let filteredStudents = [...attendanceData];
 
-      // Apply department filter if departments are selected
       if (departmentIds && departmentIds.length > 0) {
         filteredStudents = filteredStudents.filter((student) => {
           return departmentIds.some(
@@ -523,7 +524,6 @@ const Records = () => {
         );
       }
 
-      // Apply year level filter if year levels are selected
       if (yearLevelIds && yearLevelIds.length > 0) {
         filteredStudents = filteredStudents.filter((student) => {
           return yearLevelIds.some(
@@ -535,11 +535,9 @@ const Records = () => {
         );
       }
 
-      // Apply block filter if blocks are selected
       if (blockIds && blockIds.length > 0) {
         filteredStudents = filteredStudents.filter((student) => {
           return blockIds.some((blockValue) => {
-            // Find the selected block from our blocks array
             const selectedBlock = blocks.find(
               (block) =>
                 block.value === blockValue ||
@@ -549,20 +547,15 @@ const Records = () => {
 
             if (!selectedBlock) return false;
 
-            // Multiple ways to match the student to the selected block
             const matches =
-              // Match by block_id
               String(student.block_id) === String(selectedBlock.block_id) ||
               String(student.block_id) === String(selectedBlock.id) ||
-              // Match by block name and course code combination
               (student.block_name === selectedBlock.block_name &&
                 student.course_code === selectedBlock.course_code) ||
-              // Match by constructed block key
               (student.course_code &&
                 student.block_name &&
                 `${student.course_code}_${student.block_name}` ===
                   selectedBlock.value) ||
-              // Match by block name only (fallback)
               student.block_name === selectedBlock.block_name;
 
             return matches;
@@ -571,7 +564,6 @@ const Records = () => {
         console.log(`After block filter: ${filteredStudents.length} students`);
       }
 
-      // If no students match the filters
       if (filteredStudents.length === 0) {
         setModalConfig({
           title: "No Students Found",
@@ -589,9 +581,7 @@ const Records = () => {
         return;
       }
 
-      // Enhance filtered students with proper block display formatting
       filteredStudents = filteredStudents.map((student) => {
-        // Find the corresponding block data for proper formatting
         const studentBlock = blocks.find(
           (block) =>
             block.block_id === String(student.block_id) ||
@@ -600,10 +590,8 @@ const Records = () => {
 
         return {
           ...student,
-          // Ensure course_code is available for proper block display
           course_code: student.course_code || studentBlock?.course_code || "",
           block_name: student.block_name || studentBlock?.block_name || "",
-          // Add a formatted block display field
           block_display:
             (student.course_code || studentBlock?.course_code) &&
             (student.block_name || studentBlock?.block_name)
@@ -619,7 +607,6 @@ const Records = () => {
       );
       await generatePrintDocument(filteredStudents, action);
 
-      // Show modal for both print and download actions
       setModalVisible(true);
     } catch (error) {
       console.error("Print/Download error:", error);
@@ -886,7 +873,6 @@ const Records = () => {
         visible={showPrintModal}
         onClose={() => setShowPrintModal(false)}
         onPrint={(filters) => handlePrintDownload(filters, "print")}
-        onDownload={(filters) => handlePrintDownload(filters, "download")}
         showDepartment={true}
         showYearLevel={true}
         showBlock={true}
