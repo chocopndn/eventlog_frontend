@@ -209,52 +209,85 @@ const BlockList = () => {
         })
       );
 
+      const allStudentRecords = [];
+      filteredBlocks.forEach((block, index) => {
+        const summary =
+          attendanceSummaries[index]?.data?.attendance_summary || [];
+        const departmentName =
+          departments.find((dept) => dept.value === String(block.department_id))
+            ?.label || "Unknown Department";
+
+        summary.forEach((student) => {
+          allStudentRecords.push({
+            id: student.student_id,
+            name: student.student_name,
+            block: block.display_name,
+            department: departmentName,
+            present: student.present_count,
+            absent: student.absent_count,
+          });
+        });
+      });
+
       const html = `
         <html>
           <head>
             <meta charset="utf-8" />
             <style>
-              body { font-family: sans-serif; padding: 20px; }
-              h1, h5 { color: #333; }
-              table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-              th, td { border: 1px solid #999; padding: 4px; text-align: left; }
+              body { 
+                font-family: Arial, sans-serif; 
+                padding: 20px; 
+                color: black;
+              }
+              h1, h3 { 
+                color: black; 
+                text-align: center;
+              }
+              .header-line {
+                color: black;
+                font-weight: bold;
+                margin-bottom: 10px;
+                display: flex;
+              }
+              .record-line {
+                color: black;
+                margin-bottom: 2px;
+                display: flex;
+              }
+              .col-id { width: 100px; }
+              .col-name { width: 200px; }
+              .col-block { width: 120px; }
+              .col-department { width: 150px; }
+              .col-present { width: 60px; }
+              .col-absent { width: 60px; }
             </style>
           </head>
           <body>
             <h1>${eventTitle}</h1>
             <h3>Date: ${dateString}</h3>
-            ${filteredBlocks
-              .map((block, index) => {
-                const summary =
-                  attendanceSummaries[index]?.data?.attendance_summary || [];
-                return `
-                  <h2>${block.display_name}</h2>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Student ID</th>
-                        <th>Student Name</th>
-                        <th>Present</th>
-                        <th>Absent</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${summary
-                        .map(
-                          (student) => `
-                            <tr>
-                              <td>${student.student_id}</td>
-                              <td>${student.student_name}</td>
-                              <td>${student.present_count}</td>
-                              <td>${student.absent_count}</td>
-                            </tr>
-                          `
-                        )
-                        .join("")}
-                    </tbody>
-                  </table>
-                `;
-              })
+            
+            <div class="header-line">
+              <span class="col-id">ID Number</span>
+              <span class="col-name">Name</span>
+              <span class="col-block">Block</span>
+              <span class="col-department">Department</span>
+              <span class="col-present">Present</span>
+              <span class="col-absent">Absent</span>
+            </div>
+            
+            ${allStudentRecords
+              .map(
+                (record) => `
+              <div class="record-line">
+                <span class="col-id">${record.id}</span>
+                <span class="col-name">${record.name}</span>
+                <span class="col-block">${record.block}</span>
+                <span class="col-department">${record.department}</span>
+                <span class="col-present">${record.present}</span>
+                <span class="col-absent">${record.absent}</span>
+              </div>
+            `
+              )
               .join("")}
           </body>
         </html>
