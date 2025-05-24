@@ -29,10 +29,10 @@ import SquadaOneFont from "../../../assets/fonts/SquadaOne.ttf";
 
 const Login = () => {
   const [fontsLoaded, fontError] = useFonts({
-    Arial: require("../../../assets/fonts/Arial.ttf"),
-    ArialBold: require("../../../assets/fonts/ArialBold.ttf"),
-    ArialItalic: require("../../../assets/fonts/ArialItalic.ttf"),
-    SquadaOne: require("../../../assets/fonts/SquadaOne.ttf"),
+    Arial: ArialFont,
+    ArialBold: ArialBoldFont,
+    ArialItalic: ArialItalicFont,
+    SquadaOne: SquadaOneFont,
   });
 
   const [id, setId] = useState("");
@@ -100,8 +100,9 @@ const Login = () => {
   }, [fontsLoaded, fontError]);
 
   useEffect(() => {
+    if (!fontsReady) return;
+
     const loadRememberedCredentials = async () => {
-      if (!fontsReady) return;
       try {
         const rememberedId = await AsyncStorage.getItem("rememberedId");
         const rememberedPassword = await AsyncStorage.getItem(
@@ -145,7 +146,7 @@ const Login = () => {
       if (response.status === 200) {
         const roleId = parseInt(response.data.user.role_id);
 
-        if (roleId !== 3 && roleId !== 4) {
+        if (Platform.OS === "web" && roleId !== 3 && roleId !== 4) {
           setModalTitle("Access Denied");
           setModalMessage("Invalid account.");
           setModalType("error");
@@ -156,7 +157,10 @@ const Login = () => {
         await AsyncStorage.setItem("userToken", response.data.token);
         await AsyncStorage.setItem("id_number", response.data.user.id_number);
         await AsyncStorage.setItem("email", response.data.user.email);
-        await AsyncStorage.setItem("role_id", response.data.user.role_id);
+        await AsyncStorage.setItem(
+          "role_id",
+          String(response.data.user.role_id)
+        );
 
         await AsyncStorage.setItem(
           "full_name",
@@ -356,6 +360,7 @@ const styles = StyleSheet.create({
     width: "80%",
   },
   buttonContainer: {
-    width: "70%",
+    width: "80%",
   },
+  forgotPassContainer: {},
 });
