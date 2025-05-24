@@ -36,13 +36,10 @@ const Scan = () => {
       stack: error?.stack,
       ...additionalData,
     };
-
-    console.error(`[QR Scanner Error - ${context}]`, logData);
   };
 
   const logInfo = (context, message, data = {}) => {
     const timestamp = moment().format("YYYY-MM-DD HH:mm:ss");
-    console.log(`[QR Scanner Info - ${context}] ${timestamp}:`, message, data);
   };
 
   const handleCameraPermission = async () => {
