@@ -19,7 +19,6 @@ import useUserAccount from "../../hooks/useUserAccount";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Import font files directly for web
 import ArialFont from "../../assets/fonts/Arial.ttf";
 import ArialBoldFont from "../../assets/fonts/ArialBold.ttf";
 import ArialItalicFont from "../../assets/fonts/ArialItalic.ttf";
@@ -36,19 +35,16 @@ const Account = () => {
   const [fontsReady, setFontsReady] = useState(false);
   const { user, handleLogout } = useUserAccount();
 
-  // State for AsyncStorage values
   const [userInfo, setUserInfo] = useState({
     fullName: "",
     idNumber: "",
     email: "",
   });
 
-  // Register fonts directly in the document for web
   useEffect(() => {
     if (Platform.OS === "web") {
       console.log("Account: Registering fonts for web...");
 
-      // Create CSS font-face rules directly
       const style = document.createElement("style");
       style.textContent = `
         @font-face {
@@ -75,7 +71,6 @@ const Account = () => {
         }
       `;
 
-      // Add to document head if not already added
       const existingStyle = document.getElementById("account-custom-fonts");
       if (!existingStyle) {
         style.id = "account-custom-fonts";
@@ -83,7 +78,6 @@ const Account = () => {
         console.log("Account: Font CSS added to document");
       }
 
-      // Force load the fonts
       if (document.fonts) {
         Promise.all([
           document.fonts.load("16px Arial"),
@@ -97,10 +91,9 @@ const Account = () => {
           })
           .catch((error) => {
             console.warn("Account: Font loading failed:", error);
-            setFontsReady(true); // Proceed anyway
+            setFontsReady(true);
           });
       } else {
-        // Fallback for browsers without document.fonts
         setTimeout(() => {
           console.log("Account: Using fallback font loading method");
           setFontsReady(true);
@@ -109,17 +102,15 @@ const Account = () => {
     }
   }, []);
 
-  // Font loading verification for non-web platforms
   useEffect(() => {
     if (Platform.OS !== "web" && fontsLoaded && !fontError) {
       setFontsReady(true);
     }
   }, [fontsLoaded, fontError]);
 
-  // Load user info from AsyncStorage
   useEffect(() => {
     const loadUserInfo = async () => {
-      if (!fontsReady) return; // Wait for fonts to be ready
+      if (!fontsReady) return;
 
       try {
         const [fullName, idNumber, email] = await Promise.all([
@@ -143,7 +134,6 @@ const Account = () => {
     loadUserInfo();
   }, [fontsReady]);
 
-  // Show loading state until fonts are ready
   if (!fontsReady) {
     return (
       <SafeAreaView

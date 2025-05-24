@@ -46,8 +46,6 @@ const Login = () => {
 
   useEffect(() => {
     if (Platform.OS === "web") {
-      console.log("Registering fonts for web...");
-
       const style = document.createElement("style");
       style.textContent = `
         @font-face {
@@ -78,7 +76,6 @@ const Login = () => {
       if (!existingStyle) {
         style.id = "custom-fonts";
         document.head.appendChild(style);
-        console.log("Font CSS added to document");
       }
 
       if (document.fonts) {
@@ -88,19 +85,10 @@ const Login = () => {
           document.fonts.load("16px ArialItalic"),
           document.fonts.load("16px SquadaOne"),
         ])
-          .then(() => {
-            console.log("All fonts loaded successfully");
-            setFontsReady(true);
-          })
-          .catch((error) => {
-            console.warn("Font loading failed:", error);
-            setFontsReady(true);
-          });
+          .then(() => setFontsReady(true))
+          .catch(() => setFontsReady(true));
       } else {
-        setTimeout(() => {
-          console.log("Using fallback font loading method");
-          setFontsReady(true);
-        }, 500);
+        setTimeout(() => setFontsReady(true), 500);
       }
     }
   }, []);
@@ -114,7 +102,6 @@ const Login = () => {
   useEffect(() => {
     const loadRememberedCredentials = async () => {
       if (!fontsReady) return;
-
       try {
         const rememberedId = await AsyncStorage.getItem("rememberedId");
         const rememberedPassword = await AsyncStorage.getItem(
@@ -156,11 +143,20 @@ const Login = () => {
       });
 
       if (response.status === 200) {
+        const roleId = parseInt(response.data.user.role_id);
+
+        if (roleId !== 3 && roleId !== 4) {
+          setModalTitle("Access Denied");
+          setModalMessage("Invalid account.");
+          setModalType("error");
+          setModalVisible(true);
+          return;
+        }
+
         await AsyncStorage.setItem("userToken", response.data.token);
         await AsyncStorage.setItem("id_number", response.data.user.id_number);
         await AsyncStorage.setItem("email", response.data.user.email);
-
-        console.log(response.data.user);
+        await AsyncStorage.setItem("role_id", response.data.user.role_id);
 
         await AsyncStorage.setItem(
           "full_name",
@@ -173,7 +169,6 @@ const Login = () => {
 
         try {
           await storeUser(response.data.user);
-          console.log("User data stored successfully in local database");
         } catch (dbError) {
           console.error("Error storing user in local database:", dbError);
         }
@@ -187,11 +182,8 @@ const Login = () => {
           await AsyncStorage.removeItem("rememberedPassword");
           await AsyncStorage.removeItem("rememberedChecked");
         }
-        if (Platform.OS !== "web") {
-          router.replace("/(tabs)/home");
-        } else {
-          router.replace("/web");
-        }
+
+        router.replace(Platform.OS === "web" ? "/web" : "/(tabs)/home");
       } else {
         setModalTitle("Login Failed");
         setModalMessage(
@@ -277,9 +269,7 @@ const Login = () => {
         </View>
         <View style={styles.forgotPassContainer}>
           <TouchableOpacity
-            onPress={() => {
-              router.push("/login/ForgotPassword");
-            }}
+            onPress={() => router.push("/login/ForgotPassword")}
           >
             <Text style={styles.forgotPass}>Forgot Password?</Text>
           </TouchableOpacity>
@@ -290,14 +280,12 @@ const Login = () => {
       </View>
 
       {Platform.OS !== "web" && (
-        <>
-          <View style={styles.registerContainer}>
-            <Text style={styles.registerQ}>Don't have an account?</Text>
-            <TouchableOpacity onPress={() => router.push("/signup")}>
-              <Text style={styles.registerLink}>Register</Text>
-            </TouchableOpacity>
-          </View>
-        </>
+        <View style={styles.registerContainer}>
+          <Text style={styles.registerQ}>Don't have an account?</Text>
+          <TouchableOpacity onPress={() => router.push("/signup")}>
+            <Text style={styles.registerLink}>Register</Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       <StatusBar style="auto" />
