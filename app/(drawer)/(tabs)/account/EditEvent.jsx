@@ -133,7 +133,6 @@ const EditEvent = () => {
         setBlockOptions(formattedBlocks);
         setSelectedDepartmentIds(departmentIds);
       } catch (error) {
-        console.error("Error fetching event data:", error);
         setModal({
           visible: true,
           title: "Error",
@@ -439,7 +438,7 @@ const EditEvent = () => {
         if (response?.message) {
           errorMessage = response.message;
         }
-        console.error("Error updating event:", errorMessage);
+
         setModal({
           visible: true,
           title: "Error",
@@ -448,16 +447,15 @@ const EditEvent = () => {
         });
       }
     } catch (error) {
-      console.error("Error during form submission:", error);
       let errorMessage =
         "Failed to update the event. Please double-check your information and try again.";
       if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
+        errorMessage = "The event started. It can't be updated.";
       } else if (error.message === "Network request failed") {
         errorMessage =
           "There was a problem connecting to the server. Please check your internet connection and try again.";
       }
-      console.error("Submission error details:", errorMessage);
+
       setModal({
         visible: true,
         title: "Error",
