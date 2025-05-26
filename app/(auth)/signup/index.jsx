@@ -164,37 +164,37 @@ const SignUp = () => {
       >
         <FormField
           type="id"
+          example="12345"
           iconShow={false}
           title="ID Number"
-          placeholder="12345"
           value={formData.id_number}
           onChangeText={(value) => handleInputChange("id_number", value)}
           titleColor="secondary"
         />
         <FormField
           title="First Name"
-          placeholder="Juan Miguel"
+          example="Juan Miguel"
           value={formData.first_name}
           onChangeText={(value) => handleInputChange("first_name", value)}
           titleColor="secondary"
         />
         <FormField
           title="Middle Name"
-          placeholder="Reyes"
+          example="Reyes"
           value={formData.middle_name}
           onChangeText={(value) => handleInputChange("middle_name", value)}
           titleColor="secondary"
         />
         <FormField
           title="Last Name"
-          placeholder="Santos"
+          example="Santos"
           value={formData.last_name}
           onChangeText={(value) => handleInputChange("last_name", value)}
           titleColor="secondary"
         />
         <FormField
           title="Suffix Name"
-          placeholder="Jr"
+          example="Jr"
           optional
           value={formData.suffix}
           onChangeText={(value) => handleInputChange("suffix", value)}
@@ -202,9 +202,9 @@ const SignUp = () => {
         />
         <FormField
           type="email"
+          example="juanreyes@gmail.com"
           iconShow={false}
           title="Email"
-          placeholder="example@email.com"
           value={formData.email}
           onChangeText={(value) => handleInputChange("email", value)}
           titleColor="secondary"
