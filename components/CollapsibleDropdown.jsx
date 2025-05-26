@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingViewBase,
+} from "react-native";
 import Collapsible from "react-native-collapsible";
 
 import theme from "../constants/theme";
@@ -52,7 +58,7 @@ const CollapsibleDropdown = ({
               </View>
               <View style={styles.time}>
                 <Text style={styles.timeOfDay}>Afternoon:</Text>
-                <Text style={styles.detailsTime}>{am_out}</Text>
+                <Text style={styles.detailsTime}>{pm_in}</Text>
               </View>
             </View>
 
@@ -60,7 +66,7 @@ const CollapsibleDropdown = ({
               <Text style={styles.contentTitle}>TIME OUT:</Text>
               <View style={styles.time}>
                 <Text style={styles.timeOfDay}>Morning:</Text>
-                <Text style={styles.detailsTime}>{pm_in}</Text>
+                <Text style={styles.detailsTime}>{am_out}</Text>
               </View>
               <View style={styles.time}>
                 <Text style={styles.timeOfDay}>Afternoon:</Text>
