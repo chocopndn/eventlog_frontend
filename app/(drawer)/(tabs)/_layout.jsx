@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     backgroundColor: theme.colors.primary,
-    height: 70,
+    height: 80,
   },
   tabItem: {
     alignItems: "center",
