@@ -24,6 +24,7 @@ const FormField = ({
   titleColor = "primary",
   design,
   multiline = false,
+  example,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const inputs = useRef([]);
@@ -104,6 +105,7 @@ const FormField = ({
             {title}
           </Text>
           {optional && <Text style={styles.optionalText}> (optional)</Text>}
+          {example && <Text style={styles.example}> (Ex: {example})</Text>}
         </View>
       )}
       <View style={styles.codeContainer}>
@@ -137,6 +139,7 @@ const FormField = ({
             {title}
           </Text>
           {optional && <Text style={styles.optionalText}> (optional)</Text>}
+          {example && <Text style={styles.example}> (Ex: {example})</Text>}
         </View>
       )}
       <View
@@ -238,6 +241,12 @@ const styles = StyleSheet.create({
     fontFamily: "SquadaOne",
     backgroundColor: theme.colors.secondary,
     borderWidth: 2,
+  },
+  example: {
+    fontSize: theme.fontSizes.medium,
+    color: theme.colors.secondary,
+    fontFamily: "Arial",
+    fontStyle: "italic",
   },
 });
 
