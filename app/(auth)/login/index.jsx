@@ -21,6 +21,7 @@ import Header from "../../../components/Header";
 import FormField from "../../../components/FormField";
 import CustomButton from "../../../components/CustomButton";
 import { API_URL } from "../../../config/config";
+import { useAuth } from "../../../context/AuthContext";
 
 import ArialFont from "../../../assets/fonts/Arial.ttf";
 import ArialBoldFont from "../../../assets/fonts/ArialBold.ttf";
@@ -28,6 +29,8 @@ import ArialItalicFont from "../../../assets/fonts/ArialItalic.ttf";
 import SquadaOneFont from "../../../assets/fonts/SquadaOne.ttf";
 
 const Login = () => {
+  const { login: authLogin } = useAuth();
+
   const [fontsLoaded, fontError] = useFonts({
     Arial: ArialFont,
     ArialBold: ArialBoldFont,
@@ -72,30 +75,23 @@ const Login = () => {
         }
       `;
 
-      const existingStyle = document.getElementById("custom-fonts");
+      const existingStyle = document.getElementById("login-fonts");
       if (!existingStyle) {
-        style.id = "custom-fonts";
+        style.id = "login-fonts";
         document.head.appendChild(style);
       }
 
-      if (document.fonts) {
-        Promise.all([
-          document.fonts.load("16px Arial"),
-          document.fonts.load("16px ArialBold"),
-          document.fonts.load("16px ArialItalic"),
-          document.fonts.load("16px SquadaOne"),
-        ])
-          .then(() => setFontsReady(true))
-          .catch(() => setFontsReady(true));
-      } else {
-        setTimeout(() => setFontsReady(true), 500);
-      }
+      setTimeout(() => {
+        setFontsReady(true);
+      }, 500);
     }
   }, []);
 
   useEffect(() => {
-    if (Platform.OS !== "web" && fontsLoaded && !fontError) {
-      setFontsReady(true);
+    if (Platform.OS !== "web") {
+      if (fontsLoaded || fontError) {
+        setFontsReady(true);
+      }
     }
   }, [fontsLoaded, fontError]);
 
@@ -154,6 +150,17 @@ const Login = () => {
           return;
         }
 
+        const userData = {
+          ...response.data.user,
+          full_name: `${response.data.user.first_name} ${
+            response.data.user.middle_name ?? ""
+          } ${response.data.user.last_name}`
+            .replace(/\s+/g, " ")
+            .trim(),
+        };
+
+        await authLogin(userData, response.data.token);
+
         await AsyncStorage.setItem("userToken", response.data.token);
         await AsyncStorage.setItem("id_number", response.data.user.id_number);
         await AsyncStorage.setItem("email", response.data.user.email);
@@ -161,15 +168,7 @@ const Login = () => {
           "role_id",
           String(response.data.user.role_id)
         );
-
-        await AsyncStorage.setItem(
-          "full_name",
-          `${response.data.user.first_name} ${
-            response.data.user.middle_name ?? ""
-          } ${response.data.user.last_name}`
-            .replace(/\s+/g, " ")
-            .trim()
-        );
+        await AsyncStorage.setItem("full_name", userData.full_name);
 
         try {
           await storeUser(response.data.user);
@@ -217,7 +216,7 @@ const Login = () => {
         <Text
           style={{
             fontFamily:
-              Platform.OS === "web" ? "system-ui, sans-serif" : "system",
+              Platform.OS === "web" ? "system-ui, sans-serif" : "System",
             fontSize: 18,
             color: theme.colors.secondary,
             marginBottom: 10,
