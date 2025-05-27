@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import socketService from "../services/socketService";
+import globalSocketHandler from "../services/globalSocketHandler";
 
 const AuthContext = createContext({});
 
@@ -13,6 +14,7 @@ export const AuthProvider = ({ children }) => {
     title: "",
     message: "",
     type: "error",
+    cancelTitle: "CLOSE",
   });
 
   const showSessionExpiredModal = () => {
@@ -20,6 +22,7 @@ export const AuthProvider = ({ children }) => {
       title: "Session Expired",
       message: "Please log in again.",
       type: "warning",
+      cancelTitle: "CLOSE",
     });
     setModalVisible(true);
   };
@@ -33,6 +36,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
+      globalSocketHandler.cleanup();
       socketService.disconnect();
       setUser(null);
       await AsyncStorage.removeItem("userToken");
@@ -52,6 +56,14 @@ export const AuthProvider = ({ children }) => {
       console.error("Login error:", error);
     }
   };
+
+  useEffect(() => {
+    if (user && (user.role_id === 3 || user.role_id === 4 || user.block_id)) {
+      globalSocketHandler.initialize(user);
+    } else if (user) {
+      globalSocketHandler.cleanup();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (user) {
@@ -94,6 +106,12 @@ export const AuthProvider = ({ children }) => {
     };
 
     checkToken();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      globalSocketHandler.cleanup();
+    };
   }, []);
 
   return (
