@@ -50,9 +50,11 @@ const BlockList = () => {
         const event_id = Number(eventId);
         const blocksData = await fetchBlocksOfEvents(event_id, "", "");
         if (!blocksData.success) throw new Error("Failed to load blocks");
+
         const eventTitle =
           blocksData.data?.event_title || "Event Title Not Found";
         setEventTitle(eventTitle);
+
         const mappedBlocks =
           blocksData.data?.blocks?.map((block) => ({
             ...block,
@@ -62,6 +64,7 @@ const BlockList = () => {
           })) || [];
         setAllBlocks(mappedBlocks);
         setBlocks(mappedBlocks);
+
         const uniqueDepartments = [
           ...new Set(mappedBlocks.map((b) => b.department_id)),
         ];
@@ -75,6 +78,7 @@ const BlockList = () => {
           ...deptOptions,
         ];
         setDepartments(departmentsWithAll);
+
         const uniqueYearLevels = [
           ...new Set(mappedBlocks.map((b) => b.year_level_id)),
         ];
@@ -104,6 +108,7 @@ const BlockList = () => {
           selectedDepartment || undefined,
           selectedYearLevel || undefined
         );
+
         let mappedBlocks = [];
         if (blocksData?.data?.blocks?.length > 0) {
           mappedBlocks = blocksData.data.blocks.map((block) => ({
@@ -130,6 +135,7 @@ const BlockList = () => {
       setBlocks(allBlocks);
       return;
     }
+
     const lowerQuery = searchQuery.toLowerCase();
     const filtered = allBlocks.filter((block) =>
       (block.display_name || "").toLowerCase().includes(lowerQuery)
@@ -164,6 +170,7 @@ const BlockList = () => {
     try {
       const { departmentIds, blockIds, yearLevelIds, attendanceFilter } =
         filters;
+
       const filteredBlocks = allBlocks.filter((block) => {
         const departmentMatch =
           departmentIds.length === 0 ||
@@ -175,6 +182,7 @@ const BlockList = () => {
           blockIds.length === 0 || blockIds.includes(String(block.block_id));
         return departmentMatch && yearLevelMatch && blockMatch;
       });
+
       if (filteredBlocks.length === 0) {
         setModalConfig({
           title: "No Blocks Found",
@@ -185,6 +193,7 @@ const BlockList = () => {
         setModalVisible(true);
         return;
       }
+
       const startDate = new Date(2025, 4, 20);
       const endDate = new Date(2025, 4, 26);
       const formatDate = (date) =>
@@ -210,6 +219,7 @@ const BlockList = () => {
       } else {
         dateString = `${formatDate(startDate)} – ${formatDate(endDate)}`;
       }
+
       const attendanceSummaries = await Promise.all(
         filteredBlocks.map(async (block) => {
           try {
@@ -218,12 +228,14 @@ const BlockList = () => {
               block.block_id,
               attendanceFilter
             );
+
             return summary;
           } catch (error) {
             return { data: { attendance_summary: [] } };
           }
         })
       );
+
       const studentsByBlock = {};
       filteredBlocks.forEach((block, index) => {
         const summary =
@@ -231,8 +243,10 @@ const BlockList = () => {
         const departmentName =
           departments.find((dept) => dept.value === String(block.department_id))
             ?.label || "Unknown Department";
+
         const blockStudents = summary.map((student) => {
           const attendanceCounts = getAttendanceCounts(student);
+
           return {
             id: student.student_id,
             name: student.student_name,
@@ -246,17 +260,20 @@ const BlockList = () => {
             pm_out: attendanceCounts.pm_out_count,
           };
         });
+
         blockStudents.sort((a, b) => {
           const lastNameA = a.name.split(",")[0].trim().toLowerCase();
           const lastNameB = b.name.split(",")[0].trim().toLowerCase();
           return lastNameA.localeCompare(lastNameB);
         });
+
         if (blockStudents.length > 0) {
           studentsByBlock[block.display_name] = blockStudents;
         } else {
           studentsByBlock[block.display_name] = [];
         }
       });
+
       const generateBlockPage = (blockName, students, isFirst = false) => `
         <div style="${
           isFirst
@@ -272,7 +289,8 @@ const BlockList = () => {
               : "Absent List"
           }</h3>
           <h4 style="color: black; text-align: left; margin-bottom: 3px;">Date: ${dateString}</h4>
-          <h3 style="color: black; text-align: center; margin-bottom: 10px;">${blockName}</h3>
+          <h3 style="color: black; text-align: left; margin-bottom: 10px;">${blockName}</h3>
+          
           <div class="header-line">
             <span class="col-id">ID Number</span>
             <span class="col-name">Name</span>
@@ -283,6 +301,7 @@ const BlockList = () => {
             <span class="col-count">Present</span>
             <span class="col-count">Absent</span>
           </div>
+          
           ${
             students.length === 0
               ? `<div style="text-align: center; margin-top: 20px; font-style: italic; color: #666;">
@@ -307,6 +326,7 @@ const BlockList = () => {
           }
         </div>
       `;
+
       const html = `
         <html>
           <head>
@@ -348,6 +368,7 @@ const BlockList = () => {
           </body>
         </html>
       `;
+
       const { uri } = await Print.printToFileAsync({ html });
       const filterName =
         attendanceFilter === "all"
