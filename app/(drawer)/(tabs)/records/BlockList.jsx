@@ -50,11 +50,9 @@ const BlockList = () => {
         const event_id = Number(eventId);
         const blocksData = await fetchBlocksOfEvents(event_id, "", "");
         if (!blocksData.success) throw new Error("Failed to load blocks");
-
         const eventTitle =
           blocksData.data?.event_title || "Event Title Not Found";
         setEventTitle(eventTitle);
-
         const mappedBlocks =
           blocksData.data?.blocks?.map((block) => ({
             ...block,
@@ -64,7 +62,6 @@ const BlockList = () => {
           })) || [];
         setAllBlocks(mappedBlocks);
         setBlocks(mappedBlocks);
-
         const uniqueDepartments = [
           ...new Set(mappedBlocks.map((b) => b.department_id)),
         ];
@@ -78,7 +75,6 @@ const BlockList = () => {
           ...deptOptions,
         ];
         setDepartments(departmentsWithAll);
-
         const uniqueYearLevels = [
           ...new Set(mappedBlocks.map((b) => b.year_level_id)),
         ];
@@ -108,7 +104,6 @@ const BlockList = () => {
           selectedDepartment || undefined,
           selectedYearLevel || undefined
         );
-
         let mappedBlocks = [];
         if (blocksData?.data?.blocks?.length > 0) {
           mappedBlocks = blocksData.data.blocks.map((block) => ({
@@ -135,7 +130,6 @@ const BlockList = () => {
       setBlocks(allBlocks);
       return;
     }
-
     const lowerQuery = searchQuery.toLowerCase();
     const filtered = allBlocks.filter((block) =>
       (block.display_name || "").toLowerCase().includes(lowerQuery)
@@ -143,9 +137,33 @@ const BlockList = () => {
     setBlocks(filtered);
   }, [searchQuery, allBlocks]);
 
+  const formatTime = (timeString) => {
+    if (!timeString) return "-";
+    try {
+      const date = new Date(timeString);
+      return date.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } catch (error) {
+      return "-";
+    }
+  };
+
+  const getAttendanceCounts = (student) => {
+    return {
+      am_in_count: student.am_in_attended || 0,
+      am_out_count: student.am_out_attended || 0,
+      pm_in_count: student.pm_in_attended || 0,
+      pm_out_count: student.pm_out_attended || 0,
+    };
+  };
+
   const handleSavePDF = async (filters) => {
     try {
-      const { departmentIds, blockIds, yearLevelIds } = filters;
+      const { departmentIds, blockIds, yearLevelIds, attendanceFilter } =
+        filters;
       const filteredBlocks = allBlocks.filter((block) => {
         const departmentMatch =
           departmentIds.length === 0 ||
@@ -157,7 +175,6 @@ const BlockList = () => {
           blockIds.length === 0 || blockIds.includes(String(block.block_id));
         return departmentMatch && yearLevelMatch && blockMatch;
       });
-
       if (filteredBlocks.length === 0) {
         setModalConfig({
           title: "No Blocks Found",
@@ -168,7 +185,6 @@ const BlockList = () => {
         setModalVisible(true);
         return;
       }
-
       const startDate = new Date(2025, 4, 20);
       const endDate = new Date(2025, 4, 26);
       const formatDate = (date) =>
@@ -194,13 +210,13 @@ const BlockList = () => {
       } else {
         dateString = `${formatDate(startDate)} – ${formatDate(endDate)}`;
       }
-
       const attendanceSummaries = await Promise.all(
         filteredBlocks.map(async (block) => {
           try {
             const summary = await fetchAttendanceSummaryPerBlock(
               Number(eventId),
-              block.block_id
+              block.block_id,
+              attendanceFilter
             );
             return summary;
           } catch (error) {
@@ -208,27 +224,89 @@ const BlockList = () => {
           }
         })
       );
-
-      const allStudentRecords = [];
+      const studentsByBlock = {};
       filteredBlocks.forEach((block, index) => {
         const summary =
           attendanceSummaries[index]?.data?.attendance_summary || [];
         const departmentName =
           departments.find((dept) => dept.value === String(block.department_id))
             ?.label || "Unknown Department";
-
-        summary.forEach((student) => {
-          allStudentRecords.push({
+        const blockStudents = summary.map((student) => {
+          const attendanceCounts = getAttendanceCounts(student);
+          return {
             id: student.student_id,
             name: student.student_name,
             block: block.display_name,
             department: departmentName,
             present: student.present_count,
             absent: student.absent_count,
-          });
+            am_in: attendanceCounts.am_in_count,
+            am_out: attendanceCounts.am_out_count,
+            pm_in: attendanceCounts.pm_in_count,
+            pm_out: attendanceCounts.pm_out_count,
+          };
         });
+        blockStudents.sort((a, b) => {
+          const lastNameA = a.name.split(",")[0].trim().toLowerCase();
+          const lastNameB = b.name.split(",")[0].trim().toLowerCase();
+          return lastNameA.localeCompare(lastNameB);
+        });
+        if (blockStudents.length > 0) {
+          studentsByBlock[block.display_name] = blockStudents;
+        } else {
+          studentsByBlock[block.display_name] = [];
+        }
       });
-
+      const generateBlockPage = (blockName, students, isFirst = false) => `
+        <div style="${
+          isFirst
+            ? "padding-top: 10px;"
+            : "page-break-before: always; padding-top: 10px;"
+        }">
+          <h2 style="color: black; text-align: left; margin-bottom: 3px;">${eventTitle}</h2>
+          <h3 style="color: black; text-align: left; margin-bottom: 3px;">${
+            attendanceFilter === "all"
+              ? "General List"
+              : attendanceFilter === "present"
+              ? "Present List"
+              : "Absent List"
+          }</h3>
+          <h4 style="color: black; text-align: left; margin-bottom: 3px;">Date: ${dateString}</h4>
+          <h3 style="color: black; text-align: center; margin-bottom: 10px;">${blockName}</h3>
+          <div class="header-line">
+            <span class="col-id">ID Number</span>
+            <span class="col-name">Name</span>
+            <span class="col-time">AM In</span>
+            <span class="col-time">AM Out</span>
+            <span class="col-time">PM In</span>
+            <span class="col-time">PM Out</span>
+            <span class="col-count">Present</span>
+            <span class="col-count">Absent</span>
+          </div>
+          ${
+            students.length === 0
+              ? `<div style="text-align: center; margin-top: 20px; font-style: italic; color: #666;">
+                 No records
+               </div>`
+              : students
+                  .map(
+                    (record) => `
+                <div class="record-line">
+                  <span class="col-id">${record.id}</span>
+                  <span class="col-name">${record.name}</span>
+                  <span class="col-time">${record.am_in}</span>
+                  <span class="col-time">${record.am_out}</span>
+                  <span class="col-time">${record.pm_in}</span>
+                  <span class="col-time">${record.pm_out}</span>
+                  <span class="col-count">${record.present}</span>
+                  <span class="col-count">${record.absent}</span>
+                </div>
+              `
+                  )
+                  .join("")
+          }
+        </div>
+      `;
       const html = `
         <html>
           <head>
@@ -236,10 +314,11 @@ const BlockList = () => {
             <style>
               body { 
                 font-family: Arial, sans-serif; 
-                padding: 20px; 
+                padding: 0px 20px 20px 20px; 
                 color: black;
+                font-size: 11px;
               }
-              h1, h3 { 
+              h1, h2, h3 { 
                 color: black; 
                 text-align: center;
               }
@@ -254,54 +333,35 @@ const BlockList = () => {
                 margin-bottom: 2px;
                 display: flex;
               }
-              .col-id { width: 100px; }
+              .col-id { width: 90px; }
               .col-name { width: 200px; }
-              .col-block { width: 120px; }
-              .col-department { width: 150px; }
-              .col-present { width: 60px; }
-              .col-absent { width: 60px; }
+              .col-time { width: 55px; text-align: center; font-size: 11px; }
+              .col-count { width: 55px; text-align: center; }
             </style>
           </head>
           <body>
-            <h1>${eventTitle}</h1>
-            <h3>Date: ${dateString}</h3>
-            
-            <div class="header-line">
-              <span class="col-id">ID Number</span>
-              <span class="col-name">Name</span>
-              <span class="col-block">Block</span>
-              <span class="col-department">Department</span>
-              <span class="col-present">Present</span>
-              <span class="col-absent">Absent</span>
-            </div>
-            
-            ${allStudentRecords
-              .map(
-                (record) => `
-              <div class="record-line">
-                <span class="col-id">${record.id}</span>
-                <span class="col-name">${record.name}</span>
-                <span class="col-block">${record.block}</span>
-                <span class="col-department">${record.department}</span>
-                <span class="col-present">${record.present}</span>
-                <span class="col-absent">${record.absent}</span>
-              </div>
-            `
+            ${Object.entries(studentsByBlock)
+              .map(([blockName, students], index) =>
+                generateBlockPage(blockName, students, index === 0)
               )
               .join("")}
           </body>
         </html>
       `;
-
       const { uri } = await Print.printToFileAsync({ html });
-      const pdfName = `${eventTitle}.pdf`;
+      const filterName =
+        attendanceFilter === "all"
+          ? "General List"
+          : attendanceFilter === "present"
+          ? "Present List"
+          : "Absent List";
+      const pdfName = `${eventTitle} - ${filterName}.pdf`;
       const pdfPath = `${FileSystem.documentDirectory}${pdfName}`;
       await FileSystem.moveAsync({ from: uri, to: pdfPath });
       await Sharing.shareAsync(pdfPath, {
         UTI: ".pdf",
         mimeType: "application/pdf",
       });
-
       setModalConfig({
         title: "Download Successful",
         message: "Your attendance record has been downloaded successfully.",
@@ -415,6 +475,7 @@ const BlockList = () => {
         showDepartment={true}
         showBlock={true}
         showYearLevel={true}
+        showAttendance={true}
         departments={departments.filter((dept) => dept.value !== "")}
         blocks={allBlocks}
         yearLevels={yearLevels}

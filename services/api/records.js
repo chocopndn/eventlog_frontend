@@ -191,7 +191,11 @@ export const fetchStudentAttendanceByEventAndBlock = async (
   }
 };
 
-export const fetchAttendanceSummaryPerBlock = async (eventId, blockId) => {
+export const fetchAttendanceSummaryPerBlock = async (
+  eventId,
+  blockId,
+  attendanceFilter = "all"
+) => {
   try {
     if (!eventId || !blockId) {
       throw new Error("Missing required parameters: eventId and blockId.");
@@ -200,6 +204,7 @@ export const fetchAttendanceSummaryPerBlock = async (eventId, blockId) => {
     const body = {
       event_id: eventId,
       block_id: blockId,
+      attendanceFilter: attendanceFilter,
     };
 
     const response = await axios.post(
@@ -230,8 +235,6 @@ export const getStudentAttSummary = async (eventId, studentId) => {
       event_id: eventId,
       student_id: studentId,
     };
-
-    console.log(body);
 
     const response = await axios.post(
       `${API_URL}/api/attendance/student/summary`,
@@ -265,8 +268,6 @@ export const fetchAttendanceSummaryOfEvent = async (eventId) => {
       event_id: eventId,
     };
 
-    console.log("📤 Fetching attendance summary for event:", body);
-
     const response = await axios.post(
       `${API_URL}/api/attendance/event/summary`,
       body,
@@ -277,8 +278,6 @@ export const fetchAttendanceSummaryOfEvent = async (eventId) => {
         },
       }
     );
-
-    console.log("📥 Attendance summary response:", response.data);
 
     if (!response || !response.data) {
       throw new Error("Invalid response format from server.");

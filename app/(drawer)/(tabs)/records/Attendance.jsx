@@ -45,7 +45,6 @@ const SessionLog = ({ label, data, sessionType = "am" }) => {
       return null;
     }
   };
-
   const timeInKey = sessionType === "am" ? "am_in" : "pm_in";
   const timeOutKey = sessionType === "am" ? "am_out" : "pm_out";
   const scheduleTimeIn = data?.schedule?.[timeInKey];
@@ -63,7 +62,7 @@ const SessionLog = ({ label, data, sessionType = "am" }) => {
         <Text style={styles.morningText}>{label}</Text>
       </View>
       <View style={styles.logContainer}>
-        <View style={styles.timeContainer}>
+        <View style={[styles.timeContainer, { width: "50%" }]}>
           <View
             style={[
               styles.timeLabelContainer,
@@ -76,7 +75,7 @@ const SessionLog = ({ label, data, sessionType = "am" }) => {
             {renderAttendanceStatus(scheduleTimeIn, attendanceTimeIn)}
           </View>
         </View>
-        <View style={styles.timeContainer}>
+        <View style={[styles.timeContainer, { width: "50%" }]}>
           <View style={[styles.timeLabelContainer, { borderRightWidth: 0 }]}>
             <Text style={styles.timeLabel}>Time Out</Text>
           </View>
@@ -112,11 +111,9 @@ const Attendance = () => {
           blockId,
           studentId
         );
-
         if (response.success) {
           const { data } = response;
           const student = data.students.find((s) => s.student_id === studentId);
-
           if (student) {
             setEventName(data.event_name);
             setStudentDetails({
@@ -143,7 +140,6 @@ const Attendance = () => {
         setLoading(false);
       }
     };
-
     if (eventId && blockId && studentId) {
       fetchData();
     } else {
@@ -157,7 +153,6 @@ const Attendance = () => {
       if (!response?.success || !response.data) {
         throw new Error("Failed to fetch student data for PDF generation.");
       }
-
       const { event_name, student_id, student_name, attendance_summary } =
         response.data;
 
@@ -166,64 +161,85 @@ const Attendance = () => {
         <head>
           <meta charset="utf-8" />
           <style>
-            body { font-family: sans-serif; padding: 20px; }
-            h1 { color: #333; text-align: center; }
-            .info { margin-bottom: 15px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #999; padding: 8px; text-align: left; }
-            tr:nth-child(even) { background-color: #f9f9f9; }
-            .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #aaa; }
+            body { 
+              font-family: Arial, sans-serif; 
+              padding: 0px 40px 20px 40px; 
+              color: black;
+            }
+            h2, h3, h4 { 
+              color: black; 
+            }
+            .header-line {
+              color: black;
+              font-weight: bold;
+              margin-bottom: 10px;
+              display: flex;
+            }
+            .record-line {
+              color: black;
+              margin-bottom: 2px;
+              display: flex;
+            }
+            .col-date { width: 200px; }
+            .col-present { width: 80px; }
+            .col-absent { width: 80px; }
           </style>
         </head>
         <body>
-          <h1>${event_name || "Unknown Event"}</h1>
-          <div class="info">
-            <p><strong>Name:</strong> ${student_name || "N/A"}</p>
-            <p><strong>ID:</strong> ${student_id || "N/A"}</p>
-            <p><strong>Course/Block:</strong> ${
-              studentDetails?.courseBlock || "N/A"
-            }</p>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Present</th>
-                <th>Absent</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${Object.entries(attendance_summary || {})
-                .map(
-                  ([date, { present_count, absent_count }]) => `
-                  <tr>
-                    <td>${moment(date).format("MMMM D, YYYY")}</td>
-                    <td>${present_count}</td>
-                    <td>${absent_count}</td>
-                  </tr>
-                `
-                )
-                .join("")}
-            </tbody>
-          </table>
-          <div class="footer">
-            Generated on ${moment().format("MMMM D, YYYY hh:mm A")}
+          <div style="padding-top: 10px;">
+            <h2 style="color: black; text-align: left; margin-bottom: 3px;">${
+              event_name || "Unknown Event"
+            }</h2>
+            <h3 style="color: black; text-align: left; margin-bottom: 3px;">Individual Attendance Report</h3>
+            <h4 style="color: black; text-align: left; margin-bottom: 3px;">Generated: ${new Date().toLocaleDateString(
+              "en-US",
+              {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              }
+            )}</h4>
+            <h3 style="color: black; text-align: center; margin-bottom: 10px;">${
+              student_name || "N/A"
+            } (${student_id || "N/A"})</h3>
+            <div style="margin-bottom: 15px;">
+              <p style="margin: 5px 0;"><strong>Course/Block:</strong> ${
+                studentDetails?.courseBlock || "N/A"
+              }</p>
+            </div>
+            <div class="header-line">
+              <span class="col-date">Date</span>
+              <span class="col-present">Present</span>
+              <span class="col-absent">Absent</span>
+            </div>
+            ${Object.entries(attendance_summary || {})
+              .map(
+                ([date, { present_count, absent_count }]) => `
+                <div class="record-line">
+                  <span class="col-date">${moment(date).format(
+                    "MMMM D, YYYY"
+                  )}</span>
+                  <span class="col-present">${present_count}</span>
+                  <span class="col-absent">${absent_count}</span>
+                </div>
+              `
+              )
+              .join("")}
           </div>
         </body>
       </html>
     `;
 
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
-      const pdfName = `${student_name || "Student"} - ${
-        event_name || "Event"
-      }.pdf`;
+      const pdfName = `${
+        student_name || "Student"
+      } - Individual Attendance Report.pdf`;
       const pdfPath = `${FileSystem.documentDirectory}${pdfName}`;
       await FileSystem.moveAsync({ from: uri, to: pdfPath });
       await Sharing.shareAsync(pdfPath, {
         mimeType: "application/pdf",
         UTI: ".pdf",
       });
-
       setModalConfig({
         title: "Download Successful",
         message: "Your attendance record has been downloaded successfully.",

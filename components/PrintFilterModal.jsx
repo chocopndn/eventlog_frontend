@@ -11,6 +11,7 @@ const PrintFilterModal = ({
   showDepartment = false,
   showBlock = false,
   showYearLevel = false,
+  showAttendance = false,
   departments = [],
   blocks = [],
   yearLevels = [],
@@ -19,13 +20,21 @@ const PrintFilterModal = ({
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [selectedBlocks, setSelectedBlocks] = useState([]);
   const [selectedYearLevels, setSelectedYearLevels] = useState([]);
+  const [selectedAttendance, setSelectedAttendance] = useState("all");
   const [filteredBlocks, setFilteredBlocks] = useState(blocks);
+
+  const attendanceOptions = [
+    { label: "All Students", value: "all" },
+    { label: "Present Only", value: "present" },
+    { label: "Absent Only", value: "absent" },
+  ];
 
   useEffect(() => {
     if (visible) {
       setSelectedDepartments([]);
       setSelectedBlocks([]);
       setSelectedYearLevels([]);
+      setSelectedAttendance("all");
     }
   }, [visible]);
 
@@ -62,12 +71,14 @@ const PrintFilterModal = ({
       return;
     }
 
-    onPrint({
+    const filters = {
       departmentIds: selectedDepartments,
       blockIds: selectedBlocks,
       yearLevelIds: selectedYearLevels,
-    });
+      attendanceFilter: selectedAttendance,
+    };
 
+    onPrint(filters);
     onClose();
   };
 
@@ -84,7 +95,7 @@ const PrintFilterModal = ({
                 placeholder="Select Departments"
                 data={departments}
                 value={selectedDepartments}
-                onSelect={(values) => setSelectedDepartments(values)}
+                onSelect={setSelectedDepartments}
                 multiSelect
               />
             )}
@@ -95,7 +106,7 @@ const PrintFilterModal = ({
                 placeholder="Select Year Levels"
                 data={yearLevels}
                 value={selectedYearLevels}
-                onSelect={(values) => setSelectedYearLevels(values)}
+                onSelect={setSelectedYearLevels}
                 multiSelect
               />
             )}
@@ -109,8 +120,27 @@ const PrintFilterModal = ({
                   value: String(block.block_id),
                 }))}
                 value={selectedBlocks}
-                onSelect={(values) => setSelectedBlocks(values)}
+                onSelect={setSelectedBlocks}
                 multiSelect
+              />
+            )}
+
+            {showAttendance && (
+              <CustomDropdown
+                title="Attendance Filter"
+                placeholder="Select Attendance Status"
+                data={attendanceOptions}
+                value={selectedAttendance}
+                onSelect={(item) => {
+                  if (item && item.value) {
+                    setSelectedAttendance(item.value);
+                  } else if (typeof item === "string") {
+                    setSelectedAttendance(item);
+                  } else if (Array.isArray(item) && item.length > 0) {
+                    setSelectedAttendance(item[0]);
+                  }
+                }}
+                multiSelect={false}
               />
             )}
           </View>
