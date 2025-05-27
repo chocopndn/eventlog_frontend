@@ -28,7 +28,6 @@ import { startSync } from "../../../../services/api";
 import { useFocusEffect } from "expo-router";
 import { useAuth } from "../../../../context/AuthContext";
 import socketService from "../../../../services/socketService";
-import globalSocketHandler from "../../../../services/globalSocketHandler";
 
 const Home = () => {
   const { user } = useAuth();
@@ -47,7 +46,7 @@ const Home = () => {
   };
 
   const needsSync = (userRoleId) => {
-    return userRoleId !== 1;
+    return userRoleId === 1 || userRoleId === 2;
   };
 
   const refreshEventsFromDatabase = useCallback(async () => {
@@ -56,18 +55,6 @@ const Home = () => {
       let approvedEvents = (storedEvents || []).filter(
         (event) => event.status === "Approved"
       );
-
-      if ((roleId === 3 || roleId === 4) && blockId !== null) {
-        approvedEvents = approvedEvents.filter((event) => {
-          const eventBlockIds = event.block_ids || [];
-          return (
-            eventBlockIds.includes(blockId) ||
-            eventBlockIds.includes(blockId?.toString()) ||
-            eventBlockIds.includes(parseInt(blockId))
-          );
-        });
-      }
-
       setEvents(approvedEvents);
       return approvedEvents;
     } catch (error) {
@@ -77,26 +64,39 @@ const Home = () => {
 
   useEffect(() => {
     socketService.connect();
+
+    if (user?.role_id === 3 || user?.role_id === 4) {
+      socketService.joinRoom("all-events");
+    } else if ((user?.role_id === 1 || user?.role_id === 2) && user?.block_id) {
+      socketService.joinRoom(`block-${user.block_id}`);
+    }
+
     const checkConnection = setInterval(() => {
       if (socketService.socket?.connected) {
         clearInterval(checkConnection);
+        if (user?.role_id === 3 || user?.role_id === 4) {
+          socketService.joinRoom("all-events");
+        } else if (
+          (user?.role_id === 1 || user?.role_id === 2) &&
+          user?.block_id
+        ) {
+          socketService.joinRoom(`block-${user.block_id}`);
+        }
       } else {
         socketService.connect();
       }
     }, 1000);
+
     setTimeout(() => {
       clearInterval(checkConnection);
     }, 10000);
+
     return () => {
       clearInterval(checkConnection);
     };
-  }, []);
+  }, [user?.role_id, user?.block_id]);
 
   useEffect(() => {
-    if (!user?.block_id && !(user?.role_id === 3 || user?.role_id === 4)) {
-      return;
-    }
-
     const setupListeners = () => {
       if (!socketService.socket?.connected) {
         setTimeout(setupListeners, 1000);
@@ -121,32 +121,20 @@ const Home = () => {
 
         if (userRoleId === 3 || userRoleId === 4) {
           isRelevantToUser = true;
-        } else if (userRoleId === 1 || userRoleId === 2) {
-          if (userBlockId === null || userBlockId === undefined) {
-            isRelevantToUser = false;
-          } else {
-            isRelevantToUser =
-              eventBlockIds.includes(userBlockId) ||
-              eventBlockIds.includes(userBlockId?.toString()) ||
-              eventBlockIds.includes(parseInt(userBlockId));
-          }
-        } else {
-          if (userBlockId === null || userBlockId === undefined) {
-            isRelevantToUser = true;
-          } else {
-            isRelevantToUser =
-              eventBlockIds.includes(userBlockId) ||
-              eventBlockIds.includes(userBlockId?.toString()) ||
-              eventBlockIds.includes(parseInt(userBlockId));
-          }
+        } else if ((userRoleId === 1 || userRoleId === 2) && userBlockId) {
+          isRelevantToUser =
+            eventBlockIds.includes(userBlockId) ||
+            eventBlockIds.includes(userBlockId?.toString()) ||
+            eventBlockIds.includes(parseInt(userBlockId));
         }
 
         if (isRelevantToUser && data.data) {
           setModalTitle("New Event Added!");
-          setModalMessage(
-            data.message ||
-              `New event "${data.data.event_name}" has been approved and added to your schedule.`
-          );
+          const message =
+            userRoleId === 3 || userRoleId === 4
+              ? `New event "${data.data.event_name}" has been approved and added.`
+              : `New event "${data.data.event_name}" has been approved and added to your schedule.`;
+          setModalMessage(data.message || message);
           setModalVisible(true);
           setTimeout(() => {
             refreshEventsFromDatabase();
@@ -163,29 +151,19 @@ const Home = () => {
 
         if (userRoleId === 3 || userRoleId === 4) {
           isRelevantToUser = true;
-        } else if (userRoleId === 1 || userRoleId === 2) {
-          if (userBlockId === null || userBlockId === undefined) {
-            isRelevantToUser = false;
-          } else {
-            isRelevantToUser =
-              eventBlockIds.includes(userBlockId) ||
-              eventBlockIds.includes(parseInt(userBlockId));
-          }
-        } else {
-          if (userBlockId === null || userBlockId === undefined) {
-            isRelevantToUser = true;
-          } else {
-            isRelevantToUser =
-              eventBlockIds.includes(userBlockId) ||
-              eventBlockIds.includes(parseInt(userBlockId));
-          }
+        } else if ((userRoleId === 1 || userRoleId === 2) && userBlockId) {
+          isRelevantToUser =
+            eventBlockIds.includes(userBlockId) ||
+            eventBlockIds.includes(parseInt(userBlockId));
         }
 
         if (isRelevantToUser && data.event?.status === "Approved") {
           setModalTitle("New Event Added!");
-          setModalMessage(
-            `New event "${data.event.event_name}" has been added to your schedule.`
-          );
+          const message =
+            userRoleId === 3 || userRoleId === 4
+              ? `New event "${data.event.event_name}" has been added.`
+              : `New event "${data.event.event_name}" has been added to your schedule.`;
+          setModalMessage(message);
           setModalVisible(true);
           setTimeout(() => {
             refreshEventsFromDatabase();
@@ -194,13 +172,27 @@ const Home = () => {
       };
 
       const handleEventStatusChanged = (data) => {
+        const userRoleId = user?.role_id;
+        const userBlockId = user?.block_id;
+
         if (data.newStatus === "Approved") {
-          setModalTitle("Event Approved!");
-          setModalMessage(`Event "${data.eventName}" has been approved!`);
-          setModalVisible(true);
-          setTimeout(() => {
-            refreshEventsFromDatabase();
-          }, 1000);
+          let shouldShowNotification = false;
+
+          if (userRoleId === 3 || userRoleId === 4) {
+            shouldShowNotification = true;
+          } else if ((userRoleId === 1 || userRoleId === 2) && userBlockId) {
+            const eventBlockIds = data.block_ids || [];
+            shouldShowNotification = eventBlockIds.includes(userBlockId);
+          }
+
+          if (shouldShowNotification) {
+            setModalTitle("Event Approved!");
+            setModalMessage(`Event "${data.eventName}" has been approved!`);
+            setModalVisible(true);
+            setTimeout(() => {
+              refreshEventsFromDatabase();
+            }, 1000);
+          }
         } else if (
           data.newStatus === "Pending" ||
           data.newStatus === "Rejected"
@@ -211,10 +203,19 @@ const Home = () => {
         }
       };
 
+      const handleEventsListUpdated = (data) => {
+        if (data.events) {
+          setTimeout(() => {
+            refreshEventsFromDatabase();
+          }, 500);
+        }
+      };
+
       socketService.socket?.off("database-updated");
       socketService.socket?.off("newApprovedEvent");
       socketService.socket?.off("new-event-added");
       socketService.socket?.off("event-status-changed");
+      socketService.socket?.off("events-list-updated");
 
       socketService.socket?.on("database-updated", handleDatabaseUpdated);
       socketService.socket?.on("newApprovedEvent", handleNewApprovedEvent);
@@ -223,6 +224,7 @@ const Home = () => {
         "event-status-changed",
         handleEventStatusChanged
       );
+      socketService.socket?.on("events-list-updated", handleEventsListUpdated);
     };
 
     setupListeners();
@@ -232,6 +234,7 @@ const Home = () => {
       socketService.socket?.off("newApprovedEvent");
       socketService.socket?.off("new-event-added");
       socketService.socket?.off("event-status-changed");
+      socketService.socket?.off("events-list-updated");
     };
   }, [user?.block_id, user?.role_id, refreshEventsFromDatabase]);
 
@@ -243,7 +246,6 @@ const Home = () => {
         setInitialLoadComplete(true);
         return null;
       }
-
       setBlockId(user?.block_id || null);
       setRoleId(user?.role_id || null);
       setUserDataLoaded(true);
@@ -288,6 +290,7 @@ const Home = () => {
       if (!skipUserCheck && !userDataLoaded) {
         return;
       }
+
       const currentRoleId = skipUserCheck ? user?.role_id : roleId;
 
       if (!canViewEvents(currentRoleId)) {
@@ -298,19 +301,10 @@ const Home = () => {
 
       await refreshEventsFromDatabase();
 
-      let blockIdToFetch;
-      if (currentRoleId === 3 || currentRoleId === 4) {
-        blockIdToFetch = null;
-      } else {
-        blockIdToFetch = currentBlockId;
-        if (blockIdToFetch === null) {
-          setInitialLoadComplete(true);
-          return;
-        }
-      }
-
+      let blockIdToFetch = null;
       let timeoutTriggered = false;
       setRefreshing(true);
+
       const timeout = setTimeout(() => {
         timeoutTriggered = true;
         setModalTitle("Connection Issue");
@@ -322,17 +316,19 @@ const Home = () => {
 
       try {
         const response = await fetchUpcomingEvents(blockIdToFetch);
+
         if (!response?.success) {
           throw new Error(
             response?.message || "Failed to fetch events from API."
           );
         }
 
-        const approvedEvents = (response.events || []).filter(
+        const allEvents = response.events || [];
+        const approvedEvents = allEvents.filter(
           (event) => event.status === "Approved"
         );
 
-        if (approvedEvents.length === 0) {
+        if (allEvents.length === 0) {
           try {
             await clearEventsTable();
           } catch (clearError) {}
@@ -340,12 +336,13 @@ const Home = () => {
           return;
         }
 
-        const allApiEventIds = response.events.map((e) => e.event_id);
+        const allApiEventIds = allEvents.map((e) => e.event_id);
+
         try {
-          const cleanupResult = await cleanupOutdatedEvents(allApiEventIds);
+          await cleanupOutdatedEvents(allApiEventIds);
         } catch (cleanupError) {}
 
-        const storePromises = response.events.map(async (event) => {
+        const storePromises = allEvents.map(async (event) => {
           try {
             const result = await storeEvent(event, allApiEventIds);
             if (result?.success) {
@@ -366,11 +363,7 @@ const Home = () => {
           }
         });
 
-        const storeResults = await Promise.allSettled(storePromises);
-        const successfulStores = storeResults.filter(
-          (result) => result.status === "fulfilled" && result.value.success
-        ).length;
-
+        await Promise.allSettled(storePromises);
         await refreshEventsFromDatabase();
       } catch (error) {
         try {
@@ -479,6 +472,7 @@ const Home = () => {
       const parsedDates = datesArray
         .map((dateStr) => new Date(dateStr))
         .filter((d) => !isNaN(d));
+
       if (parsedDates.length === 0) return "N/A";
 
       const grouped = parsedDates.reduce((acc, date) => {
@@ -496,6 +490,7 @@ const Home = () => {
           return `${group.month} ${days}, ${group.year}`;
         })
         .join(" & ");
+
       return result;
     } catch (error) {
       return "N/A";
@@ -533,13 +528,13 @@ const Home = () => {
   const getRoleDisplayText = () => {
     switch (roleId) {
       case 1:
-        return "Administrator";
-      case 2:
         return "Student";
+      case 2:
+        return "Officer Student";
       case 3:
-        return "Instructor";
+        return "Administrator";
       case 4:
-        return "Officer";
+        return "Super Administrator";
       default:
         return "User";
     }
@@ -551,9 +546,6 @@ const Home = () => {
         <View style={styles.headerContainer}>
           <Text style={styles.textHeader}>EVENTLOG</Text>
           <Text style={styles.title}>LIST OF EVENTS</Text>
-          {roleId && (
-            <Text style={styles.roleText}>Role: {getRoleDisplayText()}</Text>
-          )}
           <View style={styles.line}></View>
         </View>
         <TouchableOpacity
@@ -582,6 +574,10 @@ const Home = () => {
           ) : !canViewEvents(roleId) ? (
             <Text style={styles.noEventText}>
               Your role does not have permission to view events.
+            </Text>
+          ) : (roleId === 1 || roleId === 2) && blockId === null ? (
+            <Text style={styles.noEventText}>
+              No block assigned. Please contact your administrator.
             </Text>
           ) : events.length > 0 ? (
             events.map((event, index) => {
@@ -642,13 +638,6 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     textAlign: "center",
   },
-  roleText: {
-    fontSize: theme.fontSizes.medium,
-    fontFamily: "SquadaOne",
-    color: theme.colors.primary,
-    textAlign: "center",
-    marginTop: theme.spacing.small,
-  },
   line: {
     borderColor: theme.colors.primary,
     borderWidth: 1,
@@ -678,6 +667,8 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     fontSize: theme.fontSizes.medium,
     fontFamily: theme.fontFamily.Arial,
+    marginTop: 20,
+    paddingHorizontal: theme.spacing.medium,
   },
   headerContainer: {
     marginTop: 20,
