@@ -73,29 +73,26 @@ const Records = () => {
         pastEventsData = pastResponse?.events || [];
       }
 
-      const groupedEvents = {};
-      [...ongoingEventsData, ...pastEventsData].forEach((record) => {
-        const { event_id, event_name, event_date } = record;
-        if (!groupedEvents[event_id]) {
-          groupedEvents[event_id] = {
-            event_id,
-            event_name,
-            event_dates: [],
-          };
-        }
-        groupedEvents[event_id].event_dates.push(event_date);
-      });
+      const processEvents = (events) => {
+        return events.map((event) => ({
+          event_id: event.event_id,
+          event_name: event.event_name,
+          event_dates:
+            typeof event.event_dates === "string"
+              ? event.event_dates.split(",").map((date) => date.trim())
+              : Array.isArray(event.event_dates)
+              ? event.event_dates
+              : [event.event_dates].filter(Boolean),
+        }));
+      };
 
-      const ongoingList = Object.values(groupedEvents).filter((event) =>
-        ongoingEventsData.some((e) => e.event_id === event.event_id)
-      );
-      const pastList = Object.values(groupedEvents).filter((event) =>
-        pastEventsData.some((e) => e.event_id === event.event_id)
-      );
+      const processedOngoing = processEvents(ongoingEventsData);
+      const processedPast = processEvents(pastEventsData);
 
-      setOngoingEvents(ongoingList);
-      setPastEvents(pastList);
+      setOngoingEvents(processedOngoing);
+      setPastEvents(processedPast);
     } catch (error) {
+      console.error("Error fetching records:", error);
     } finally {
       setLoading(false);
     }
@@ -142,7 +139,63 @@ const Records = () => {
     if (!Array.isArray(eventDates) || eventDates.length === 0) {
       return "No dates available";
     }
-    return eventDates
+
+    const sortedDates = eventDates
+      .filter((date) => date && date.trim())
+      .sort((a, b) => moment(a).valueOf() - moment(b).valueOf());
+
+    if (sortedDates.length === 0) {
+      return "No dates available";
+    }
+
+    if (sortedDates.length === 1) {
+      return moment(sortedDates[0]).format("MMM DD, YYYY");
+    }
+
+    const momentDates = sortedDates.map((date) => moment(date));
+    let isConsecutive = true;
+
+    for (let i = 1; i < momentDates.length; i++) {
+      const diff = momentDates[i].diff(momentDates[i - 1], "days");
+      if (diff !== 1) {
+        isConsecutive = false;
+        break;
+      }
+    }
+
+    if (isConsecutive && sortedDates.length === 2) {
+      const startDate = momentDates[0];
+      const endDate = momentDates[1];
+
+      if (
+        startDate.year() === endDate.year() &&
+        startDate.month() === endDate.month()
+      ) {
+        return `${startDate.format("MMM DD")}-${endDate.format("DD, YYYY")}`;
+      } else {
+        return `${startDate.format("MMM DD")} - ${endDate.format(
+          "MMM DD, YYYY"
+        )}`;
+      }
+    }
+
+    if (isConsecutive && sortedDates.length > 2) {
+      const startDate = momentDates[0];
+      const endDate = momentDates[momentDates.length - 1];
+
+      if (
+        startDate.year() === endDate.year() &&
+        startDate.month() === endDate.month()
+      ) {
+        return `${startDate.format("MMM DD")}-${endDate.format("DD, YYYY")}`;
+      } else {
+        return `${startDate.format("MMM DD")} - ${endDate.format(
+          "MMM DD, YYYY"
+        )}`;
+      }
+    }
+
+    return sortedDates
       .map((date) => moment(date).format("MMM DD, YYYY"))
       .join(", ");
   }, []);
