@@ -6,160 +6,75 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from "react-native";
-import React, { useState, useEffect } from "react";
-import { getRoleID, getStoredUser } from "../../../../database/queries";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
+import moment from "moment";
+import CustomSearch from "../../../../components/CustomSearch";
+import globalStyles from "../../../../constants/globalStyles";
+import theme from "../../../../constants/theme";
+import { router } from "expo-router";
+import { useAuth } from "../../../../context/AuthContext";
+import { useEvents } from "../../../../context/EventsContext";
+import { getStoredUser } from "../../../../database/queries";
 import {
   fetchUserOngoingEvents,
   fetchUserPastEvents,
   fetchAllPastEvents,
   fetchAllOngoingEvents,
 } from "../../../../services/api/records";
-import moment from "moment";
-import CustomSearch from "../../../../components/CustomSearch";
-import globalStyles from "../../../../constants/globalStyles";
-import theme from "../../../../constants/theme";
-import { router } from "expo-router";
 
 const Records = () => {
-  const [roleId, setRoleId] = useState(null);
-  const [allEvents, setAllEvents] = useState([]);
-  const [filteredOngoingEvents, setFilteredOngoingEvents] = useState([]);
-  const [filteredPastEvents, setFilteredPastEvents] = useState([]);
+  const { user } = useAuth();
+  const { loading: eventsLoading, lastEventUpdate } = useEvents();
   const [searchTerm, setSearchTerm] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [originalOngoing, setOriginalOngoing] = useState([]);
-  const [originalPast, setOriginalPast] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [ongoingEvents, setOngoingEvents] = useState([]);
+  const [pastEvents, setPastEvents] = useState([]);
   const [studentId, setStudentId] = useState(null);
   const [blockId, setBlockId] = useState(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchRoleId = async () => {
-      const roleId = await getRoleID();
-      if (!roleId) return;
-      setRoleId(roleId);
-    };
-    fetchRoleId();
-  }, []);
+  const canViewRecords = (userRoleId) => {
+    return [1, 2, 3].includes(userRoleId);
+  };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        let ongoingEvents = [];
-        let pastEvents = [];
-        let idNumber = null;
-        let blockNumber = null;
-
-        if (roleId === 1 || roleId === 2) {
-          const storedUser = await getStoredUser();
-          if (!storedUser || !storedUser.id_number) return;
-          idNumber = storedUser.id_number;
-          blockNumber = storedUser.block_id || null;
-          setStudentId(idNumber);
-          setBlockId(blockNumber);
-          const ongoingApiResponse = await fetchUserOngoingEvents(idNumber);
-          const pastApiResponse = await fetchUserPastEvents(idNumber);
-          ongoingEvents = ongoingApiResponse?.events || [];
-          pastEvents = pastApiResponse?.events || [];
-        } else if (roleId === 3) {
-          const ongoingApiResponse = await fetchAllOngoingEvents();
-          const pastApiResponse = await fetchAllPastEvents();
-          ongoingEvents = ongoingApiResponse?.events || [];
-          pastEvents = pastApiResponse?.events || [];
-        }
-
-        const groupedEvents = {};
-        [...ongoingEvents, ...pastEvents].forEach((record) => {
-          const { event_id, event_name, event_date } = record;
-          if (!groupedEvents[event_id]) {
-            groupedEvents[event_id] = {
-              event_id,
-              event_name,
-              event_dates: [],
-            };
-          }
-          groupedEvents[event_id].event_dates.push(event_date);
-        });
-
-        const allEvents = Object.values(groupedEvents);
-        const ongoingList = Object.values(groupedEvents).filter((event) =>
-          ongoingEvents.some((e) => e.event_id === event.event_id)
-        );
-        const pastList = Object.values(groupedEvents).filter((event) =>
-          pastEvents.some((e) => e.event_id === event.event_id)
-        );
-
-        setAllEvents(allEvents);
-        setOriginalOngoing(ongoingList);
-        setOriginalPast(pastList);
-        setFilteredOngoingEvents(ongoingList);
-        setFilteredPastEvents(pastList);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (roleId !== null) {
-      fetchData();
+  const fetchRecordsData = useCallback(async () => {
+    if (!user || !canViewRecords(user.role_id)) {
+      setOngoingEvents([]);
+      setPastEvents([]);
+      return;
     }
-  }, [roleId]);
-
-  useEffect(() => {
     try {
-      if (!searchTerm.trim()) {
-        setFilteredOngoingEvents(originalOngoing);
-        setFilteredPastEvents(originalPast);
-      } else {
-        const filteredEvents = allEvents.filter((event) =>
-          event.event_name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        setFilteredOngoingEvents(
-          filteredEvents.filter((event) =>
-            originalOngoing.some((e) => e.event_id === event.event_id)
-          )
-        );
-        setFilteredPastEvents(
-          filteredEvents.filter((event) =>
-            originalPast.some((e) => e.event_id === event.event_id)
-          )
-        );
-      }
-    } catch (error) {
-      console.error("Error filtering events:", error);
-    }
-  }, [searchTerm]);
+      setLoading(true);
+      let ongoingEventsData = [];
+      let pastEventsData = [];
+      let userIdNumber = null;
+      let userBlockNumber = null;
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      let ongoingEvents = [];
-      let pastEvents = [];
-      let idNumber = null;
-      let blockNumber = null;
-
-      if (roleId === 1 || roleId === 2) {
+      if (user.role_id === 1 || user.role_id === 2) {
         const storedUser = await getStoredUser();
-        if (!storedUser || !storedUser.id_number) return;
-        idNumber = storedUser.id_number;
-        blockNumber = storedUser.block_id || null;
-        setStudentId(idNumber);
-        setBlockId(blockNumber);
-        const ongoingApiResponse = await fetchUserOngoingEvents(idNumber);
-        const pastApiResponse = await fetchUserPastEvents(idNumber);
-        ongoingEvents = ongoingApiResponse?.events || [];
-        pastEvents = pastApiResponse?.events || [];
-      } else if (roleId === 3) {
-        const ongoingApiResponse = await fetchAllOngoingEvents();
-        const pastApiResponse = await fetchAllPastEvents();
-        ongoingEvents = ongoingApiResponse?.events || [];
-        pastEvents = pastApiResponse?.events || [];
+        if (!storedUser || !storedUser.id_number) {
+          return;
+        }
+        userIdNumber = storedUser.id_number;
+        userBlockNumber = storedUser.block_id || null;
+        setStudentId(userIdNumber);
+        setBlockId(userBlockNumber);
+        const [ongoingResponse, pastResponse] = await Promise.all([
+          fetchUserOngoingEvents(userIdNumber),
+          fetchUserPastEvents(userIdNumber),
+        ]);
+        ongoingEventsData = ongoingResponse?.events || [];
+        pastEventsData = pastResponse?.events || [];
+      } else if (user.role_id === 3) {
+        const [ongoingResponse, pastResponse] = await Promise.all([
+          fetchAllOngoingEvents(),
+          fetchAllPastEvents(),
+        ]);
+        ongoingEventsData = ongoingResponse?.events || [];
+        pastEventsData = pastResponse?.events || [];
       }
 
       const groupedEvents = {};
-      [...ongoingEvents, ...pastEvents].forEach((record) => {
+      [...ongoingEventsData, ...pastEventsData].forEach((record) => {
         const { event_id, event_name, event_date } = record;
         if (!groupedEvents[event_id]) {
           groupedEvents[event_id] = {
@@ -171,169 +86,170 @@ const Records = () => {
         groupedEvents[event_id].event_dates.push(event_date);
       });
 
-      const allEvents = Object.values(groupedEvents);
       const ongoingList = Object.values(groupedEvents).filter((event) =>
-        ongoingEvents.some((e) => e.event_id === event.event_id)
+        ongoingEventsData.some((e) => e.event_id === event.event_id)
       );
       const pastList = Object.values(groupedEvents).filter((event) =>
-        pastEvents.some((e) => e.event_id === event.event_id)
+        pastEventsData.some((e) => e.event_id === event.event_id)
       );
 
-      setAllEvents(allEvents);
-      setOriginalOngoing(ongoingList);
-      setOriginalPast(pastList);
-      setFilteredOngoingEvents(ongoingList);
-      setFilteredPastEvents(pastList);
+      setOngoingEvents(ongoingList);
+      setPastEvents(pastList);
     } catch (error) {
-      console.error("Error refreshing data:", error);
     } finally {
-      setIsRefreshing(false);
+      setLoading(false);
     }
-  };
+  }, [user?.role_id, user?.id_number]);
 
-  if (loading) {
+  useEffect(() => {
+    if (user) {
+      fetchRecordsData();
+    }
+  }, [user, fetchRecordsData]);
+
+  useEffect(() => {
+    if (lastEventUpdate > 0) {
+      setTimeout(() => {
+        fetchRecordsData();
+      }, 1000);
+    }
+  }, [lastEventUpdate, fetchRecordsData]);
+
+  const { filteredOngoing, filteredPast } = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return {
+        filteredOngoing: ongoingEvents,
+        filteredPast: pastEvents,
+      };
+    }
+    const searchLower = searchTerm.toLowerCase();
+    return {
+      filteredOngoing: ongoingEvents.filter((event) =>
+        event.event_name.toLowerCase().includes(searchLower)
+      ),
+      filteredPast: pastEvents.filter((event) =>
+        event.event_name.toLowerCase().includes(searchLower)
+      ),
+    };
+  }, [ongoingEvents, pastEvents, searchTerm]);
+
+  const onRefresh = useCallback(async () => {
+    if (loading) return;
+    await fetchRecordsData();
+  }, [loading, fetchRecordsData]);
+
+  const formatEventDates = useCallback((eventDates) => {
+    if (!Array.isArray(eventDates) || eventDates.length === 0) {
+      return "No dates available";
+    }
+    return eventDates
+      .map((date) => moment(date).format("MMM DD, YYYY"))
+      .join(", ");
+  }, []);
+
+  const handleEventPress = useCallback(
+    (eventId) => {
+      if (user?.role_id === 1 || user?.role_id === 2) {
+        router.push(
+          `/records/Attendance?eventId=${eventId}&studentId=${studentId}&blockId=${blockId}`
+        );
+      } else if (user?.role_id === 3) {
+        router.push(`/records/BlockList?eventId=${eventId}`);
+      }
+    },
+    [user?.role_id, studentId, blockId]
+  );
+
+  const renderEventSection = useCallback(
+    (title, events) => {
+      if (events.length === 0) return null;
+      return (
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>{title}</Text>
+          {events.map((event, index) => (
+            <TouchableOpacity
+              key={`${event.event_id}-${index}`}
+              style={styles.eventContainer}
+              onPress={() => handleEventPress(event.event_id)}
+            >
+              <Text style={styles.eventTitle}>{event.event_name}</Text>
+              <Text style={styles.eventDate}>
+                {formatEventDates(event.event_dates)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      );
+    },
+    [handleEventPress, formatEventDates]
+  );
+
+  const renderContent = useCallback(() => {
+    if (loading && ongoingEvents.length === 0 && pastEvents.length === 0) {
+      return (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Loading records...</Text>
+        </View>
+      );
+    }
+    if (!canViewRecords(user?.role_id)) {
+      return (
+        <View style={styles.noEventsContainer}>
+          <Text style={styles.noEventsText}>
+            Your role does not have permission to view records.
+          </Text>
+        </View>
+      );
+    }
+    const hasEvents = filteredOngoing.length > 0 || filteredPast.length > 0;
+    if (!hasEvents) {
+      return (
+        <View style={styles.noEventsContainer}>
+          <Text style={styles.noEventsText}>
+            {searchTerm.trim()
+              ? "No records found matching your search."
+              : "No records available."}
+          </Text>
+        </View>
+      );
+    }
     return (
-      <View style={globalStyles.secondaryContainer}>
-        <Text style={styles.loadingText}>Loading...</Text>
-      </View>
+      <>
+        {renderEventSection("Ongoing Events", filteredOngoing)}
+        {renderEventSection("Past Events", filteredPast)}
+      </>
     );
-  }
-
-  const hasEvents =
-    filteredOngoingEvents.length > 0 || filteredPastEvents.length > 0;
+  }, [
+    loading,
+    ongoingEvents.length,
+    pastEvents.length,
+    canViewRecords,
+    user?.role_id,
+    filteredOngoing,
+    filteredPast,
+    searchTerm,
+    renderEventSection,
+  ]);
 
   return (
     <View style={globalStyles.secondaryContainer}>
       <View style={styles.searchContainer}>
-        <CustomSearch
-          placeholder="Search records"
-          onSearch={(text) => setSearchTerm(text)}
-        />
+        <CustomSearch placeholder="Search records" onSearch={setSearchTerm} />
       </View>
       <ScrollView
-        style={{ flex: 1, width: "100%", marginBottom: 20 }}
-        contentContainerStyle={styles.scrollview}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollviewContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+          <RefreshControl
+            refreshing={loading || eventsLoading}
+            onRefresh={onRefresh}
+            colors={[theme.colors.primary]}
+            tintColor={theme.colors.primary}
+          />
         }
       >
-        {roleId === 1 || roleId === 2 ? (
-          <>
-            {filteredOngoingEvents.length > 0 && (
-              <View style={styles.sectionContainer}>
-                <Text style={styles.sectionTitle}>Ongoing Events</Text>
-                {filteredOngoingEvents.map((event, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.eventContainer}
-                    onPress={() =>
-                      router.push(
-                        `/records/Attendance?eventId=${event.event_id}&studentId=${studentId}&blockId=${blockId}`
-                      )
-                    }
-                  >
-                    <Text style={styles.eventTitle}>{event.event_name}</Text>
-                    <Text style={styles.eventDate}>
-                      {Array.isArray(event.event_dates) &&
-                      event.event_dates.length > 0
-                        ? event.event_dates
-                            .map((date) => moment(date).format("MMM DD, YYYY"))
-                            .join(", ")
-                        : "No dates available"}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-            {filteredPastEvents.length > 0 && (
-              <View style={styles.sectionContainer}>
-                <Text style={styles.sectionTitle}>Past Events</Text>
-                {filteredPastEvents.map((event, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.eventContainer}
-                    onPress={() =>
-                      router.push(
-                        `/records/Attendance?eventId=${event.event_id}&studentId=${studentId}&blockId=${blockId}`
-                      )
-                    }
-                  >
-                    <Text style={styles.eventTitle}>{event.event_name}</Text>
-                    <Text style={styles.eventDate}>
-                      {Array.isArray(event.event_dates) &&
-                      event.event_dates.length > 0
-                        ? event.event_dates
-                            .map((date) => moment(date).format("MMM DD, YYYY"))
-                            .join(", ")
-                        : "No dates available"}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </>
-        ) : roleId === 3 ? (
-          <>
-            {filteredOngoingEvents.length > 0 && (
-              <View style={styles.sectionContainer}>
-                <Text style={styles.sectionTitle}>Ongoing Events</Text>
-                {filteredOngoingEvents.map((event, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.eventContainer}
-                    onPress={() =>
-                      router.push(
-                        `/records/BlockList?eventId=${event.event_id}`
-                      )
-                    }
-                  >
-                    <Text style={styles.eventTitle}>{event.event_name}</Text>
-                    <Text style={styles.eventDate}>
-                      {Array.isArray(event.event_dates) &&
-                      event.event_dates.length > 0
-                        ? event.event_dates
-                            .map((date) => moment(date).format("MMM DD, YYYY"))
-                            .join(", ")
-                        : "No dates available"}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-            {filteredPastEvents.length > 0 && (
-              <View style={styles.sectionContainer}>
-                <Text style={styles.sectionTitle}>Past Events</Text>
-                {filteredPastEvents.map((event, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.eventContainer}
-                    onPress={() =>
-                      router.push(
-                        `/records/BlockList?eventId=${event.event_id}`
-                      )
-                    }
-                  >
-                    <Text style={styles.eventTitle}>{event.event_name}</Text>
-                    <Text style={styles.eventDate}>
-                      {Array.isArray(event.event_dates) &&
-                      event.event_dates.length > 0
-                        ? event.event_dates
-                            .map((date) => moment(date).format("MMM DD, YYYY"))
-                            .join(", ")
-                        : "No dates available"}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </>
-        ) : null}
-        {!hasEvents && (
-          <View style={styles.noEventsContainer}>
-            <Text style={styles.noEventsText}>No events available.</Text>
-          </View>
-        )}
+        {renderContent()}
       </ScrollView>
     </View>
   );
@@ -346,28 +262,14 @@ const styles = StyleSheet.create({
     width: "90%",
     marginTop: 30,
   },
-  eventContainer: {
-    borderWidth: 2,
-    width: "90%",
-    height: 50,
-    borderColor: theme.colors.primary,
-    marginTop: theme.spacing.medium,
-    justifyContent: "center",
-    paddingHorizontal: theme.spacing.small,
+  scrollView: {
+    flex: 1,
+    width: "100%",
+    marginBottom: 20,
   },
-  scrollview: {
+  scrollviewContent: {
     alignItems: "center",
     flexGrow: 1,
-  },
-  eventTitle: {
-    color: theme.colors.primary,
-    fontFamily: "SquadaOne",
-    fontSize: theme.fontSizes.large,
-  },
-  eventDate: {
-    fontSize: theme.fontSizes.small,
-    fontFamily: "SquadaOne",
-    color: theme.colors.primary,
   },
   sectionContainer: {
     width: "100%",
@@ -379,16 +281,45 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.title,
     fontFamily: "SquadaOne",
     color: theme.colors.primary,
+    marginBottom: theme.spacing.small,
+  },
+  eventContainer: {
+    borderWidth: 2,
+    width: "90%",
+    minHeight: 50,
+    borderColor: theme.colors.primary,
+    marginTop: theme.spacing.medium,
+    justifyContent: "center",
+    paddingHorizontal: theme.spacing.small,
+    paddingVertical: theme.spacing.small,
+  },
+  eventTitle: {
+    color: theme.colors.primary,
+    fontFamily: "SquadaOne",
+    fontSize: theme.fontSizes.large,
+  },
+  eventDate: {
+    fontSize: theme.fontSizes.small,
+    fontFamily: "SquadaOne",
+    color: theme.colors.primary,
+    marginTop: 2,
   },
   noEventsContainer: {
     alignItems: "center",
     justifyContent: "center",
     marginTop: theme.spacing.large,
+    paddingHorizontal: theme.spacing.medium,
   },
   noEventsText: {
     fontSize: theme.fontSizes.medium,
     fontFamily: "SquadaOne",
     color: theme.colors.primary,
+    textAlign: "center",
+  },
+  loadingContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: theme.spacing.large,
   },
   loadingText: {
     fontSize: theme.fontSizes.large,

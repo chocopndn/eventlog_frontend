@@ -3,165 +3,42 @@ import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import QRCode from "react-native-qrcode-svg";
 import CustomDropdown from "../../../../components/CustomDropdown";
-import { getStoredUser, getStoredEvents } from "../../../../database/queries";
+import { getStoredUser } from "../../../../database/queries";
 import CryptoES from "crypto-es";
 import { QR_SECRET_KEY } from "../../../../config/config";
-import socketService from "../../../../services/socketService";
 import { useAuth } from "../../../../context/AuthContext";
+import { useEvents } from "../../../../context/EventsContext";
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import images from "../../../../constants/images";
 
 const Generate = () => {
   const { user: authUser } = useAuth();
+  const { events } = useEvents();
   const [user, setUser] = useState(null);
-  const [events, setEvents] = useState([]);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
-  const fetchData = async () => {
+  const fetchUserData = async () => {
     try {
       const userData = await getStoredUser();
-      const eventsData = await getStoredEvents();
-      const approvedEvents = (eventsData || []).filter(
-        (event) => event.status === "Approved"
-      );
       setUser(userData);
-      setEvents(approvedEvents);
-      if (selectedEvent) {
-        const isSelectedEventStillValid = approvedEvents.some(
-          (event) => event.event_id === selectedEvent.event_id
-        );
-        if (!isSelectedEventStillValid) {
-          setSelectedEvent(null);
-        }
-      }
     } catch (error) {}
   };
 
   useEffect(() => {
-    fetchData();
+    fetchUserData();
   }, []);
 
   useEffect(() => {
-    if (authUser?.block_id) {
-      socketService.connect();
-      socketService.joinRoom(`block-${authUser.block_id}`);
-
-      socketService.socket?.off("upcoming-events-updated");
-      socketService.socket?.off("events-list-updated");
-      socketService.socket?.off("newApprovedEvent");
-      socketService.socket?.off("new-event-added");
-      socketService.socket?.off("event-deleted");
-      socketService.socket?.off("event-status-changed");
-      socketService.socket?.off("database-updated");
-
-      socketService.socket?.on("database-updated", (data) => {
-        if (data.type === "event-saved") {
-          setTimeout(() => fetchData(), 200);
-        }
-      });
-
-      socketService.socket?.on("upcoming-events-updated", (data) => {
-        if (data.block_id === authUser.block_id) {
-          fetchData();
-        }
-      });
-
-      socketService.socket?.on("events-list-updated", (data) => {
-        if (data.type === "upcoming") {
-          fetchData();
-        }
-      });
-
-      socketService.socket?.on("newApprovedEvent", (data) => {
-        const eventBlockIds = data.data?.block_ids || [];
-        const userBlockId = authUser?.block_id;
-        const isRelevantToUser =
-          eventBlockIds.includes(userBlockId) ||
-          eventBlockIds.includes(userBlockId?.toString()) ||
-          eventBlockIds.includes(parseInt(userBlockId));
-        if (isRelevantToUser) {
-          setEvents((prevEvents) => {
-            const eventExists = prevEvents.some(
-              (event) => event.event_id === data.data.event_id
-            );
-            if (!eventExists && data.data.status === "Approved") {
-              return [data.data, ...prevEvents];
-            }
-            return prevEvents;
-          });
-          setTimeout(() => fetchData(), 500);
-          setTimeout(() => fetchData(), 1500);
-          setTimeout(() => fetchData(), 3000);
-        }
-      });
-
-      socketService.socket?.on("new-event-added", (data) => {
-        if (data.block_ids?.includes(authUser?.block_id)) {
-          if (data.event?.status === "Approved") {
-            setEvents((prevEvents) => {
-              const eventExists = prevEvents.some(
-                (event) => event.event_id === data.event.event_id
-              );
-              if (!eventExists) {
-                return [data.event, ...prevEvents];
-              }
-              return prevEvents;
-            });
-            setTimeout(() => fetchData(), 500);
-            setTimeout(() => fetchData(), 1500);
-            setTimeout(() => fetchData(), 3000);
-          }
-        }
-      });
-
-      socketService.socket?.on("event-deleted", (data) => {
-        setEvents((prevEvents) =>
-          prevEvents.filter((event) => event.event_id !== data.eventId)
-        );
-        if (selectedEvent && selectedEvent.event_id === data.eventId) {
-          setSelectedEvent(null);
-        }
-      });
-
-      socketService.socket?.on("event-status-changed", (data) => {
-        if (data.newStatus === "Approved") {
-          setEvents((prevEvents) => {
-            const eventExists = prevEvents.some(
-              (event) => event.event_id === data.eventId
-            );
-            if (!eventExists && data.eventData) {
-              return [data.eventData, ...prevEvents];
-            }
-            return prevEvents;
-          });
-        } else if (
-          data.newStatus === "Pending" ||
-          data.newStatus === "Rejected"
-        ) {
-          setEvents((prevEvents) =>
-            prevEvents.filter((event) => event.event_id !== data.eventId)
-          );
-          if (selectedEvent && selectedEvent.event_id === data.eventId) {
-            setSelectedEvent(null);
-          }
-        }
-      });
-    }
-
-    return () => {
-      if (authUser?.block_id) {
-        socketService.leaveRoom(`block-${authUser.block_id}`);
+    if (selectedEvent) {
+      const isSelectedEventStillValid = events.some(
+        (event) => event.event_id === selectedEvent.event_id
+      );
+      if (!isSelectedEventStillValid) {
+        setSelectedEvent(null);
       }
-      socketService.socket?.off("upcoming-events-updated");
-      socketService.socket?.off("events-list-updated");
-      socketService.socket?.off("newApprovedEvent");
-      socketService.socket?.off("new-event-added");
-      socketService.socket?.off("event-deleted");
-      socketService.socket?.off("event-status-changed");
-      socketService.socket?.off("database-updated");
-    };
-  }, [authUser, selectedEvent]);
+    }
+  }, [events, selectedEvent]);
 
   const handleEventSelect = (event) => {
     setSelectedEvent(event);
@@ -253,9 +130,9 @@ const Generate = () => {
       {user && (
         <View style={styles.userDetailsContainer}>
           <Text style={styles.userDetails}>
-            {`${user.first_name} ${user.middle_name} ${user.last_name}${
-              user.suffix ? ` ${user.suffix}` : ""
-            }`}
+            {`${user.first_name} ${
+              user.middle_name ? user.middle_name + " " : ""
+            }${user.last_name}${user.suffix ? ` ${user.suffix}` : ""}`}
           </Text>
           <Text style={styles.userDetails}>ID: {user.id_number}</Text>
           <Text style={styles.userDetails}>Course: {user.course_code}</Text>

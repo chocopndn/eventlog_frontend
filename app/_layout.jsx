@@ -1,6 +1,7 @@
 import { Slot } from "expo-router";
 import { AuthProvider, useAuth } from "../context/AuthContext";
 import { EventsProvider } from "../context/EventsContext";
+import { RecordsProvider } from "../context/RecordsContext";
 import CustomModal from "../components/CustomModal";
 
 function RootLayoutWithModal() {
@@ -25,7 +26,9 @@ const RootLayout = () => {
   return (
     <AuthProvider>
       <EventsProvider>
-        <RootLayoutWithModal />
+        <RecordsProvider>
+          <RootLayoutWithModal />
+        </RecordsProvider>
       </EventsProvider>
     </AuthProvider>
   );
