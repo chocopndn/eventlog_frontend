@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Modal,
   View,
@@ -6,9 +6,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
+  Dimensions,
 } from "react-native";
 import theme from "../constants/theme";
 import images from "../constants/images";
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 const CustomModal = ({
   visible,
@@ -21,6 +24,20 @@ const CustomModal = ({
   cancelTitle = "Cancel",
   confirmTitle = "Confirm",
 }) => {
+  const [showContent, setShowContent] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      setShowContent(false);
+      const timer = setTimeout(() => {
+        setShowContent(true);
+      }, 150);
+      return () => clearTimeout(timer);
+    } else {
+      setShowContent(false);
+    }
+  }, [visible]);
+
   let iconSource;
   if (type === "success") {
     iconSource = images.success;
@@ -30,6 +47,11 @@ const CustomModal = ({
     iconSource = images.warning;
   }
 
+  const modalWidth = screenWidth * 0.8;
+  const modalHeight = 280;
+  const centerX = (screenWidth - modalWidth) / 2;
+  const centerY = (screenHeight - modalHeight) / 2;
+
   return (
     <Modal
       visible={visible}
@@ -38,33 +60,45 @@ const CustomModal = ({
       onRequestClose={onClose || onCancel}
     >
       <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
-          {iconSource && <Image source={iconSource} style={styles.icon} />}
-          {title && <Text style={styles.title}>{title}</Text>}
-          <Text style={styles.message}>{message}</Text>
+        {showContent && (
           <View
             style={[
-              styles.buttonContainer,
-              { justifyContent: onConfirm ? "space-between" : "center" },
+              styles.modalContainer,
+              {
+                position: "absolute",
+                left: centerX,
+                top: centerY,
+                width: modalWidth,
+              },
             ]}
           >
-            <TouchableOpacity
-              onPress={onCancel || onClose}
-              style={styles.cancelButton}
+            {iconSource && <Image source={iconSource} style={styles.icon} />}
+            {title && <Text style={styles.title}>{title}</Text>}
+            <Text style={styles.message}>{message}</Text>
+            <View
+              style={[
+                styles.buttonContainer,
+                { justifyContent: onConfirm ? "space-between" : "center" },
+              ]}
             >
-              <Text style={styles.cancelButtonText}>{cancelTitle}</Text>
-            </TouchableOpacity>
-
-            {onConfirm && (
               <TouchableOpacity
-                onPress={onConfirm}
-                style={styles.confirmButton}
+                onPress={onCancel || onClose}
+                style={styles.cancelButton}
               >
-                <Text style={styles.confirmButtonText}>{confirmTitle}</Text>
+                <Text style={styles.cancelButtonText}>{cancelTitle}</Text>
               </TouchableOpacity>
-            )}
+
+              {onConfirm && (
+                <TouchableOpacity
+                  onPress={onConfirm}
+                  style={styles.confirmButton}
+                >
+                  <Text style={styles.confirmButtonText}>{confirmTitle}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
-        </View>
+        )}
       </View>
     </Modal>
   );
@@ -72,13 +106,14 @@ const CustomModal = ({
 
 const styles = StyleSheet.create({
   overlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: screenWidth,
+    height: screenHeight,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContainer: {
-    width: "80%",
     padding: 20,
     alignItems: "center",
     justifyContent: "center",
