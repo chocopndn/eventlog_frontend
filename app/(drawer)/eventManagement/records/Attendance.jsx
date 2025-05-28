@@ -19,6 +19,7 @@ import * as Sharing from "expo-sharing";
 import CustomModal from "../../../../components/CustomModal";
 import { fetchStudentAttendanceByEventAndBlock } from "../../../../services/api/records";
 import { getStudentAttSummary } from "../../../../services/api/records";
+import TabsComponent from "../../../../components/TabsComponent";
 
 const SessionLog = ({ label, data, sessionType = "am" }) => {
   const now = moment.now();
@@ -48,6 +49,7 @@ const SessionLog = ({ label, data, sessionType = "am" }) => {
 
   const timeInKey = sessionType === "am" ? "am_in" : "pm_in";
   const timeOutKey = sessionType === "am" ? "am_out" : "pm_out";
+
   const scheduleTimeIn = data?.schedule?.[timeInKey];
   const scheduleTimeOut = data?.schedule?.[timeOutKey];
   const attendanceTimeIn = data?.attendance?.[timeInKey];
@@ -63,7 +65,7 @@ const SessionLog = ({ label, data, sessionType = "am" }) => {
         <Text style={styles.morningText}>{label}</Text>
       </View>
       <View style={styles.logContainer}>
-        <View style={styles.timeContainer}>
+        <View style={[styles.timeContainer, { width: "50%" }]}>
           <View
             style={[
               styles.timeLabelContainer,
@@ -76,7 +78,7 @@ const SessionLog = ({ label, data, sessionType = "am" }) => {
             {renderAttendanceStatus(scheduleTimeIn, attendanceTimeIn)}
           </View>
         </View>
-        <View style={styles.timeContainer}>
+        <View style={[styles.timeContainer, { width: "50%" }]}>
           <View style={[styles.timeLabelContainer, { borderRightWidth: 0 }]}>
             <Text style={styles.timeLabel}>Time Out</Text>
           </View>
@@ -112,11 +114,9 @@ const Attendance = () => {
           blockId,
           studentId
         );
-
         if (response.success) {
           const { data } = response;
           const student = data.students.find((s) => s.student_id === studentId);
-
           if (student) {
             setEventName(data.event_name);
             setStudentDetails({
@@ -143,7 +143,6 @@ const Attendance = () => {
         setLoading(false);
       }
     };
-
     if (eventId && blockId && studentId) {
       fetchData();
     } else {
@@ -158,65 +157,114 @@ const Attendance = () => {
         throw new Error("Failed to fetch student data for PDF generation.");
       }
 
-      const { event_name, student_id, student_name, attendance_summary } =
-        response.data;
+      const {
+        event_name,
+        student_id,
+        student_name,
+        attendance_summary,
+        available_time_periods = {},
+      } = response.data;
+
+      let tableHeaders = `<span class="col-date">Date</span>`;
+      if (available_time_periods.hasAmIn) {
+        tableHeaders += '<span class="col-time">AM In</span>';
+      }
+      if (available_time_periods.hasAmOut) {
+        tableHeaders += '<span class="col-time">AM Out</span>';
+      }
+      if (available_time_periods.hasPmIn) {
+        tableHeaders += '<span class="col-time">PM In</span>';
+      }
+      if (available_time_periods.hasPmOut) {
+        tableHeaders += '<span class="col-time">PM Out</span>';
+      }
+      tableHeaders += `
+        <span class="col-count">Present</span>
+        <span class="col-count">Absent</span>
+      `;
+
+      const tableRows = Object.entries(attendance_summary || {})
+        .map(([date, summary]) => {
+          let rowColumns = `<span class="col-date">${moment(date).format(
+            "MMMM D, YYYY"
+          )}</span>`;
+          if (available_time_periods.hasAmIn) {
+            rowColumns += `<span class="col-time">${
+              summary.am_in_attended || 0
+            }</span>`;
+          }
+          if (available_time_periods.hasAmOut) {
+            rowColumns += `<span class="col-time">${
+              summary.am_out_attended || 0
+            }</span>`;
+          }
+          if (available_time_periods.hasPmIn) {
+            rowColumns += `<span class="col-time">${
+              summary.pm_in_attended || 0
+            }</span>`;
+          }
+          if (available_time_periods.hasPmOut) {
+            rowColumns += `<span class="col-time">${
+              summary.pm_out_attended || 0
+            }</span>`;
+          }
+          rowColumns += `
+            <span class="col-count">${summary.present_count}</span>
+            <span class="col-count">${summary.absent_count}</span>
+          `;
+          return `<div class="record-line">${rowColumns}</div>`;
+        })
+        .join("");
 
       const htmlContent = `
       <html>
         <head>
           <meta charset="utf-8" />
           <style>
-            body { font-family: sans-serif; padding: 20px; }
-            h1 { color: #333; text-align: center; }
-            .info { margin-bottom: 15px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #999; padding: 8px; text-align: left; }
-            tr:nth-child(even) { background-color: #f9f9f9; }
-            .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #aaa; }
+            body { font-family: Arial, sans-serif; padding: 0px 40px 20px 40px; color: black; font-size: 11px; }
+            h2, h3, h4 { color: black; }
+            .header-line { color: black; font-weight: bold; margin-bottom: 10px; display: flex; }
+            .record-line { color: black; margin-bottom: 2px; display: flex; }
+            .col-date { width: 120px; text-align: left; }
+            .col-time { width: 60px; text-align: center; font-size: 11px; }
+            .col-count { width: 60px; text-align: center; }
           </style>
         </head>
         <body>
-          <h1>${event_name || "Unknown Event"}</h1>
-          <div class="info">
-            <p><strong>Name:</strong> ${student_name || "N/A"}</p>
-            <p><strong>ID:</strong> ${student_id || "N/A"}</p>
-            <p><strong>Course/Block:</strong> ${
-              studentDetails?.courseBlock || "N/A"
-            }</p>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Present</th>
-                <th>Absent</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${Object.entries(attendance_summary || {})
-                .map(
-                  ([date, { present_count, absent_count }]) => `
-                  <tr>
-                    <td>${moment(date).format("MMMM D, YYYY")}</td>
-                    <td>${present_count}</td>
-                    <td>${absent_count}</td>
-                  </tr>
-                `
-                )
-                .join("")}
-            </tbody>
-          </table>
-          <div class="footer">
-            Generated on ${moment().format("MMMM D, YYYY hh:mm A")}
+          <div style="padding-top: 10px;">
+            <h2 style="color: black; text-align: left; margin-bottom: 3px;">${
+              event_name || "Unknown Event"
+            }</h2>
+            <h3 style="color: black; text-align: left; margin-bottom: 3px;">Individual Attendance Report</h3>
+            <h4 style="color: black; text-align: left; margin-bottom: 3px;">Generated: ${new Date().toLocaleDateString(
+              "en-US",
+              {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              }
+            )}</h4>
+            <h3 style="color: black; text-align: left; margin-bottom: 10px;">${
+              student_name || "N/A"
+            } (${student_id || "N/A"})</h3>
+            <div style="margin-bottom: 15px;">
+              <p style="margin: 5px 0; text-align: left;"><strong>Course/Block:</strong> ${
+                studentDetails?.courseBlock || "N/A"
+              }</p>
+            </div>
+            <div class="header-line">
+              ${tableHeaders}
+            </div>
+            ${tableRows}
           </div>
         </body>
       </html>
     `;
 
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
-      const pdfName = `${student_name || "Student"} - ${
-        event_name || "Event"
-      }.pdf`;
+      const pdfName = `${
+        student_name || "Student"
+      } - Individual Attendance Report.pdf`;
       const pdfPath = `${FileSystem.documentDirectory}${pdfName}`;
       await FileSystem.moveAsync({ from: uri, to: pdfPath });
       await Sharing.shareAsync(pdfPath, {
@@ -336,6 +384,7 @@ const Attendance = () => {
         cancelTitle={modalConfig.cancelTitle}
         onCancel={() => setModalVisible(false)}
       />
+      <TabsComponent />
     </View>
   );
 };
@@ -356,6 +405,7 @@ const styles = StyleSheet.create({
     width: "100%",
     borderWidth: 2,
     borderColor: theme.colors.primary,
+    marginBottom: 90,
   },
   eventTitle: {
     fontSize: theme.fontSizes.huge,

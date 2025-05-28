@@ -15,6 +15,7 @@ import theme from "../../../../constants/theme";
 import images from "../../../../constants/images";
 
 import CustomSearch from "../../../../components/CustomSearch";
+import TabsComponent from "../../../../components/TabsComponent";
 
 const StudentsList = () => {
   const [students, setStudents] = useState([]);
@@ -140,6 +141,7 @@ const StudentsList = () => {
           ))
         )}
       </ScrollView>
+      <TabsComponent />
     </View>
   );
 };

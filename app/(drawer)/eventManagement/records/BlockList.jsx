@@ -21,6 +21,7 @@ import * as Print from "expo-print";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import CustomModal from "../../../../components/CustomModal";
+import TabsComponent from "../../../../components/TabsComponent";
 
 const BlockList = () => {
   const { eventId } = useLocalSearchParams();
@@ -49,10 +50,12 @@ const BlockList = () => {
         setLoading(true);
         const event_id = Number(eventId);
         const blocksData = await fetchBlocksOfEvents(event_id, "", "");
-        if (!blocksData?.success) throw new Error("Failed to load blocks");
-        setEventTitle(blocksData?.data?.event_title || "Event Title Not Found");
+        if (!blocksData.success) throw new Error("Failed to load blocks");
+        const eventTitle =
+          blocksData.data?.event_title || "Event Title Not Found";
+        setEventTitle(eventTitle);
         const mappedBlocks =
-          blocksData?.data?.blocks?.map((block) => ({
+          blocksData.data?.blocks?.map((block) => ({
             ...block,
             display_name: block.course_code
               ? `${block.course_code} ${block.block_name}`
@@ -60,7 +63,6 @@ const BlockList = () => {
           })) || [];
         setAllBlocks(mappedBlocks);
         setBlocks(mappedBlocks);
-
         const uniqueDepartments = [
           ...new Set(mappedBlocks.map((b) => b.department_id)),
         ];
@@ -69,11 +71,11 @@ const BlockList = () => {
             ?.course_code,
           value: String(deptId),
         }));
-        setDepartments([
+        const departmentsWithAll = [
           { label: "All Departments", value: "" },
           ...deptOptions,
-        ]);
-
+        ];
+        setDepartments(departmentsWithAll);
         const uniqueYearLevels = [
           ...new Set(mappedBlocks.map((b) => b.year_level_id)),
         ];
@@ -136,121 +138,316 @@ const BlockList = () => {
     setBlocks(filtered);
   }, [searchQuery, allBlocks]);
 
-  const handleSavePDF = async (filters) => {
-    const { departmentIds, blockIds, yearLevelIds } = filters;
-    const filteredBlocks = allBlocks.filter((block) => {
-      const departmentMatch =
-        departmentIds.length === 0 ||
-        departmentIds.includes(String(block.department_id));
-      const yearLevelMatch =
-        yearLevelIds.length === 0 ||
-        yearLevelIds.includes(String(block.year_level_id));
-      const blockMatch =
-        blockIds.length === 0 || blockIds.includes(String(block.block_id));
-      return departmentMatch && yearLevelMatch && blockMatch;
-    });
-
-    if (filteredBlocks.length === 0) {
-      alert("No blocks match the selected filters.");
-      return;
-    }
-
+  const formatTime = (timeString) => {
+    if (!timeString) return "-";
     try {
-      const startDate = new Date(2025, 4, 20);
-      const endDate = new Date(2025, 4, 26);
+      const date = new Date(timeString);
+      return date.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      });
+    } catch (error) {
+      return "-";
+    }
+  };
 
-      const formatDate = (date) => {
-        return date.toLocaleDateString("en-US", {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
+  const getAttendanceCounts = (student) => {
+    return {
+      am_in_count: student.am_in_attended || 0,
+      am_out_count: student.am_out_attended || 0,
+      pm_in_count: student.pm_in_attended || 0,
+      pm_out_count: student.pm_out_attended || 0,
+    };
+  };
+
+  const handleSavePDF = async (filters) => {
+    try {
+      const { departmentIds, blockIds, yearLevelIds, attendanceFilter } =
+        filters;
+      const filteredBlocks = allBlocks.filter((block) => {
+        const departmentMatch =
+          departmentIds.length === 0 ||
+          departmentIds.includes(String(block.department_id));
+        const yearLevelMatch =
+          yearLevelIds.length === 0 ||
+          yearLevelIds.includes(String(block.year_level_id));
+        const blockMatch =
+          blockIds.length === 0 || blockIds.includes(String(block.block_id));
+        return departmentMatch && yearLevelMatch && blockMatch;
+      });
+
+      if (filteredBlocks.length === 0) {
+        setModalConfig({
+          title: "No Blocks Found",
+          message: "No blocks match the selected filters.",
+          type: "warning",
+          cancelTitle: "OK",
         });
-      };
-
-      let dateString = "";
-      if (
-        startDate.getDate() === endDate.getDate() &&
-        startDate.getMonth() === endDate.getMonth() &&
-        startDate.getFullYear() === endDate.getFullYear()
-      ) {
-        dateString = `${formatDate(startDate)}`;
-      } else if (
-        startDate.getMonth() === endDate.getMonth() &&
-        startDate.getFullYear() === endDate.getFullYear()
-      ) {
-        dateString = `${startDate.toLocaleDateString("en-US", {
-          month: "long",
-        })} ${startDate.getDate()}–${endDate.getDate()}, ${startDate.getFullYear()}`;
-      } else {
-        dateString = `${formatDate(startDate)} – ${formatDate(endDate)}`;
+        setModalVisible(true);
+        return;
       }
 
       const attendanceSummaries = await Promise.all(
-        filteredBlocks.map((block) =>
-          fetchAttendanceSummaryPerBlock(Number(eventId), block.block_id)
-        )
+        filteredBlocks.map(async (block) => {
+          try {
+            const summary = await fetchAttendanceSummaryPerBlock(
+              Number(eventId),
+              block.block_id,
+              attendanceFilter
+            );
+            return summary;
+          } catch (error) {
+            return {
+              data: {
+                attendance_summary: [],
+                available_time_periods: {
+                  hasAmIn: false,
+                  hasAmOut: false,
+                  hasPmIn: false,
+                  hasPmOut: false,
+                },
+                first_event_date: null,
+                last_event_date: null,
+              },
+            };
+          }
+        })
       );
+
+      let eventStartDate = null;
+      let eventEndDate = null;
+      for (const summary of attendanceSummaries) {
+        if (summary?.data?.first_event_date && summary?.data?.last_event_date) {
+          eventStartDate = summary.data.first_event_date;
+          eventEndDate = summary.data.last_event_date;
+          break;
+        }
+      }
+
+      let dateString = "Date not available";
+      if (eventStartDate && eventEndDate) {
+        const startDate = new Date(eventStartDate);
+        const endDate = new Date(eventEndDate);
+        const formatDate = (date) =>
+          date.toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          });
+        if (
+          startDate.getDate() === endDate.getDate() &&
+          startDate.getMonth() === endDate.getMonth() &&
+          startDate.getFullYear() === endDate.getFullYear()
+        ) {
+          dateString = `${formatDate(startDate)}`;
+        } else if (
+          startDate.getMonth() === endDate.getMonth() &&
+          startDate.getFullYear() === endDate.getFullYear()
+        ) {
+          dateString = `${startDate.toLocaleDateString("en-US", {
+            month: "long",
+          })} ${startDate.getDate()}–${endDate.getDate()}, ${startDate.getFullYear()}`;
+        } else {
+          dateString = `${formatDate(startDate)} – ${formatDate(endDate)}`;
+        }
+      }
+
+      const studentsByBlock = {};
+      let globalAvailableTimePeriods = {
+        hasAmIn: false,
+        hasAmOut: false,
+        hasPmIn: false,
+        hasPmOut: false,
+      };
+
+      filteredBlocks.forEach((block, index) => {
+        const summaryData = attendanceSummaries[index]?.data || {};
+        const summary = summaryData.attendance_summary || [];
+        const availableTimePeriods = summaryData.available_time_periods || {
+          hasAmIn: false,
+          hasAmOut: false,
+          hasPmIn: false,
+          hasPmOut: false,
+        };
+
+        globalAvailableTimePeriods.hasAmIn =
+          globalAvailableTimePeriods.hasAmIn || availableTimePeriods.hasAmIn;
+        globalAvailableTimePeriods.hasAmOut =
+          globalAvailableTimePeriods.hasAmOut || availableTimePeriods.hasAmOut;
+        globalAvailableTimePeriods.hasPmIn =
+          globalAvailableTimePeriods.hasPmIn || availableTimePeriods.hasPmIn;
+        globalAvailableTimePeriods.hasPmOut =
+          globalAvailableTimePeriods.hasPmOut || availableTimePeriods.hasPmOut;
+
+        const departmentName =
+          departments.find((dept) => dept.value === String(block.department_id))
+            ?.label || "Unknown Department";
+
+        const blockStudents = summary.map((student) => {
+          const attendanceCounts = getAttendanceCounts(student);
+          return {
+            id: student.student_id,
+            name: student.student_name,
+            block: block.display_name,
+            department: departmentName,
+            present: student.present_count,
+            absent: student.absent_count,
+            am_in: attendanceCounts.am_in_count,
+            am_out: attendanceCounts.am_out_count,
+            pm_in: attendanceCounts.pm_in_count,
+            pm_out: attendanceCounts.pm_out_count,
+            availableTimePeriods: availableTimePeriods,
+          };
+        });
+
+        blockStudents.sort((a, b) => {
+          const lastNameA = a.name.split(",")[0].trim().toLowerCase();
+          const lastNameB = b.name.split(",")[0].trim().toLowerCase();
+          return lastNameA.localeCompare(lastNameB);
+        });
+
+        studentsByBlock[block.display_name] = {
+          students: blockStudents,
+          availableTimePeriods: availableTimePeriods,
+        };
+      });
+
+      const generateBlockPage = (blockName, blockData, isFirst = false) => {
+        const { students, availableTimePeriods } = blockData;
+
+        let headerColumns = `
+          <span class="col-id">ID Number</span>
+          <span class="col-name">Name</span>
+        `;
+        if (availableTimePeriods.hasAmIn) {
+          headerColumns += '<span class="col-time">AM In</span>';
+        }
+        if (availableTimePeriods.hasAmOut) {
+          headerColumns += '<span class="col-time">AM Out</span>';
+        }
+        if (availableTimePeriods.hasPmIn) {
+          headerColumns += '<span class="col-time">PM In</span>';
+        }
+        if (availableTimePeriods.hasPmOut) {
+          headerColumns += '<span class="col-time">PM Out</span>';
+        }
+        headerColumns += `
+          <span class="col-count">Present</span>
+          <span class="col-count">Absent</span>
+        `;
+
+        const studentRows =
+          students.length === 0
+            ? `<div style="text-align: center; margin-top: 20px; font-style: italic; color: #666;">
+               No records
+             </div>`
+            : students
+                .map((record) => {
+                  let rowColumns = `
+                <span class="col-id">${record.id}</span>
+                <span class="col-name">${record.name}</span>
+              `;
+                  if (availableTimePeriods.hasAmIn) {
+                    rowColumns += `<span class="col-time">${record.am_in}</span>`;
+                  }
+                  if (availableTimePeriods.hasAmOut) {
+                    rowColumns += `<span class="col-time">${record.am_out}</span>`;
+                  }
+                  if (availableTimePeriods.hasPmIn) {
+                    rowColumns += `<span class="col-time">${record.pm_in}</span>`;
+                  }
+                  if (availableTimePeriods.hasPmOut) {
+                    rowColumns += `<span class="col-time">${record.pm_out}</span>`;
+                  }
+                  rowColumns += `
+                <span class="col-count">${record.present}</span>
+                <span class="col-count">${record.absent}</span>
+              `;
+                  return `<div class="record-line">${rowColumns}</div>`;
+                })
+                .join("");
+
+        return `
+          <div style="${
+            isFirst
+              ? "padding-top: 10px;"
+              : "page-break-before: always; padding-top: 10px;"
+          }">
+            <h2 style="color: black; text-align: left; margin-bottom: 3px;">${eventTitle}</h2>
+            <h3 style="color: black; text-align: left; margin-bottom: 3px;">${
+              attendanceFilter === "all"
+                ? "General List"
+                : attendanceFilter === "present"
+                ? "Present List"
+                : "Absent List"
+            }</h3>
+            <h4 style="color: black; text-align: left; margin-bottom: 3px;">Date: ${dateString}</h4>
+            <h3 style="color: black; text-align: left; margin-bottom: 10px;">${blockName}</h3>
+            <div class="header-line">
+              ${headerColumns}
+            </div>
+            ${studentRows}
+          </div>
+        `;
+      };
 
       const html = `
         <html>
           <head>
             <meta charset="utf-8" />
             <style>
-              body { font-family: sans-serif; padding: 20px; }
-              h1, h5 { color: #333; }
-              table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-              th, td { border: 1px solid #999; padding: 4px; text-align: left; }
+              body { 
+                font-family: Arial, sans-serif; 
+                padding: 0px 20px 20px 20px; 
+                color: black;
+                font-size: 11px;
+              }
+              h1, h2, h3 { 
+                color: black; 
+                text-align: center;
+              }
+              .header-line {
+                color: black;
+                font-weight: bold;
+                margin-bottom: 10px;
+                display: flex;
+              }
+              .record-line {
+                color: black;
+                margin-bottom: 2px;
+                display: flex;
+              }
+              .col-id { width: 90px; }
+              .col-name { width: 200px; }
+              .col-time { width: 55px; text-align: center; font-size: 11px; }
+              .col-count { width: 55px; text-align: center; }
             </style>
           </head>
           <body>
-            <h1>${eventTitle}</h1>
-            <h3>Date: ${dateString}</h3>
-            ${filteredBlocks
-              .map((block, index) => {
-                const summary =
-                  attendanceSummaries[index]?.data?.attendance_summary || [];
-                return `
-                  <h2>${block.display_name}</h2>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Student ID</th>
-                        <th>Student Name</th>
-                        <th>Present</th>
-                        <th>Absent</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${summary
-                        .map(
-                          (student) => `
-                            <tr>
-                              <td>${student.student_id}</td>
-                              <td>${student.student_name}</td>
-                              <td>${student.present_count}</td>
-                              <td>${student.absent_count}</td>
-                            </tr>
-                          `
-                        )
-                        .join("")}
-                    </tbody>
-                  </table>
-                `;
-              })
+            ${Object.entries(studentsByBlock)
+              .map(([blockName, blockData], index) =>
+                generateBlockPage(blockName, blockData, index === 0)
+              )
               .join("")}
           </body>
         </html>
       `;
 
       const { uri } = await Print.printToFileAsync({ html });
-      const pdfName = `${eventTitle}.pdf`;
+      const filterName =
+        attendanceFilter === "all"
+          ? "General List"
+          : attendanceFilter === "present"
+          ? "Present List"
+          : "Absent List";
+      const pdfName = `${eventTitle} - ${filterName}.pdf`;
       const pdfPath = `${FileSystem.documentDirectory}${pdfName}`;
       await FileSystem.moveAsync({ from: uri, to: pdfPath });
       await Sharing.shareAsync(pdfPath, {
         UTI: ".pdf",
         mimeType: "application/pdf",
       });
-
       setModalConfig({
         title: "Download Successful",
         message: "Your attendance record has been downloaded successfully.",
@@ -269,17 +466,36 @@ const BlockList = () => {
     }
   };
 
+  const handleBlockPress = (block) => {
+    router.push({
+      pathname: "eventManagement/records/StudentsList",
+      params: { eventId: eventId, blockId: block.block_id },
+    });
+  };
+
+  const handleDownloadPress = () => {
+    if (allBlocks.length === 0) {
+      setModalConfig({
+        title: "No Blocks Available",
+        message: "No blocks available to print.",
+        type: "warning",
+        cancelTitle: "OK",
+      });
+      setModalVisible(true);
+      return;
+    }
+    setShowPrintModal(true);
+  };
+
   return (
     <View style={globalStyles.secondaryContainer}>
       <Text style={styles.eventTitle}>{eventTitle}</Text>
-
       <View style={styles.container}>
         <CustomSearch
           placeholder="Search blocks..."
           onSearch={(text) => setSearchQuery(text)}
         />
       </View>
-
       <View style={styles.container}>
         <View style={styles.filterContainer}>
           <View style={{ width: "48%" }}>
@@ -304,7 +520,6 @@ const BlockList = () => {
           </View>
         </View>
       </View>
-
       <ScrollView contentContainerStyle={styles.scrollviewContainer}>
         {loading ? (
           <Text style={styles.noDataText}>Loading blocks...</Text>
@@ -325,12 +540,7 @@ const BlockList = () => {
               >
                 <TouchableOpacity
                   style={styles.blockContainer}
-                  onPress={() =>
-                    router.push({
-                      pathname: "eventManagement/records/StudentsList",
-                      params: { eventId: eventId, blockId: block.block_id },
-                    })
-                  }
+                  onPress={() => handleBlockPress(block)}
                 >
                   <Text style={styles.blockText}>
                     {block.display_name || "Unnamed Block"}
@@ -341,20 +551,9 @@ const BlockList = () => {
           </View>
         )}
       </ScrollView>
-
       <View style={styles.buttonContainer}>
-        <CustomButton
-          title="Download"
-          onPress={() => {
-            if (allBlocks.length === 0) {
-              alert("No blocks available to print. Please add blocks first.");
-              return;
-            }
-            setShowPrintModal(true);
-          }}
-        />
+        <CustomButton title="Download" onPress={handleDownloadPress} />
       </View>
-
       <PrintFilterModal
         visible={showPrintModal}
         onClose={() => setShowPrintModal(false)}
@@ -362,11 +561,11 @@ const BlockList = () => {
         showDepartment={true}
         showBlock={true}
         showYearLevel={true}
+        showAttendance={true}
         departments={departments.filter((dept) => dept.value !== "")}
         blocks={allBlocks}
         yearLevels={yearLevels}
       />
-
       <CustomModal
         visible={modalVisible}
         title={modalConfig.title}
@@ -375,6 +574,7 @@ const BlockList = () => {
         cancelTitle={modalConfig.cancelTitle}
         onCancel={() => setModalVisible(false)}
       />
+      <TabsComponent />
     </View>
   );
 };
@@ -440,5 +640,6 @@ const styles = StyleSheet.create({
     width: "100%",
     marginVertical: 20,
     paddingHorizontal: theme.spacing.medium,
+    marginBottom: 95,
   },
 });

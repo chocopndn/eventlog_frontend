@@ -18,6 +18,8 @@ import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import { router } from "expo-router";
 
+import TabsComponent from "../../../../components/TabsComponent";
+
 const Records = () => {
   const [roleId, setRoleId] = useState(null);
   const [allEvents, setAllEvents] = useState([]);
@@ -246,6 +248,8 @@ const Records = () => {
           </View>
         )}
       </ScrollView>
+
+      <TabsComponent />
     </View>
   );
 };
