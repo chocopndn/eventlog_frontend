@@ -25,7 +25,6 @@ const AddStudent = () => {
     middle_name: "",
     last_name: "",
     suffix: "",
-    email: "",
   });
 
   const roles = [
@@ -82,8 +81,7 @@ const AddStudent = () => {
         !formData.role_id ||
         !formData.block_id ||
         !formData.first_name.trim() ||
-        !formData.last_name.trim() ||
-        !formData.email.trim()
+        !formData.last_name.trim()
       ) {
         setModal({
           visible: true,
@@ -102,7 +100,6 @@ const AddStudent = () => {
         middle_name: formData.middle_name || null,
         last_name: formData.last_name,
         suffix: formData.suffix || null,
-        email: formData.email,
       };
 
       setIsLoading(true);
@@ -123,7 +120,6 @@ const AddStudent = () => {
         middle_name: "",
         last_name: "",
         suffix: "",
-        email: "",
       });
     } catch (error) {
       setModal({
@@ -203,15 +199,6 @@ const AddStudent = () => {
             placeholder="Jr"
             value={formData.suffix}
             onChangeText={(text) => handleChange("suffix", text)}
-          />
-
-          <FormField
-            type="email"
-            iconShow={false}
-            title="Email"
-            placeholder="example@gmail.com"
-            value={formData.email}
-            onChangeText={(text) => handleChange("email", text)}
           />
         </View>
         <CustomDropdown

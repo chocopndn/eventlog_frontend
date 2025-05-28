@@ -50,6 +50,13 @@ const EditStudent = () => {
   ];
 
   const getStatusOptions = () => {
+    if (formData.status === "Not Enrolled") {
+      return [
+        { label: "Active", value: "Active" },
+        { label: "Disabled", value: "Disabled" },
+        { label: "Not Enrolled", value: "Not Enrolled" },
+      ];
+    }
     if (formData.status === "Unregistered") {
       return [
         { label: "Unregistered", value: "Unregistered" },
@@ -126,15 +133,15 @@ const EditStudent = () => {
   const handleChange = (name, value) => {
     if (
       name === "email" &&
-      formData.status === "Unregistered" &&
+      (formData.status === "Unregistered" ||
+        formData.status === "Not Enrolled") &&
       value.trim() !== ""
     ) {
       setFormData((prevFormData) => ({ ...prevFormData, email: null }));
       setModal({
         visible: true,
         title: "Warning",
-        message:
-          "This student is currently unregistered. Email cannot be added.",
+        message: `This student is currently ${formData.status.toLowerCase()}. Email cannot be added.`,
         type: "warning",
       });
       return;
@@ -175,7 +182,10 @@ const EditStudent = () => {
       }
 
       let emailValue = formData.email;
-      if (formData.status === "Unregistered") {
+      if (
+        formData.status === "Unregistered" ||
+        formData.status === "Not Enrolled"
+      ) {
         emailValue = null;
       }
 
@@ -266,7 +276,10 @@ const EditStudent = () => {
             placeholder="example@gmail.com"
             value={formData.email || ""}
             onChangeText={(text) => handleChange("email", text)}
-            editable={formData.status !== "Unregistered"}
+            editable={
+              formData.status !== "Unregistered" &&
+              formData.status !== "Not Enrolled"
+            }
           />
           <CustomDropdown
             title="Block"
