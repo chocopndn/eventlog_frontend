@@ -45,8 +45,10 @@ const SessionLog = ({ label, data, sessionType = "am" }) => {
       return null;
     }
   };
+
   const timeInKey = sessionType === "am" ? "am_in" : "pm_in";
   const timeOutKey = sessionType === "am" ? "am_out" : "pm_out";
+
   const scheduleTimeIn = data?.schedule?.[timeInKey];
   const scheduleTimeOut = data?.schedule?.[timeOutKey];
   const attendanceTimeIn = data?.attendance?.[timeInKey];
@@ -153,36 +155,78 @@ const Attendance = () => {
       if (!response?.success || !response.data) {
         throw new Error("Failed to fetch student data for PDF generation.");
       }
-      const { event_name, student_id, student_name, attendance_summary } =
-        response.data;
+
+      const {
+        event_name,
+        student_id,
+        student_name,
+        attendance_summary,
+        available_time_periods = {},
+      } = response.data;
+
+      let tableHeaders = `<span class="col-date">Date</span>`;
+      if (available_time_periods.hasAmIn) {
+        tableHeaders += '<span class="col-time">AM In</span>';
+      }
+      if (available_time_periods.hasAmOut) {
+        tableHeaders += '<span class="col-time">AM Out</span>';
+      }
+      if (available_time_periods.hasPmIn) {
+        tableHeaders += '<span class="col-time">PM In</span>';
+      }
+      if (available_time_periods.hasPmOut) {
+        tableHeaders += '<span class="col-time">PM Out</span>';
+      }
+      tableHeaders += `
+        <span class="col-count">Present</span>
+        <span class="col-count">Absent</span>
+      `;
+
+      const tableRows = Object.entries(attendance_summary || {})
+        .map(([date, summary]) => {
+          let rowColumns = `<span class="col-date">${moment(date).format(
+            "MMMM D, YYYY"
+          )}</span>`;
+          if (available_time_periods.hasAmIn) {
+            rowColumns += `<span class="col-time">${
+              summary.am_in_attended || 0
+            }</span>`;
+          }
+          if (available_time_periods.hasAmOut) {
+            rowColumns += `<span class="col-time">${
+              summary.am_out_attended || 0
+            }</span>`;
+          }
+          if (available_time_periods.hasPmIn) {
+            rowColumns += `<span class="col-time">${
+              summary.pm_in_attended || 0
+            }</span>`;
+          }
+          if (available_time_periods.hasPmOut) {
+            rowColumns += `<span class="col-time">${
+              summary.pm_out_attended || 0
+            }</span>`;
+          }
+          rowColumns += `
+            <span class="col-count">${summary.present_count}</span>
+            <span class="col-count">${summary.absent_count}</span>
+          `;
+          return `<div class="record-line">${rowColumns}</div>`;
+        })
+        .join("");
 
       const htmlContent = `
       <html>
         <head>
           <meta charset="utf-8" />
           <style>
-            body { 
-              font-family: Arial, sans-serif; 
-              padding: 0px 40px 20px 40px; 
-              color: black;
-            }
-            h2, h3, h4 { 
-              color: black; 
-            }
-            .header-line {
-              color: black;
-              font-weight: bold;
-              margin-bottom: 10px;
-              display: flex;
-            }
-            .record-line {
-              color: black;
-              margin-bottom: 2px;
-              display: flex;
-            }
-            .col-date { width: 200px; }
-            .col-present { width: 80px; }
-            .col-absent { width: 80px; }
+            body { font-family: Arial, sans-serif; padding: 0px 40px 20px 40px; color: black; font-size: 11px; }
+            h2, h3, h4 { color: black; }
+            .header-line { color: black; font-weight: bold; margin-bottom: 10px; display: flex; }
+            .record-line { color: black; margin-bottom: 2px; display: flex; }
+            .col-date { width: 120px; text-align: left; }
+            .col-time { width: 60px; text-align: center; font-size: 11px; }
+            .col-count { width: 60px; text-align: center; }
           </style>
         </head>
         <body>
@@ -199,32 +243,18 @@ const Attendance = () => {
                 year: "numeric",
               }
             )}</h4>
-            <h3 style="color: black; text-align: center; margin-bottom: 10px;">${
+            <h3 style="color: black; text-align: left; margin-bottom: 10px;">${
               student_name || "N/A"
             } (${student_id || "N/A"})</h3>
             <div style="margin-bottom: 15px;">
-              <p style="margin: 5px 0;"><strong>Course/Block:</strong> ${
+              <p style="margin: 5px 0; text-align: left;"><strong>Course/Block:</strong> ${
                 studentDetails?.courseBlock || "N/A"
               }</p>
             </div>
             <div class="header-line">
-              <span class="col-date">Date</span>
-              <span class="col-present">Present</span>
-              <span class="col-absent">Absent</span>
+              ${tableHeaders}
             </div>
-            ${Object.entries(attendance_summary || {})
-              .map(
-                ([date, { present_count, absent_count }]) => `
-                <div class="record-line">
-                  <span class="col-date">${moment(date).format(
-                    "MMMM D, YYYY"
-                  )}</span>
-                  <span class="col-present">${present_count}</span>
-                  <span class="col-absent">${absent_count}</span>
-                </div>
-              `
-              )
-              .join("")}
+            ${tableRows}
           </div>
         </body>
       </html>
@@ -240,6 +270,7 @@ const Attendance = () => {
         mimeType: "application/pdf",
         UTI: ".pdf",
       });
+
       setModalConfig({
         title: "Download Successful",
         message: "Your attendance record has been downloaded successfully.",

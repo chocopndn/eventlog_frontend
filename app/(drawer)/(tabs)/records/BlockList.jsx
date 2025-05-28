@@ -50,11 +50,9 @@ const BlockList = () => {
         const event_id = Number(eventId);
         const blocksData = await fetchBlocksOfEvents(event_id, "", "");
         if (!blocksData.success) throw new Error("Failed to load blocks");
-
         const eventTitle =
           blocksData.data?.event_title || "Event Title Not Found";
         setEventTitle(eventTitle);
-
         const mappedBlocks =
           blocksData.data?.blocks?.map((block) => ({
             ...block,
@@ -64,7 +62,6 @@ const BlockList = () => {
           })) || [];
         setAllBlocks(mappedBlocks);
         setBlocks(mappedBlocks);
-
         const uniqueDepartments = [
           ...new Set(mappedBlocks.map((b) => b.department_id)),
         ];
@@ -78,7 +75,6 @@ const BlockList = () => {
           ...deptOptions,
         ];
         setDepartments(departmentsWithAll);
-
         const uniqueYearLevels = [
           ...new Set(mappedBlocks.map((b) => b.year_level_id)),
         ];
@@ -108,7 +104,6 @@ const BlockList = () => {
           selectedDepartment || undefined,
           selectedYearLevel || undefined
         );
-
         let mappedBlocks = [];
         if (blocksData?.data?.blocks?.length > 0) {
           mappedBlocks = blocksData.data.blocks.map((block) => ({
@@ -135,7 +130,6 @@ const BlockList = () => {
       setBlocks(allBlocks);
       return;
     }
-
     const lowerQuery = searchQuery.toLowerCase();
     const filtered = allBlocks.filter((block) =>
       (block.display_name || "").toLowerCase().includes(lowerQuery)
@@ -170,7 +164,6 @@ const BlockList = () => {
     try {
       const { departmentIds, blockIds, yearLevelIds, attendanceFilter } =
         filters;
-
       const filteredBlocks = allBlocks.filter((block) => {
         const departmentMatch =
           departmentIds.length === 0 ||
@@ -194,32 +187,6 @@ const BlockList = () => {
         return;
       }
 
-      const startDate = new Date(2025, 4, 20);
-      const endDate = new Date(2025, 4, 26);
-      const formatDate = (date) =>
-        date.toLocaleDateString("en-US", {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        });
-      let dateString = "";
-      if (
-        startDate.getDate() === endDate.getDate() &&
-        startDate.getMonth() === endDate.getMonth() &&
-        startDate.getFullYear() === endDate.getFullYear()
-      ) {
-        dateString = `${formatDate(startDate)}`;
-      } else if (
-        startDate.getMonth() === endDate.getMonth() &&
-        startDate.getFullYear() === endDate.getFullYear()
-      ) {
-        dateString = `${startDate.toLocaleDateString("en-US", {
-          month: "long",
-        })} ${startDate.getDate()}–${endDate.getDate()}, ${startDate.getFullYear()}`;
-      } else {
-        dateString = `${formatDate(startDate)} – ${formatDate(endDate)}`;
-      }
-
       const attendanceSummaries = await Promise.all(
         filteredBlocks.map(async (block) => {
           try {
@@ -228,25 +195,96 @@ const BlockList = () => {
               block.block_id,
               attendanceFilter
             );
-
             return summary;
           } catch (error) {
-            return { data: { attendance_summary: [] } };
+            return {
+              data: {
+                attendance_summary: [],
+                available_time_periods: {
+                  hasAmIn: false,
+                  hasAmOut: false,
+                  hasPmIn: false,
+                  hasPmOut: false,
+                },
+                first_event_date: null,
+                last_event_date: null,
+              },
+            };
           }
         })
       );
 
+      let eventStartDate = null;
+      let eventEndDate = null;
+      for (const summary of attendanceSummaries) {
+        if (summary?.data?.first_event_date && summary?.data?.last_event_date) {
+          eventStartDate = summary.data.first_event_date;
+          eventEndDate = summary.data.last_event_date;
+          break;
+        }
+      }
+
+      let dateString = "Date not available";
+      if (eventStartDate && eventEndDate) {
+        const startDate = new Date(eventStartDate);
+        const endDate = new Date(eventEndDate);
+        const formatDate = (date) =>
+          date.toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          });
+        if (
+          startDate.getDate() === endDate.getDate() &&
+          startDate.getMonth() === endDate.getMonth() &&
+          startDate.getFullYear() === endDate.getFullYear()
+        ) {
+          dateString = `${formatDate(startDate)}`;
+        } else if (
+          startDate.getMonth() === endDate.getMonth() &&
+          startDate.getFullYear() === endDate.getFullYear()
+        ) {
+          dateString = `${startDate.toLocaleDateString("en-US", {
+            month: "long",
+          })} ${startDate.getDate()}–${endDate.getDate()}, ${startDate.getFullYear()}`;
+        } else {
+          dateString = `${formatDate(startDate)} – ${formatDate(endDate)}`;
+        }
+      }
+
       const studentsByBlock = {};
+      let globalAvailableTimePeriods = {
+        hasAmIn: false,
+        hasAmOut: false,
+        hasPmIn: false,
+        hasPmOut: false,
+      };
+
       filteredBlocks.forEach((block, index) => {
-        const summary =
-          attendanceSummaries[index]?.data?.attendance_summary || [];
+        const summaryData = attendanceSummaries[index]?.data || {};
+        const summary = summaryData.attendance_summary || [];
+        const availableTimePeriods = summaryData.available_time_periods || {
+          hasAmIn: false,
+          hasAmOut: false,
+          hasPmIn: false,
+          hasPmOut: false,
+        };
+
+        globalAvailableTimePeriods.hasAmIn =
+          globalAvailableTimePeriods.hasAmIn || availableTimePeriods.hasAmIn;
+        globalAvailableTimePeriods.hasAmOut =
+          globalAvailableTimePeriods.hasAmOut || availableTimePeriods.hasAmOut;
+        globalAvailableTimePeriods.hasPmIn =
+          globalAvailableTimePeriods.hasPmIn || availableTimePeriods.hasPmIn;
+        globalAvailableTimePeriods.hasPmOut =
+          globalAvailableTimePeriods.hasPmOut || availableTimePeriods.hasPmOut;
+
         const departmentName =
           departments.find((dept) => dept.value === String(block.department_id))
             ?.label || "Unknown Department";
 
         const blockStudents = summary.map((student) => {
           const attendanceCounts = getAttendanceCounts(student);
-
           return {
             id: student.student_id,
             name: student.student_name,
@@ -258,6 +296,7 @@ const BlockList = () => {
             am_out: attendanceCounts.am_out_count,
             pm_in: attendanceCounts.pm_in_count,
             pm_out: attendanceCounts.pm_out_count,
+            availableTimePeriods: availableTimePeriods,
           };
         });
 
@@ -267,65 +306,90 @@ const BlockList = () => {
           return lastNameA.localeCompare(lastNameB);
         });
 
-        if (blockStudents.length > 0) {
-          studentsByBlock[block.display_name] = blockStudents;
-        } else {
-          studentsByBlock[block.display_name] = [];
-        }
+        studentsByBlock[block.display_name] = {
+          students: blockStudents,
+          availableTimePeriods: availableTimePeriods,
+        };
       });
 
-      const generateBlockPage = (blockName, students, isFirst = false) => `
-        <div style="${
-          isFirst
-            ? "padding-top: 10px;"
-            : "page-break-before: always; padding-top: 10px;"
-        }">
-          <h2 style="color: black; text-align: left; margin-bottom: 3px;">${eventTitle}</h2>
-          <h3 style="color: black; text-align: left; margin-bottom: 3px;">${
-            attendanceFilter === "all"
-              ? "General List"
-              : attendanceFilter === "present"
-              ? "Present List"
-              : "Absent List"
-          }</h3>
-          <h4 style="color: black; text-align: left; margin-bottom: 3px;">Date: ${dateString}</h4>
-          <h3 style="color: black; text-align: left; margin-bottom: 10px;">${blockName}</h3>
-          
-          <div class="header-line">
-            <span class="col-id">ID Number</span>
-            <span class="col-name">Name</span>
-            <span class="col-time">AM In</span>
-            <span class="col-time">AM Out</span>
-            <span class="col-time">PM In</span>
-            <span class="col-time">PM Out</span>
-            <span class="col-count">Present</span>
-            <span class="col-count">Absent</span>
+      const generateBlockPage = (blockName, blockData, isFirst = false) => {
+        const { students, availableTimePeriods } = blockData;
+
+        let headerColumns = `
+          <span class="col-id">ID Number</span>
+          <span class="col-name">Name</span>
+        `;
+        if (availableTimePeriods.hasAmIn) {
+          headerColumns += '<span class="col-time">AM In</span>';
+        }
+        if (availableTimePeriods.hasAmOut) {
+          headerColumns += '<span class="col-time">AM Out</span>';
+        }
+        if (availableTimePeriods.hasPmIn) {
+          headerColumns += '<span class="col-time">PM In</span>';
+        }
+        if (availableTimePeriods.hasPmOut) {
+          headerColumns += '<span class="col-time">PM Out</span>';
+        }
+        headerColumns += `
+          <span class="col-count">Present</span>
+          <span class="col-count">Absent</span>
+        `;
+
+        const studentRows =
+          students.length === 0
+            ? `<div style="text-align: center; margin-top: 20px; font-style: italic; color: #666;">
+               No records
+             </div>`
+            : students
+                .map((record) => {
+                  let rowColumns = `
+                <span class="col-id">${record.id}</span>
+                <span class="col-name">${record.name}</span>
+              `;
+                  if (availableTimePeriods.hasAmIn) {
+                    rowColumns += `<span class="col-time">${record.am_in}</span>`;
+                  }
+                  if (availableTimePeriods.hasAmOut) {
+                    rowColumns += `<span class="col-time">${record.am_out}</span>`;
+                  }
+                  if (availableTimePeriods.hasPmIn) {
+                    rowColumns += `<span class="col-time">${record.pm_in}</span>`;
+                  }
+                  if (availableTimePeriods.hasPmOut) {
+                    rowColumns += `<span class="col-time">${record.pm_out}</span>`;
+                  }
+                  rowColumns += `
+                <span class="col-count">${record.present}</span>
+                <span class="col-count">${record.absent}</span>
+              `;
+                  return `<div class="record-line">${rowColumns}</div>`;
+                })
+                .join("");
+
+        return `
+          <div style="${
+            isFirst
+              ? "padding-top: 10px;"
+              : "page-break-before: always; padding-top: 10px;"
+          }">
+            <h2 style="color: black; text-align: left; margin-bottom: 3px;">${eventTitle}</h2>
+            <h3 style="color: black; text-align: left; margin-bottom: 3px;">${
+              attendanceFilter === "all"
+                ? "General List"
+                : attendanceFilter === "present"
+                ? "Present List"
+                : "Absent List"
+            }</h3>
+            <h4 style="color: black; text-align: left; margin-bottom: 3px;">Date: ${dateString}</h4>
+            <h3 style="color: black; text-align: left; margin-bottom: 10px;">${blockName}</h3>
+            <div class="header-line">
+              ${headerColumns}
+            </div>
+            ${studentRows}
           </div>
-          
-          ${
-            students.length === 0
-              ? `<div style="text-align: center; margin-top: 20px; font-style: italic; color: #666;">
-                 No records
-               </div>`
-              : students
-                  .map(
-                    (record) => `
-                <div class="record-line">
-                  <span class="col-id">${record.id}</span>
-                  <span class="col-name">${record.name}</span>
-                  <span class="col-time">${record.am_in}</span>
-                  <span class="col-time">${record.am_out}</span>
-                  <span class="col-time">${record.pm_in}</span>
-                  <span class="col-time">${record.pm_out}</span>
-                  <span class="col-count">${record.present}</span>
-                  <span class="col-count">${record.absent}</span>
-                </div>
-              `
-                  )
-                  .join("")
-          }
-        </div>
-      `;
+        `;
+      };
 
       const html = `
         <html>
@@ -361,8 +425,8 @@ const BlockList = () => {
           </head>
           <body>
             ${Object.entries(studentsByBlock)
-              .map(([blockName, students], index) =>
-                generateBlockPage(blockName, students, index === 0)
+              .map(([blockName, blockData], index) =>
+                generateBlockPage(blockName, blockData, index === 0)
               )
               .join("")}
           </body>
