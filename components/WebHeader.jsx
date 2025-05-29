@@ -67,9 +67,10 @@ const styles = StyleSheet.create({
     paddingLeft: theme.spacing.medium,
   },
   headerIcon: {
-    width: 50,
-    height: 50,
+    width: 40,
+    height: 40,
     tintColor: theme.colors.secondary,
+    marginBottom: theme.spacing.small,
   },
   navButtonContainer: {
     alignItems: "center",
