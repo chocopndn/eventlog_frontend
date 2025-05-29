@@ -22,6 +22,7 @@ const FormField = ({
   iconShow = true,
   borderColor = "primary",
   titleColor = "primary",
+  exampleColor = "secondary",
   design,
   multiline = false,
   example,
@@ -95,6 +96,9 @@ const FormField = ({
   const resolvedTitleColor =
     titleColor === "secondary" ? theme.colors.secondary : theme.colors.primary;
 
+  const resolvedExampleColor =
+    exampleColor === "primary" ? theme.colors.primary : theme.colors.secondary;
+
   const borderRadius = design === "sharp" ? 0 : theme.borderRadius.medium;
 
   return type === "code" ? (
@@ -105,7 +109,12 @@ const FormField = ({
             {title}
           </Text>
           {optional && <Text style={styles.optionalText}> (optional)</Text>}
-          {example && <Text style={styles.example}> (Ex: {example})</Text>}
+          {example && (
+            <Text style={[styles.example, { color: resolvedExampleColor }]}>
+              {" "}
+              (Ex: {example})
+            </Text>
+          )}
         </View>
       )}
       <View style={styles.codeContainer}>
@@ -139,7 +148,12 @@ const FormField = ({
             {title}
           </Text>
           {optional && <Text style={styles.optionalText}> (optional)</Text>}
-          {example && <Text style={styles.example}> (Ex: {example})</Text>}
+          {example && (
+            <Text style={[styles.example, { color: resolvedExampleColor }]}>
+              {" "}
+              (Ex: {example})
+            </Text>
+          )}
         </View>
       )}
       <View
@@ -244,7 +258,6 @@ const styles = StyleSheet.create({
   },
   example: {
     fontSize: theme.fontSizes.medium,
-    color: theme.colors.secondary,
     fontFamily: "Arial",
     fontStyle: "italic",
   },

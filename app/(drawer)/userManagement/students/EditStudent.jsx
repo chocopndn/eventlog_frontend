@@ -249,31 +249,36 @@ const EditStudent = () => {
         <View>
           <FormField
             title="First Name"
-            placeholder="Juan Miguel"
+            example="Juan Miguel"
+            exampleColor="primary"
             value={formData.first_name}
             onChangeText={(text) => handleChange("first_name", text)}
           />
           <FormField
             title="Middle Name (Optional)"
-            placeholder="Reyes"
+            example="Reyes"
+            exampleColor="primary"
             value={formData.middle_name}
             onChangeText={(text) => handleChange("middle_name", text)}
           />
           <FormField
             title="Last Name"
-            placeholder="Santos"
+            example="Santos"
+            exampleColor="primary"
             value={formData.last_name}
             onChangeText={(text) => handleChange("last_name", text)}
           />
           <FormField
             title="Suffix (Optional)"
-            placeholder="Jr"
+            example="Jr"
+            exampleColor="primary"
             value={formData.suffix}
             onChangeText={(text) => handleChange("suffix", text)}
           />
           <FormField
             title="Email"
-            placeholder="example@gmail.com"
+            example="example@gmail.com"
+            exampleColor="primary"
             value={formData.email || ""}
             onChangeText={(text) => handleChange("email", text)}
             editable={

@@ -168,35 +168,40 @@ const AddStudent = () => {
             type="id"
             iconShow={false}
             title="ID Number"
-            placeholder="12345678"
+            example="1234567"
+            exampleColor="primary"
             value={formData.id_number}
             onChangeText={(text) => handleChange("id_number", text)}
           />
 
           <FormField
             title="First Name"
-            placeholder="Juan Miguel"
+            example="Juan Miguel"
+            exampleColor="primary"
             value={formData.first_name}
             onChangeText={(text) => handleChange("first_name", text)}
           />
 
           <FormField
             title="Middle Name (Optional)"
-            placeholder="Reyes"
+            example="Reyes"
+            exampleColor="primary"
             value={formData.middle_name}
             onChangeText={(text) => handleChange("middle_name", text)}
           />
 
           <FormField
             title="Last Name"
-            placeholder="Santos"
+            example="Santos"
+            exampleColor="primary"
             value={formData.last_name}
             onChangeText={(text) => handleChange("last_name", text)}
           />
 
           <FormField
             title="Suffix (Optional)"
-            placeholder="Jr"
+            example="Jr"
+            exampleColor="primary"
             value={formData.suffix}
             onChangeText={(text) => handleChange("suffix", text)}
           />
