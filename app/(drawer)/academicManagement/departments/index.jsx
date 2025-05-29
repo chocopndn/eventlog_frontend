@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -48,17 +48,25 @@ export default function DepartmentsScreen() {
   };
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       loadDepartments();
     }, [])
   );
 
   const filteredDepartments = Array.isArray(departments)
     ? departments.filter((dept) => {
-        const label = dept.label?.toLowerCase() || "";
-        const value = dept.value?.toString().toLowerCase() || "";
-        const query = searchQuery.toLowerCase();
-        return label.includes(query) || value.includes(query);
+        if (!searchQuery.trim()) return true;
+
+        const departmentName = dept.department_name?.toLowerCase() || "";
+        const status = dept.status?.toLowerCase() || "";
+        const departmentId = dept.department_id?.toString().toLowerCase() || "";
+        const query = searchQuery.toLowerCase().trim();
+
+        return (
+          departmentName.includes(query) ||
+          status.includes(query) ||
+          departmentId.includes(query)
+        );
       })
     : [];
 
@@ -92,13 +100,24 @@ export default function DepartmentsScreen() {
     } catch (error) {}
   };
 
+  const handleSearchChange = (query) => {
+    setSearchQuery(query);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+  };
+
   return (
     <View style={[globalStyles.secondaryContainer, { paddingTop: 0 }]}>
       <Text style={styles.headerText}>DEPARTMENTS</Text>
       <View style={{ paddingHorizontal: theme.spacing.medium, width: "100%" }}>
         <SearchBar
           placeholder="Search departments..."
-          onSearch={(query) => setSearchQuery(query)}
+          value={searchQuery}
+          onSearch={handleSearchChange}
+          onChangeText={handleSearchChange}
+          onClear={handleClearSearch}
         />
       </View>
       <ScrollView
@@ -125,7 +144,7 @@ export default function DepartmentsScreen() {
                   {department.department_name}
                 </Text>
                 <Text style={styles.departmentCode} numberOfLines={1}>
-                  {department.status}
+                  Status: {department.status}
                 </Text>
               </View>
               <View style={styles.iconContainer}>
@@ -151,7 +170,11 @@ export default function DepartmentsScreen() {
             </TouchableOpacity>
           ))
         ) : (
-          <Text style={styles.noResults}>No departments found</Text>
+          <Text style={styles.noResults}>
+            {searchQuery.trim()
+              ? `No departments found matching "${searchQuery}"`
+              : "No departments found"}
+          </Text>
         )}
       </ScrollView>
 
