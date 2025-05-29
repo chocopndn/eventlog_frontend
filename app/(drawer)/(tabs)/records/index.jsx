@@ -77,12 +77,7 @@ const Records = () => {
         return events.map((event) => ({
           event_id: event.event_id,
           event_name: event.event_name,
-          event_dates:
-            typeof event.event_dates === "string"
-              ? event.event_dates.split(",").map((date) => date.trim())
-              : Array.isArray(event.event_dates)
-              ? event.event_dates
-              : [event.event_dates].filter(Boolean),
+          event_dates: processEventDates(event.event_dates),
         }));
       };
 
@@ -97,6 +92,30 @@ const Records = () => {
       setLoading(false);
     }
   }, [user?.role_id, user?.id_number]);
+
+  const processEventDates = (eventDates) => {
+    if (!eventDates) return [];
+
+    let dates = [];
+
+    if (typeof eventDates === "string") {
+      dates = eventDates
+        .split(",")
+        .map((date) => date.trim())
+        .filter(Boolean);
+    } else if (Array.isArray(eventDates)) {
+      dates = eventDates.filter(Boolean);
+    } else {
+      dates = [eventDates].filter(Boolean);
+    }
+
+    return dates
+      .map((date) => {
+        const parsedDate = moment(date);
+        return parsedDate.isValid() ? parsedDate.format("YYYY-MM-DD") : null;
+      })
+      .filter(Boolean);
+  };
 
   useEffect(() => {
     if (user) {
@@ -140,32 +159,31 @@ const Records = () => {
       return "No dates available";
     }
 
-    const sortedDates = eventDates
-      .filter((date) => date && date.trim())
-      .sort((a, b) => moment(a).valueOf() - moment(b).valueOf());
+    const validDates = eventDates
+      .map((date) => moment(date))
+      .filter((momentDate) => momentDate.isValid())
+      .sort((a, b) => a.valueOf() - b.valueOf());
 
-    if (sortedDates.length === 0) {
+    if (validDates.length === 0) {
       return "No dates available";
     }
 
-    if (sortedDates.length === 1) {
-      return moment(sortedDates[0]).format("MMM DD, YYYY");
+    if (validDates.length === 1) {
+      return validDates[0].format("MMM DD, YYYY");
     }
 
-    const momentDates = sortedDates.map((date) => moment(date));
     let isConsecutive = true;
-
-    for (let i = 1; i < momentDates.length; i++) {
-      const diff = momentDates[i].diff(momentDates[i - 1], "days");
+    for (let i = 1; i < validDates.length; i++) {
+      const diff = validDates[i].diff(validDates[i - 1], "days");
       if (diff !== 1) {
         isConsecutive = false;
         break;
       }
     }
 
-    if (isConsecutive && sortedDates.length === 2) {
-      const startDate = momentDates[0];
-      const endDate = momentDates[1];
+    if (isConsecutive) {
+      const startDate = validDates[0];
+      const endDate = validDates[validDates.length - 1];
 
       if (
         startDate.year() === endDate.year() &&
@@ -179,25 +197,16 @@ const Records = () => {
       }
     }
 
-    if (isConsecutive && sortedDates.length > 2) {
-      const startDate = momentDates[0];
-      const endDate = momentDates[momentDates.length - 1];
-
-      if (
-        startDate.year() === endDate.year() &&
-        startDate.month() === endDate.month()
-      ) {
-        return `${startDate.format("MMM DD")}-${endDate.format("DD, YYYY")}`;
-      } else {
-        return `${startDate.format("MMM DD")} - ${endDate.format(
-          "MMM DD, YYYY"
-        )}`;
-      }
-    }
-
-    return sortedDates
-      .map((date) => moment(date).format("MMM DD, YYYY"))
+    const datesToShow = validDates.slice(0, 3);
+    const formatted = datesToShow
+      .map((date) => date.format("MMM DD, YYYY"))
       .join(", ");
+
+    if (validDates.length > 3) {
+      return `${formatted}... (+${validDates.length - 3} more)`;
+    }
+
+    return formatted;
   }, []);
 
   const handleEventPress = useCallback(
