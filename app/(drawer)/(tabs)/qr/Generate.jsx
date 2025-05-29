@@ -1,6 +1,7 @@
-import { StyleSheet, View, Image, Text, TouchableOpacity } from "react-native";
-import React, { useState, useEffect } from "react";
+import { StyleSheet, View, Image, Text } from "react-native";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { StatusBar } from "expo-status-bar";
+import { useFocusEffect } from "expo-router";
 import QRCode from "react-native-qrcode-svg";
 import CustomDropdown from "../../../../components/CustomDropdown";
 import { getStoredUser } from "../../../../database/queries";
@@ -14,9 +15,16 @@ import images from "../../../../constants/images";
 
 const Generate = () => {
   const { user: authUser } = useAuth();
-  const { events } = useEvents();
+  const {
+    events,
+    refreshEventsFromDatabase,
+    fetchAndStoreEvents,
+    lastEventUpdate,
+  } = useEvents();
   const [user, setUser] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const prevEventsLength = useRef(events.length);
+  const lastFetchRef = useRef(0);
 
   const fetchUserData = async () => {
     try {
@@ -30,7 +38,8 @@ const Generate = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedEvent) {
+    const currentLength = events.length;
+    if (selectedEvent && currentLength !== prevEventsLength.current) {
       const isSelectedEventStillValid = events.some(
         (event) => event.event_id === selectedEvent.event_id
       );
@@ -38,7 +47,36 @@ const Generate = () => {
         setSelectedEvent(null);
       }
     }
+    prevEventsLength.current = currentLength;
   }, [events, selectedEvent]);
+
+  const smartFetch = useCallback(
+    (reason) => {
+      const now = Date.now();
+      if (now - lastFetchRef.current < 3000) {
+        return;
+      }
+      lastFetchRef.current = now;
+      fetchAndStoreEvents();
+    },
+    [fetchAndStoreEvents]
+  );
+
+  useEffect(() => {
+    smartFetch("Mount");
+  }, [smartFetch]);
+
+  useFocusEffect(
+    useCallback(() => {
+      smartFetch("Focus");
+    }, [smartFetch])
+  );
+
+  useEffect(() => {
+    if (lastEventUpdate > 0) {
+      smartFetch("EventsContext notification");
+    }
+  }, [lastEventUpdate, smartFetch]);
 
   const handleEventSelect = (event) => {
     setSelectedEvent(event);
@@ -99,6 +137,9 @@ const Generate = () => {
       </View>
       <View style={styles.dropdownContainer}>
         <CustomDropdown
+          key={`dropdown-${events.length}-${events
+            .map((e) => e.event_id)
+            .join("-")}`}
           display="sharp"
           fontFamily={theme.fontFamily.SquadaOne}
           placeholder="SELECT EVENT"

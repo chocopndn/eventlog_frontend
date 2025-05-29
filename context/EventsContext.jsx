@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from "react";
 import socketService from "../services/socketService";
 import { getStoredEvents } from "../database/queries";
@@ -16,7 +17,18 @@ export const EventsProvider = ({ children }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [lastFetchTime, setLastFetchTime] = useState(0);
+  const refreshTimeoutRef = useRef(null);
+  const updateNotificationTimeoutRef = useRef(null);
   const [lastEventUpdate, setLastEventUpdate] = useState(0);
+
+  const notifyEventUpdate = useCallback(() => {
+    if (updateNotificationTimeoutRef.current) {
+      clearTimeout(updateNotificationTimeoutRef.current);
+    }
+    updateNotificationTimeoutRef.current = setTimeout(() => {
+      setLastEventUpdate(Date.now());
+    }, 2000);
+  }, []);
 
   const canViewEvents = (userRoleId) => {
     return [1, 2, 3, 4].includes(userRoleId);
@@ -41,9 +53,33 @@ export const EventsProvider = ({ children }) => {
     return false;
   };
 
+  const debouncedRefresh = useCallback(() => {
+    if (updateNotificationTimeoutRef.current) {
+      clearTimeout(updateNotificationTimeoutRef.current);
+    }
+    updateNotificationTimeoutRef.current = setTimeout(() => {
+      updateNotificationTimeoutRef.current = null;
+      refreshEventsFromDatabase();
+    }, 1000);
+  }, []);
+
+  const debouncedAPIFetch = useCallback(() => {
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current);
+    }
+    refreshTimeoutRef.current = setTimeout(async () => {
+      refreshTimeoutRef.current = null;
+      await fetchAndStoreEvents();
+    }, 2000);
+  }, []);
+
   const refreshEventsFromDatabase = useCallback(async () => {
     if (!user || !canViewEvents(user.role_id)) {
-      setEvents([]);
+      if (user === null && events.length > 0) {
+        setEvents([]);
+      } else if (user === undefined) {
+        return events;
+      }
       return [];
     }
     try {
@@ -55,12 +91,11 @@ export const EventsProvider = ({ children }) => {
       setEvents(approvedEvents);
       return approvedEvents;
     } catch (error) {
-      setEvents([]);
-      return [];
+      return events;
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, events]);
 
   const fetchAndStoreEvents = useCallback(async () => {
     if (!user) return;
@@ -111,27 +146,35 @@ export const EventsProvider = ({ children }) => {
       });
       await Promise.allSettled(storePromises);
       await refreshEventsFromDatabase();
-      setLastEventUpdate(Date.now());
     } catch (error) {
       await refreshEventsFromDatabase();
     }
-  }, [user?.role_id, user?.block_id, lastFetchTime, refreshEventsFromDatabase]);
+  }, [user?.role_id, user?.block_id, lastFetchTime]);
 
   useEffect(() => {
     if (authLoading) {
       return;
     }
-    if (!user) {
+
+    if (user === null) {
       setEvents([]);
       return;
     }
+
+    if (user === undefined) {
+      return;
+    }
+
     refreshEventsFromDatabase();
+
     socketService.connect();
+
     if (user?.role_id === 3 || user?.role_id === 4) {
       socketService.joinRoom("all-events");
     } else if ((user?.role_id === 1 || user?.role_id === 2) && user?.block_id) {
       socketService.joinRoom(`block-${user.block_id}`);
     }
+
     const checkConnection = setInterval(() => {
       if (socketService.socket?.connected) {
         clearInterval(checkConnection);
@@ -147,6 +190,7 @@ export const EventsProvider = ({ children }) => {
         socketService.connect();
       }
     }, 1000);
+
     setTimeout(() => {
       clearInterval(checkConnection);
     }, 10000);
@@ -156,7 +200,7 @@ export const EventsProvider = ({ children }) => {
         data.type === "event-saved" ||
         data.type === "events-fetched-and-stored"
       ) {
-        await refreshEventsFromDatabase();
+        debouncedRefresh();
       }
     };
 
@@ -164,16 +208,7 @@ export const EventsProvider = ({ children }) => {
       const eventData = data.data || data;
       const eventBlockIds = eventData?.block_ids || [];
       if (isEventRelevantToUser(eventBlockIds, user?.block_id, user?.role_id)) {
-        const message =
-          user?.role_id === 3 || user?.role_id === 4
-            ? `New event "${
-                eventData?.event_name || "Untitled"
-              }" has been approved and added.`
-            : `New event "${
-                eventData?.event_name || "Untitled"
-              }" has been approved and added to your schedule.`;
-        showGlobalModal("New Event Added!", data.message || message, "success");
-        setTimeout(() => fetchAndStoreEvents(), 1000);
+        setLastEventUpdate(Date.now());
       }
     };
 
@@ -183,12 +218,7 @@ export const EventsProvider = ({ children }) => {
         isEventRelevantToUser(eventBlockIds, user?.block_id, user?.role_id) &&
         data.event?.status === "Approved"
       ) {
-        const message =
-          user?.role_id === 3 || user?.role_id === 4
-            ? `New event "${data.event.event_name}" has been added.`
-            : `New event "${data.event.event_name}" has been added to your schedule.`;
-        showGlobalModal("New Event Added!", message, "success");
-        setTimeout(() => fetchAndStoreEvents(), 1000);
+        setLastEventUpdate(Date.now());
       }
     };
 
@@ -197,12 +227,7 @@ export const EventsProvider = ({ children }) => {
         if (
           isEventRelevantToUser(data.block_ids, user?.block_id, user?.role_id)
         ) {
-          showGlobalModal(
-            "Event Approved!",
-            `Event "${data.eventName}" has been approved!`,
-            "success"
-          );
-          setTimeout(() => fetchAndStoreEvents(), 1000);
+          setLastEventUpdate(Date.now());
         }
       } else if (
         data.newStatus === "Pending" ||
@@ -211,24 +236,11 @@ export const EventsProvider = ({ children }) => {
         setEvents((prevEvents) =>
           prevEvents.filter((event) => event.event_id !== data.eventId)
         );
-        setLastEventUpdate(Date.now());
-        if (
-          data.newStatus === "Rejected" &&
-          isEventRelevantToUser(data.block_ids, user?.block_id, user?.role_id)
-        ) {
-          showGlobalModal(
-            "Event Status Changed",
-            `Event "${
-              data.eventName
-            }" has been ${data.newStatus.toLowerCase()}.`,
-            "warning"
-          );
-        }
       }
     };
 
     const handleEventsListUpdated = async (data) => {
-      setTimeout(() => refreshEventsFromDatabase(), 500);
+      setLastEventUpdate(Date.now());
     };
 
     const eventTypes = [
@@ -238,9 +250,11 @@ export const EventsProvider = ({ children }) => {
       "event-status-changed",
       "events-list-updated",
     ];
+
     eventTypes.forEach((eventType) => {
       socketService.socket?.off(eventType);
     });
+
     socketService.socket?.on("database-updated", handleDatabaseUpdated);
     socketService.socket?.on("newApprovedEvent", handleNewApprovedEvent);
     socketService.socket?.on("new-event-added", handleNewEventAdded);
@@ -249,17 +263,15 @@ export const EventsProvider = ({ children }) => {
 
     return () => {
       clearInterval(checkConnection);
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+        refreshTimeoutRef.current = null;
+      }
       eventTypes.forEach((eventType) => {
         socketService.socket?.off(eventType);
       });
     };
-  }, [
-    authLoading,
-    user?.role_id,
-    user?.block_id,
-    showGlobalModal,
-    refreshEventsFromDatabase,
-  ]);
+  }, [authLoading, user?.role_id, user?.block_id, user]);
 
   return (
     <EventsContext.Provider

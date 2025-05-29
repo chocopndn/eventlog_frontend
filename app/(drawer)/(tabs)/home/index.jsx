@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useRef, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -8,7 +8,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import CollapsibleDropdown from "../../../../components/CollapsibleDropdown";
@@ -18,16 +18,40 @@ import { useEvents } from "../../../../context/EventsContext";
 
 const Home = () => {
   const { user } = useAuth();
-  const { events, loading, refreshEventsFromDatabase, fetchAndStoreEvents } =
-    useEvents();
+  const { events, loading, fetchAndStoreEvents, lastEventUpdate } = useEvents();
+
+  const lastFetchRef = useRef(0);
 
   const canViewEvents = (userRoleId) => [1, 2, 3, 4].includes(userRoleId);
 
-  const onRefresh = useCallback(async () => {
-    if (loading) return;
-    await refreshEventsFromDatabase();
-    await fetchAndStoreEvents();
-  }, [loading, refreshEventsFromDatabase, fetchAndStoreEvents]);
+  const smartFetch = useCallback(
+    async (reason) => {
+      const now = Date.now();
+      if (now - lastFetchRef.current < 5000) {
+        return;
+      }
+      lastFetchRef.current = now;
+      if (loading) return;
+      await fetchAndStoreEvents();
+    },
+    [loading, fetchAndStoreEvents]
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      smartFetch("Focus");
+    }, [smartFetch])
+  );
+
+  const onRefresh = useCallback(() => {
+    smartFetch("Manual refresh");
+  }, [smartFetch]);
+
+  useEffect(() => {
+    if (lastEventUpdate > 0) {
+      smartFetch("EventsContext notification");
+    }
+  }, [lastEventUpdate, smartFetch]);
 
   const formatTime = (timeString) => {
     if (!timeString || typeof timeString !== "string" || !timeString.trim())
