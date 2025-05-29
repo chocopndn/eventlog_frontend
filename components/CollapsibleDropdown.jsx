@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderTopWidth: 0,
     borderColor: theme.colors.primary,
-    height: 200,
+    height: 250,
     justifyContent: "center",
   },
   date: {
