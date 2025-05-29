@@ -25,21 +25,25 @@ const SessionLog = ({ label, data, sessionType = "am" }) => {
   const now = moment.now();
   const isAttendanceTimePassed = (time) => {
     try {
-      if (!time) return false;
+      if (!time) return true;
       const dateStr = data.date;
-      if (!dateStr) return false;
+      if (!dateStr) return true;
       const timeMoment = moment(`${dateStr}T${time}`, "YYYY-MM-DDTHH:mm:ss");
       return timeMoment.isSameOrBefore(now);
     } catch (error) {
-      return false;
+      return true;
     }
   };
+
   const renderAttendanceStatus = (time, attendance) => {
     try {
-      if (isAttendanceTimePassed(time)) {
+      if (attendance !== null && attendance !== undefined) {
         const iconSource = attendance ? images.present : images.absent;
         const iconStyle = attendance ? styles.presentIcon : styles.absentIcon;
         return <Image source={iconSource} style={iconStyle} />;
+      }
+      if (isAttendanceTimePassed(time)) {
+        return <Image source={images.absent} style={styles.absentIcon} />;
       }
       return null;
     } catch (error) {
@@ -49,7 +53,6 @@ const SessionLog = ({ label, data, sessionType = "am" }) => {
 
   const timeInKey = sessionType === "am" ? "am_in" : "pm_in";
   const timeOutKey = sessionType === "am" ? "am_out" : "pm_out";
-
   const scheduleTimeIn = data?.schedule?.[timeInKey];
   const scheduleTimeOut = data?.schedule?.[timeOutKey];
   const attendanceTimeIn = data?.attendance?.[timeInKey];
@@ -91,11 +94,92 @@ const SessionLog = ({ label, data, sessionType = "am" }) => {
   );
 };
 
+const AttendanceSummary = ({ summaryData, availableTimePeriods }) => {
+  if (!summaryData || Object.keys(summaryData).length === 0) {
+    return null;
+  }
+
+  return (
+    <View style={styles.summaryContainer}>
+      <Text style={styles.summaryTitle}>Attendance Summary</Text>
+      <View style={styles.summaryHeaderRow}>
+        <Text style={[styles.summaryHeaderCell, styles.dateColumn]}>Date</Text>
+        {availableTimePeriods?.hasAmIn && (
+          <Text style={[styles.summaryHeaderCell, styles.timeColumn]}>
+            AM In
+          </Text>
+        )}
+        {availableTimePeriods?.hasAmOut && (
+          <Text style={[styles.summaryHeaderCell, styles.timeColumn]}>
+            AM Out
+          </Text>
+        )}
+        {availableTimePeriods?.hasPmIn && (
+          <Text style={[styles.summaryHeaderCell, styles.timeColumn]}>
+            PM In
+          </Text>
+        )}
+        {availableTimePeriods?.hasPmOut && (
+          <Text style={[styles.summaryHeaderCell, styles.timeColumn]}>
+            PM Out
+          </Text>
+        )}
+        <Text style={[styles.summaryHeaderCell, styles.countColumn]}>
+          Present
+        </Text>
+        <Text style={[styles.summaryHeaderCell, styles.countColumn]}>
+          Absent
+        </Text>
+      </View>
+      {Object.entries(summaryData).map(([date, summary]) => (
+        <View key={date} style={styles.summaryRow}>
+          <Text style={[styles.summaryCell, styles.dateColumn]}>
+            {moment(date).format("MMM D")}
+          </Text>
+          {availableTimePeriods?.hasAmIn && (
+            <Text style={[styles.summaryCell, styles.timeColumn]}>
+              {summary.am_in_attended || 0}
+            </Text>
+          )}
+          {availableTimePeriods?.hasAmOut && (
+            <Text style={[styles.summaryCell, styles.timeColumn]}>
+              {summary.am_out_attended || 0}
+            </Text>
+          )}
+          {availableTimePeriods?.hasPmIn && (
+            <Text style={[styles.summaryCell, styles.timeColumn]}>
+              {summary.pm_in_attended || 0}
+            </Text>
+          )}
+          {availableTimePeriods?.hasPmOut && (
+            <Text style={[styles.summaryCell, styles.timeColumn]}>
+              {summary.pm_out_attended || 0}
+            </Text>
+          )}
+          <Text
+            style={[styles.summaryCell, styles.countColumn, styles.presentText]}
+          >
+            {summary.present_count}
+          </Text>
+          <Text
+            style={[styles.summaryCell, styles.countColumn, styles.absentText]}
+          >
+            {summary.absent_count}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+};
+
 const Attendance = () => {
   const [attendanceDataList, setAttendanceDataList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [eventName, setEventName] = useState("");
   const [studentDetails, setStudentDetails] = useState(null);
+  const [attendanceSummary, setAttendanceSummary] = useState(null);
+  const [availableTimePeriods, setAvailableTimePeriods] = useState(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
   const { eventId, blockId, studentId } = useLocalSearchParams();
   const [modalVisible, setModalVisible] = useState(false);
   const [modalConfig, setModalConfig] = useState({
@@ -114,9 +198,11 @@ const Attendance = () => {
           blockId,
           studentId
         );
+
         if (response.success) {
           const { data } = response;
           const student = data.students.find((s) => s.student_id === studentId);
+
           if (student) {
             setEventName(data.event_name);
             setStudentDetails({
@@ -150,9 +236,35 @@ const Attendance = () => {
     }
   }, [eventId, blockId, studentId]);
 
+  const fetchSummaryData = async () => {
+    try {
+      setSummaryLoading(true);
+      const response = await getStudentAttSummary({
+        event_id: eventId,
+        student_id: studentId,
+      });
+      if (response?.success && response.data) {
+        setAttendanceSummary(response.data.attendance_summary);
+        setAvailableTimePeriods(response.data.available_time_periods);
+      } else {
+        setAttendanceSummary(null);
+        setAvailableTimePeriods(null);
+      }
+    } catch (error) {
+      setAttendanceSummary(null);
+      setAvailableTimePeriods(null);
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
   const handlePrint = async () => {
     try {
-      const response = await getStudentAttSummary(eventId, studentId);
+      const response = await getStudentAttSummary({
+        event_id: eventId,
+        student_id: studentId,
+      });
+
       if (!response?.success || !response.data) {
         throw new Error("Failed to fetch student data for PDF generation.");
       }
@@ -324,6 +436,8 @@ const Attendance = () => {
                 Course/Block: {studentDetails.courseBlock}
               </Text>
             </View>
+
+            <Text style={styles.detailsTitle}>Detailed Records</Text>
             {attendanceDataList.map((attendanceData, index) => {
               const sessionData = {
                 date: attendanceData.date,
@@ -428,6 +542,14 @@ const styles = StyleSheet.create({
     color: theme.colors.primary,
     marginTop: theme.spacing.xsmall,
   },
+  detailsTitle: {
+    fontSize: theme.fontSizes.extraLarge,
+    fontFamily: theme.fontFamily.SquadaOne,
+    color: theme.colors.primary,
+    textAlign: "center",
+    marginTop: theme.spacing.large,
+    marginBottom: theme.spacing.medium,
+  },
   attendanceContainer: {
     borderWidth: 3,
     borderColor: theme.colors.primary,
@@ -523,5 +645,71 @@ const styles = StyleSheet.create({
     fontFamily: theme.fontFamily.SquadaOne,
     color: theme.colors.secondary,
     textAlign: "center",
+  },
+  summaryContainer: {
+    marginBottom: theme.spacing.large,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    backgroundColor: "#f8f9fa",
+  },
+  summaryTitle: {
+    fontSize: theme.fontSizes.extraLarge,
+    fontFamily: theme.fontFamily.SquadaOne,
+    color: theme.colors.primary,
+    textAlign: "center",
+    paddingVertical: theme.spacing.medium,
+    borderBottomWidth: 2,
+    borderBottomColor: theme.colors.primary,
+  },
+  summaryHeaderRow: {
+    flexDirection: "row",
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.small,
+  },
+  summaryHeaderCell: {
+    fontSize: theme.fontSizes.small,
+    fontFamily: theme.fontFamily.SquadaOne,
+    color: "white",
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+  summaryRow: {
+    flexDirection: "row",
+    paddingVertical: theme.spacing.small,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.primary,
+  },
+  summaryCell: {
+    fontSize: theme.fontSizes.small,
+    fontFamily: theme.fontFamily.SquadaOne,
+    color: theme.colors.primary,
+    textAlign: "center",
+  },
+  dateColumn: {
+    flex: 2,
+  },
+  timeColumn: {
+    flex: 1,
+  },
+  countColumn: {
+    flex: 1,
+  },
+  presentText: {
+    color: theme.colors.green,
+    fontWeight: "bold",
+  },
+  absentText: {
+    color: "red",
+    fontWeight: "bold",
+  },
+  summaryLoadingContainer: {
+    paddingVertical: theme.spacing.large,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  summaryLoadingText: {
+    fontSize: theme.fontSizes.medium,
+    fontFamily: theme.fontFamily.SquadaOne,
+    color: theme.colors.secondary,
   },
 });

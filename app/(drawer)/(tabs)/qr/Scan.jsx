@@ -14,6 +14,7 @@ import {
   logAttendance,
   isAlreadyLogged,
 } from "../../../../database/queries";
+import { syncAttendance } from "../../../../services/api";
 
 const Scan = () => {
   const [permission, requestPermission] = useCameraPermissions();
@@ -62,6 +63,15 @@ const Scan = () => {
     }
   }, [permission]);
 
+  useEffect(() => {
+    const performAutoSync = async () => {
+      try {
+        const result = await syncAttendance();
+      } catch (error) {}
+    };
+    performAutoSync();
+  }, []);
+
   if (!permission) {
     return (
       <View style={[globalStyles.secondaryContainer, styles.messageContainer]}>
@@ -87,46 +97,6 @@ const Scan = () => {
     );
   }
 
-  const determineTimeSlot = (currentTime, timeChecks) => {
-    const current = moment(currentTime, "HH:mm:ss");
-    for (const check of timeChecks) {
-      if (check.start && check.end) {
-        const isInWindow = current.isBetween(
-          moment(check.start, "HH:mm:ss"),
-          moment(check.end, "HH:mm:ss"),
-          null,
-          "[]"
-        );
-        if (isInWindow) {
-          return check.type;
-        }
-      }
-    }
-    const validSlots = timeChecks.filter((check) => check.start && check.end);
-    for (const check of validSlots) {
-      const slotStart = moment(check.start, "HH:mm:ss");
-      const slotEnd = moment(check.end, "HH:mm:ss");
-      if (current.isBefore(slotStart)) {
-        return check.type;
-      }
-      if (current.isAfter(slotEnd)) {
-        const nextSlot = validSlots.find((nextCheck) => {
-          const nextStart = moment(nextCheck.start, "HH:mm:ss");
-          return nextStart.isAfter(slotEnd);
-        });
-        if (!nextSlot || current.isBefore(moment(nextSlot.start, "HH:mm:ss"))) {
-          return check.type;
-        }
-      }
-    }
-    const lastSlot = validSlots[validSlots.length - 1];
-    if (lastSlot) {
-      return lastSlot.type;
-    }
-    const fallback = validSlots[0]?.type || "AM_IN";
-    return fallback;
-  };
-
   const handleBarcodeScanned = async ({ data }) => {
     if (!isScanning) return;
     setIsScanning(false);
@@ -134,6 +104,7 @@ const Scan = () => {
       if (!isBase64(data)) {
         throw new Error("Invalid QR Code format - not base64");
       }
+
       let decryptedText;
       try {
         const bytes = CryptoJS.AES.decrypt(data, QR_SECRET_KEY);
@@ -141,59 +112,72 @@ const Scan = () => {
       } catch (decryptError) {
         throw new Error("Failed to decrypt QR code");
       }
+
       if (!decryptedText.startsWith("eventlog")) {
         throw new Error(
           "Invalid QR code format. Please scan an EventLog QR code."
         );
       }
+
       const [prefix, eventDateIdStr, studentIdStr] = decryptedText.split("-");
       if (prefix !== "eventlog") {
         throw new Error("Invalid QR code format.");
       }
+
       const eventDateId = parseInt(eventDateIdStr, 10);
-      const studentId = parseInt(studentIdStr, 10);
-      if (isNaN(eventDateId) || isNaN(studentId)) {
+      const studentId = studentIdStr;
+
+      if (isNaN(eventDateId) || !studentId) {
         throw new Error("Invalid QR code data.");
       }
+
       let events;
       try {
         events = await getStoredEvents(eventDateId);
       } catch (dbError) {
         throw new Error("Failed to retrieve event data");
       }
+
       if (!Array.isArray(events) || events.length === 0) {
         throw new Error("No events found for the given date.");
       }
+
       const event = events.find((e) => {
         const possibleDateIds =
           e.event_date_ids || e.dateIds || e.date_ids || e.eventDateIds;
         return possibleDateIds && possibleDateIds.includes(eventDateId);
       });
+
       if (!event) {
         throw new Error(
           "QR code is not valid for current events. Please use a current QR code."
         );
       }
+
       const { am_in, am_out, pm_in, pm_out, duration, event_name } = event;
+
       const calculateWindow = (time) => {
         return time
           ? moment(time, "HH:mm:ss").add(duration, "minutes").format("HH:mm:ss")
           : null;
       };
+
       const amInWindowEnd = calculateWindow(am_in);
       const amOutWindowEnd = calculateWindow(am_out);
       const pmInWindowEnd = calculateWindow(pm_in);
       const pmOutWindowEnd = calculateWindow(pm_out);
-      const currentDate = moment().format("YYYY-MM-DD");
       const currentTime = moment().format("HH:mm:ss");
+
       let isValidTime = false;
       let attendanceType = null;
+
       const timeChecks = [
         { type: "AM_IN", start: am_in, end: amInWindowEnd },
         { type: "AM_OUT", start: am_out, end: amOutWindowEnd },
         { type: "PM_IN", start: pm_in, end: pmInWindowEnd },
         { type: "PM_OUT", start: pm_out, end: pmOutWindowEnd },
       ];
+
       for (const check of timeChecks) {
         if (check.start && check.end) {
           const currentMoment = moment(currentTime, "HH:mm:ss");
@@ -205,27 +189,14 @@ const Scan = () => {
             null,
             "[]"
           );
-          const [currentHour, currentMin, currentSec] = currentTime
-            .split(":")
-            .map(Number);
-          const [startHour, startMin, startSec] = check.start
-            .split(":")
-            .map(Number);
-          const [endHour, endMin, endSec] = check.end.split(":").map(Number);
-          const currentTotalSeconds =
-            currentHour * 3600 + currentMin * 60 + currentSec;
-          const startTotalSeconds = startHour * 3600 + startMin * 60 + startSec;
-          const endTotalSeconds = endHour * 3600 + endMin * 60 + endSec;
-          const manualInWindow =
-            currentTotalSeconds >= startTotalSeconds &&
-            currentTotalSeconds <= endTotalSeconds;
-          if (isInWindow || manualInWindow) {
+          if (isInWindow) {
             isValidTime = true;
             attendanceType = check.type;
             break;
           }
         }
       }
+
       if (isValidTime) {
         const attendanceData = {
           event_date_id: eventDateId,
@@ -233,13 +204,16 @@ const Scan = () => {
           type: attendanceType,
           event_name: event_name,
         };
+
         const typeDescriptions = {
           AM_IN: "Morning Time In",
           AM_OUT: "Morning Time Out",
           PM_IN: "Afternoon Time In",
           PM_OUT: "Afternoon Time Out",
         };
+
         const friendlyTypeDescription = typeDescriptions[attendanceData.type];
+
         let alreadyLogged;
         try {
           alreadyLogged = await isAlreadyLogged(
@@ -250,12 +224,14 @@ const Scan = () => {
         } catch (checkError) {
           throw new Error("Failed to verify attendance status");
         }
+
         if (alreadyLogged) {
           const errorMsg = `${friendlyTypeDescription} attendance already logged for this student.`;
           setErrorMessage(errorMsg);
           setErrorModalVisible(true);
           return;
         }
+
         setPendingAttendanceData(attendanceData);
         setConfirmationModalVisible(true);
       } else {
@@ -276,6 +252,9 @@ const Scan = () => {
     try {
       await logAttendance(pendingAttendanceData);
       setSuccessModalVisible(true);
+      try {
+        await syncAttendance();
+      } catch (syncError) {}
     } catch (error) {
       if (error.message.includes("has already been logged")) {
         setErrorMessage(error.message);
@@ -362,6 +341,7 @@ const Scan = () => {
           </Text>
         </View>
       </View>
+
       <CustomModal
         visible={successModalVisible}
         title="QR Code Scanned"
@@ -371,6 +351,7 @@ const Scan = () => {
         onCancel={() => handleModalClose(setSuccessModalVisible)}
         cancelTitle="CLOSE"
       />
+
       <CustomModal
         visible={errorModalVisible}
         title="Error"
@@ -380,6 +361,7 @@ const Scan = () => {
         onCancel={() => handleModalClose(setErrorModalVisible)}
         cancelTitle="CLOSE"
       />
+
       <CustomModal
         visible={confirmationModalVisible}
         title="Confirm Attendance"
@@ -393,6 +375,7 @@ Event Name: ${pendingAttendanceData?.event_name}`}
         onConfirm={() => confirmAttendance()}
         cancelTitle="No"
       />
+
       <StatusBar style="light" />
     </View>
   );

@@ -663,15 +663,39 @@ export const syncAttendance = async () => {
       const cleanedRecord = {
         event_date_id: record.event_date_id,
         student_id_number: record.student_id_number,
+
+        am_in:
+          record.am_in === 1 || record.am_in === true
+            ? true
+            : record.am_in === 0 || record.am_in === false
+            ? false
+            : undefined,
+        am_out:
+          record.am_out === 1 || record.am_out === true
+            ? true
+            : record.am_out === 0 || record.am_out === false
+            ? false
+            : undefined,
+        pm_in:
+          record.pm_in === 1 || record.pm_in === true
+            ? true
+            : record.pm_in === 0 || record.pm_in === false
+            ? false
+            : undefined,
+        pm_out:
+          record.pm_out === 1 || record.pm_out === true
+            ? true
+            : record.pm_out === 0 || record.pm_out === false
+            ? false
+            : undefined,
       };
-      if (record.am_in !== null && record.am_in !== undefined)
-        cleanedRecord.am_in = true;
-      if (record.am_out !== null && record.am_out !== undefined)
-        cleanedRecord.am_out = true;
-      if (record.pm_in !== null && record.pm_in !== undefined)
-        cleanedRecord.pm_in = true;
-      if (record.pm_out !== null && record.pm_out !== undefined)
-        cleanedRecord.pm_out = true;
+
+      Object.keys(cleanedRecord).forEach((key) => {
+        if (cleanedRecord[key] === undefined) {
+          delete cleanedRecord[key];
+        }
+      });
+
       return cleanedRecord;
     });
 
@@ -680,19 +704,42 @@ export const syncAttendance = async () => {
     });
 
     if (!response.data.success) {
-      throw new Error("Failed to sync attendance with the backend.");
+      throw new Error(
+        response.data.message || "Failed to sync attendance with the backend."
+      );
     }
+
+    const { synced_count, failed_count, failed_records } =
+      response.data.data || {};
 
     if (shouldClearAttendance) {
       await dbInstance.runAsync("DELETE FROM attendance");
     }
 
-    return { success: true, message: "Attendance synced successfully." };
+    return {
+      success: true,
+      message: "Attendance synced successfully.",
+      syncedCount: synced_count,
+      failedCount: failed_count,
+      failedRecords: failed_records,
+    };
   } catch (error) {
-    throw error;
+    if (error.response) {
+      const errorMessage =
+        error.response.data?.message || "Server error during sync";
+      throw new Error(`Sync failed: ${errorMessage}`);
+    } else if (error.request) {
+      throw new Error("Network error: Unable to connect to server");
+    } else {
+      throw new Error(`Sync error: ${error.message}`);
+    }
   } finally {
     if (dbInstance && typeof dbInstance.close === "function") {
-      dbInstance.close();
+      try {
+        await dbInstance.close();
+      } catch (closeError) {
+        console.warn("Error closing database:", closeError);
+      }
     }
   }
 };
