@@ -361,5 +361,4 @@ const styles = StyleSheet.create({
   buttonContainer: {
     width: "80%",
   },
-  forgotPassContainer: {},
 });

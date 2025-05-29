@@ -362,7 +362,6 @@ const Web = () => {
             </>
           )}
 
-          {/* No Events Message */}
           {!hasEvents && (
             <View style={styles.noEventsContainer}>
               <Text style={styles.noEventsText}>

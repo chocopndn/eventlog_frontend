@@ -11,7 +11,7 @@ import globalStyles from "../../../../constants/globalStyles";
 import theme from "../../../../constants/theme";
 import {
   fetchDepartmentById,
-  disableDepartment, // Updated API function
+  disableDepartment,
 } from "../../../../services/api";
 import { useLocalSearchParams } from "expo-router";
 
@@ -19,7 +19,7 @@ const DepartmentDetails = () => {
   const { id: department_id } = useLocalSearchParams();
   const [departmentDetails, setDepartmentDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDisableModalVisible, setIsDisableModalVisible] = useState(false); // Renamed variable
+  const [isDisableModalVisible, setIsDisableModalVisible] = useState(false);
   const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
 
   const fetchDepartmentDetails = async () => {
@@ -66,9 +66,8 @@ const DepartmentDetails = () => {
 
   const handleConfirmDisable = async () => {
     try {
-      await disableDepartment(departmentDetails.department_id); // Call the disable API
+      await disableDepartment(departmentDetails.department_id);
 
-      // Update the department's status in the state
       setDepartmentDetails((prevDetails) =>
         prevDetails ? { ...prevDetails, status: "Disabled" } : null
       );
@@ -144,7 +143,6 @@ const DepartmentDetails = () => {
         confirmTitle="Disable"
       />
 
-      {/* Success Modal */}
       <CustomModal
         visible={isSuccessModalVisible}
         title="Success"

@@ -1,6 +1,5 @@
 import logo from "../assets/images/logo.png";
 
-// icons
 import lock from "../assets/icons/lock.png";
 import idBadge from "../assets/icons/id-badge.png";
 import view from "../assets/icons/view.png";
