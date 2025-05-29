@@ -54,7 +54,7 @@ const Account = () => {
             <View style={[styles.detailsContainer, { borderBottomWidth: 0 }]}>
               <Text style={styles.detailsTitle}>Department: </Text>
               <Text style={styles.details}>
-                {user?.department_code || "N/A"}
+                {user?.department_name || "N/A"}
               </Text>
             </View>
           )}
