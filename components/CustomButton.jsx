@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontFamily: "SquadaOne",
-    fontSize: 30,
+    fontSize: 25,
   },
   textPrimary: {
     color: theme.colors.secondary,

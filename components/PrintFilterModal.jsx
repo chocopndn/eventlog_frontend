@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   buttonContainer: {
-    width: "45%",
+    width: "48%",
   },
   customButton: {
     backgroundColor: theme.colors.primary,

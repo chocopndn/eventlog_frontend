@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     color: theme.colors.primary,
-    fontSize: theme.fontSizes.large,
+    fontSize: theme.fontSizes.medium,
     fontFamily: "SquadaOne",
   },
   confirmButton: {
