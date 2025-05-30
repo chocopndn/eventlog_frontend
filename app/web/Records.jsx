@@ -28,7 +28,6 @@ const Records = () => {
     ArialItalic: require("../../assets/fonts/ArialItalic.ttf"),
     SquadaOne: require("../../assets/fonts/SquadaOne.ttf"),
   });
-
   const [fontsReady, setFontsReady] = useState(false);
   const [attendanceData, setAttendanceData] = useState([]);
   const [eventInfo, setEventInfo] = useState(null);
@@ -37,12 +36,11 @@ const Records = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedYearLevel, setSelectedYearLevel] = useState("");
-
   const [departments, setDepartments] = useState([]);
   const [yearLevels, setYearLevels] = useState([]);
   const [blocks, setBlocks] = useState([]);
-
   const [showPrintModal, setShowPrintModal] = useState(false);
+  const [currentAction, setCurrentAction] = useState("download");
   const [modalVisible, setModalVisible] = useState(false);
   const [modalConfig, setModalConfig] = useState({
     title: "",
@@ -83,7 +81,6 @@ const Records = () => {
         style.id = "records-custom-fonts";
         document.head.appendChild(style);
       }
-
       if (document.fonts) {
         Promise.all([
           document.fonts.load("16px Arial"),
@@ -94,7 +91,7 @@ const Records = () => {
           .then(() => {
             setFontsReady(true);
           })
-          .catch((error) => {
+          .catch(() => {
             setFontsReady(true);
           });
       } else {
@@ -113,9 +110,7 @@ const Records = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!eventId) {
-        return;
-      }
+      if (!eventId) return;
       setLoading(true);
       setError(null);
       try {
@@ -125,7 +120,6 @@ const Records = () => {
             fetchDepartments(),
             fetchBlocks().catch(() => null),
           ]);
-
         const students = attendanceResponse?.data?.students || [];
         const eventDetails = {
           id: attendanceResponse?.data?.event_id,
@@ -138,22 +132,17 @@ const Records = () => {
             attendanceResponse?.data?.event_status ||
             attendanceResponse?.data?.event?.status,
         };
-
         setAttendanceData(students);
         setEventInfo(eventDetails);
-
         const eventBlockIds = attendanceResponse?.data?.block_ids || [];
-
         const studentDepartments = [
           ...new Set(
             students.map((student) => student.department_code).filter(Boolean)
           ),
         ];
         const apiDepartments = departmentsResponse?.data || [];
-
         const departmentOptions = [
           { label: "All Departments", value: "" },
-
           ...studentDepartments.map((deptCode) => {
             const apiDept = apiDepartments.find(
               (dept) => dept.code === deptCode
@@ -163,7 +152,6 @@ const Records = () => {
               value: deptCode,
             };
           }),
-
           ...apiDepartments
             .filter((dept) => !studentDepartments.includes(dept.code))
             .map((dept) => ({
@@ -171,12 +159,10 @@ const Records = () => {
               value: dept.code,
             })),
         ].sort((a, b) => a.label.localeCompare(b.label));
-
         const uniqueDepartmentOptions = departmentOptions.filter(
           (dept, index, self) =>
             index === self.findIndex((d) => d.value === dept.value)
         );
-
         const yearLevelOptions = [
           { label: "All Year Levels", value: "" },
           ...(attendanceResponse?.data?.year_levels || [])
@@ -186,9 +172,7 @@ const Records = () => {
             }))
             .sort((a, b) => a.label.localeCompare(b.label)),
         ];
-
         let blockOptions = [];
-
         if (blocksResponse?.data && Array.isArray(blocksResponse.data)) {
           blockOptions = blocksResponse.data
             .filter(
@@ -201,11 +185,9 @@ const Records = () => {
               const uniqueBlockKey = block.course_code
                 ? `${block.course_code}_${block.name}`
                 : block.name;
-
               const displayLabel = block.course_code
                 ? `${block.course_code} ${block.name}`
                 : block.name;
-
               return {
                 key: `block-${block.id}`,
                 label: displayLabel,
@@ -230,11 +212,9 @@ const Records = () => {
               const uniqueBlockKey = block.course_code
                 ? `${block.course_code}_${block.name}`
                 : block.name;
-
               const displayLabel = block.course_code
                 ? `${block.course_code} ${block.name}`
                 : block.name;
-
               return {
                 key: `block-${block.id}`,
                 label: displayLabel,
@@ -253,7 +233,6 @@ const Records = () => {
             })
             .sort((a, b) => a.label.localeCompare(b.label));
         }
-
         setDepartments(uniqueDepartmentOptions);
         setYearLevels(yearLevelOptions);
         setBlocks(blockOptions);
@@ -263,7 +242,6 @@ const Records = () => {
         setLoading(false);
       }
     };
-
     if (fontsReady) {
       fetchData();
     }
@@ -284,21 +262,18 @@ const Records = () => {
             .includes(searchQuery.toLowerCase())) ||
         (student.block_name &&
           student.block_name.toLowerCase().includes(searchQuery.toLowerCase()));
-
       const matchesDepartment =
         !selectedDepartment ||
         selectedDepartment === "" ||
         selectedDepartment === "error" ||
         (student.department_code &&
           String(student.department_code) === String(selectedDepartment));
-
       const matchesYearLevel =
         !selectedYearLevel ||
         selectedYearLevel === "" ||
         selectedYearLevel === "error" ||
         (student.year_level_id &&
           String(student.year_level_id) === String(selectedYearLevel));
-
       return matchesSearch && matchesDepartment && matchesYearLevel;
     });
   }, [attendanceData, searchQuery, selectedDepartment, selectedYearLevel]);
@@ -315,114 +290,290 @@ const Records = () => {
     setSelectedYearLevel(item.value);
   };
 
-  const generatePrintDocument = async (students, action) => {
-    const html = `
-      <html>
-        <head>
-          <meta charset="utf-8" />
-          <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
-            h1 { color: #333; text-align: center; margin-bottom: 30px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #333; padding: 8px; text-align: center; }
-            th { background-color: #f5f5f5; font-weight: bold; }
-            tr:nth-child(even) { background-color: #f9f9f9; }
-            .summary { margin-bottom: 20px; font-size: 14px; }
-            @media print {
-              body { margin: 0; padding: 10px; }
-              h1 { margin-bottom: 20px; }
-              table { page-break-inside: auto; }
-              tr { page-break-inside: avoid; page-break-after: auto; }
-            }
-          </style>
-        </head>
-        <body>
-          <h1>${
-            eventInfo?.name && eventInfo.name !== "eventloging"
-              ? eventInfo.name
-              : "Event Attendance Report"
-          }</h1>
-          <div class="summary">
-            <strong>Total Students:</strong> ${students.length}<br>
-            <strong>Generated:</strong> ${new Date().toLocaleDateString()}
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th>ID Number</th>
-                <th>Student Name</th>
-                <th>Block</th>
-                <th>Department</th>
-                <th>Present</th>
-                <th>Absent</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${students
-                .map((student) => {
-                  let blockDisplay = "N/A";
+  const generatePrintDocument = async (students, filters, action) => {
+    const { attendanceFilter = "all" } = filters;
+    const studentsByBlock = {};
+    students.forEach((student) => {
+      let blockDisplay = "Unknown Block";
+      if (student.block_display) {
+        blockDisplay = student.block_display;
+      } else if (student.course_code && student.block_name) {
+        blockDisplay = `${student.course_code} ${student.block_name}`;
+      } else if (student.block_name) {
+        blockDisplay = student.block_name;
+      } else if (student.block_id) {
+        const studentBlock = blocks.find(
+          (block) =>
+            block.block_id === String(student.block_id) ||
+            block.id === String(student.block_id)
+        );
+        if (studentBlock) {
+          blockDisplay =
+            studentBlock.course_code && studentBlock.block_name
+              ? `${studentBlock.course_code} ${studentBlock.block_name}`
+              : studentBlock.block_name ||
+                studentBlock.label ||
+                "Unknown Block";
+        }
+      }
+      if (!studentsByBlock[blockDisplay]) {
+        studentsByBlock[blockDisplay] = {
+          students: [],
+          availableTimePeriods: {
+            hasAmIn: true,
+            hasAmOut: true,
+            hasPmIn: true,
+            hasPmOut: true,
+          },
+        };
+      }
+      studentsByBlock[blockDisplay].students.push({
+        id: student.id_number || "N/A",
+        name: student.full_name || "N/A",
+        present: student.present_count || 0,
+        absent: student.absent_count || 0,
+        am_in: student.am_in_attended || 0,
+        am_out: student.am_out_attended || 0,
+        pm_in: student.pm_in_attended || 0,
+        pm_out: student.pm_out_attended || 0,
+      });
+    });
 
-                  if (student.block_display) {
-                    blockDisplay = student.block_display;
-                  } else if (student.course_code && student.block_name) {
-                    blockDisplay = `${student.course_code} ${student.block_name}`;
-                  } else if (student.block_name) {
-                    blockDisplay = student.block_name;
-                  } else if (student.block_id) {
-                    const studentBlock = blocks.find(
-                      (block) =>
-                        block.block_id === String(student.block_id) ||
-                        block.id === String(student.block_id)
-                    );
-                    if (studentBlock) {
-                      blockDisplay =
-                        studentBlock.course_code && studentBlock.block_name
-                          ? `${studentBlock.course_code} ${studentBlock.block_name}`
-                          : studentBlock.block_name ||
-                            studentBlock.label ||
-                            "N/A";
-                    }
-                  }
+    Object.keys(studentsByBlock).forEach((blockKey) => {
+      studentsByBlock[blockKey].students.sort((a, b) => {
+        const nameA = a.name ? a.name.toLowerCase() : "";
+        const nameB = b.name ? b.name.toLowerCase() : "";
+        return nameA.localeCompare(nameB);
+      });
+    });
 
-                  return `
-                      <tr>
-                        <td>${student.id_number || "N/A"}</td>
-                        <td>${student.full_name || "N/A"}</td>
-                        <td>${blockDisplay}</td>
-                        <td>${student.department_code || "N/A"}</td>
-                        <td>${student.present_count || 0}</td>
-                        <td>${student.absent_count || 0}</td>
-                      </tr>
-                    `;
-                })
-                .join("")}
-            </tbody>
-          </table>
-        </body>
-      </html>
+    const generateBlockPage = (blockName, blockData, isFirst = false) => {
+      const { students, availableTimePeriods } = blockData;
+      let headerColumns = `
+      <span class="col-id">ID Number</span>
+      <span class="col-name">Name</span>
     `;
+      if (availableTimePeriods.hasAmIn) {
+        headerColumns += '<span class="col-time">AM In</span>';
+      }
+      if (availableTimePeriods.hasAmOut) {
+        headerColumns += '<span class="col-time">AM Out</span>';
+      }
+      if (availableTimePeriods.hasPmIn) {
+        headerColumns += '<span class="col-time">PM In</span>';
+      }
+      if (availableTimePeriods.hasPmOut) {
+        headerColumns += '<span class="col-time">PM Out</span>';
+      }
+      headerColumns += `
+      <span class="col-count">Present</span>
+      <span class="col-count">Absent</span>
+    `;
+      const studentRows =
+        students.length === 0
+          ? `<div style="text-align: center; margin-top: 20px; font-style: italic; color: #666;">
+           No records
+         </div>`
+          : students
+              .map((record) => {
+                let rowColumns = `
+            <span class="col-id">${record.id}</span>
+            <span class="col-name">${record.name}</span>
+          `;
+                if (availableTimePeriods.hasAmIn) {
+                  rowColumns += `<span class="col-time">${record.am_in}</span>`;
+                }
+                if (availableTimePeriods.hasAmOut) {
+                  rowColumns += `<span class="col-time">${record.am_out}</span>`;
+                }
+                if (availableTimePeriods.hasPmIn) {
+                  rowColumns += `<span class="col-time">${record.pm_in}</span>`;
+                }
+                if (availableTimePeriods.hasPmOut) {
+                  rowColumns += `<span class="col-time">${record.pm_out}</span>`;
+                }
+                rowColumns += `
+            <span class="col-count">${record.present}</span>
+            <span class="col-count">${record.absent}</span>
+          `;
+                return `<div class="record-line">${rowColumns}</div>`;
+              })
+              .join("");
+
+      return `
+      <div style="${
+        isFirst
+          ? "padding-top: 10px;"
+          : "page-break-before: always; padding-top: 10px;"
+      }">
+        <h2 style="color: black; text-align: left; margin-bottom: 3px;">${
+          eventInfo?.name && eventInfo.name !== "eventloging"
+            ? eventInfo.name
+            : "Event Attendance Report"
+        }</h2>
+        <h3 style="color: black; text-align: left; margin-bottom: 3px;">${
+          attendanceFilter === "all"
+            ? "General List"
+            : attendanceFilter === "present"
+            ? "Present List"
+            : "Absent List"
+        }</h3>
+        <h4 style="color: black; text-align: left; margin-bottom: 3px;">Date: ${new Date().toLocaleDateString()}</h4>
+        <h3 style="color: black; text-align: left; margin-bottom: 10px;">${blockName}</h3>
+        <div class="header-line">
+          ${headerColumns}
+        </div>
+        ${studentRows}
+      </div>
+    `;
+    };
+
+    const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>Attendance Report - ${eventInfo?.name || "Event"}</title>
+        <style>
+          body { 
+            font-family: Arial, sans-serif; 
+            padding: 0px 20px 20px 20px; 
+            color: black;
+            font-size: 11px;
+            background: white;
+          }
+          h1, h2, h3, h4 { 
+            color: black; 
+            text-align: left;
+            margin-bottom: 3px;
+          }
+          .header-line {
+            color: black;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+          }
+          .record-line {
+            color: black;
+            margin-bottom: 2px;
+            display: flex;
+          }
+          .col-id { 
+            width: 90px; 
+            padding: 4px;
+            text-align: left;
+          }
+          .col-name { 
+            width: 200px; 
+            padding: 4px;
+            text-align: left;
+          }
+          .col-time { 
+            width: 55px; 
+            text-align: left; 
+            font-size: 11px;
+            padding: 4px;
+          }
+          .col-count { 
+            width: 55px; 
+            text-align: left;
+            padding: 4px;
+          }
+          @media print {
+            body { 
+              margin: 0; 
+              padding: 10px;
+              -webkit-print-color-adjust: exact;
+            }
+            h1, h2, h3, h4 { 
+              margin-bottom: 10px; 
+            }
+            .header-line, .record-line { 
+              page-break-inside: avoid; 
+            }
+            div[style*="page-break-before"] { 
+              page-break-before: always; 
+            }
+          }
+          .react-native-screen,
+          .expo-web-container,
+          body > div:not(.page-content) {
+            display: none !important;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="page-content">
+          ${Object.entries(studentsByBlock)
+            .map(([blockName, blockData], index) =>
+              generateBlockPage(blockName, blockData, index === 0)
+            )
+            .join("")}
+        </div>
+      </body>
+    </html>
+  `;
 
     if (action === "print") {
       if (Platform.OS === "web") {
-        const printWindow = window.open("", "_blank", "width=800,height=600");
+        const printWindow = window.open(
+          "",
+          "_blank",
+          "width=900,height=700,scrollbars=yes"
+        );
+        if (!printWindow) {
+          setModalConfig({
+            title: "Print Blocked",
+            message: "Please allow popups for this site to enable printing.",
+            type: "warning",
+            cancelTitle: "OK",
+          });
+          setModalVisible(true);
+          return;
+        }
+        printWindow.document.open();
         printWindow.document.write(html);
         printWindow.document.close();
 
-        printWindow.onload = () => {
-          setTimeout(() => {
-            printWindow.print();
+        const triggerPrint = () => {
+          try {
+            printWindow.focus();
+            if (printWindow.print) {
+              printWindow.print();
+            } else {
+              printWindow.document.execCommand("print", false, null);
+            }
             setTimeout(() => {
-              printWindow.close();
-            }, 1000);
-          }, 500);
+              if (!printWindow.closed) {
+                printWindow.close();
+              }
+            }, 2000);
+          } catch (printError) {
+            setModalConfig({
+              title: "Print Error",
+              message:
+                "Could not open print dialog. Please try manually printing from the new window.",
+              type: "warning",
+              cancelTitle: "OK",
+            });
+            setModalVisible(true);
+          }
         };
 
-        setModalConfig({
-          title: "Print Successful",
-          message: "Print dialog opened. Please select your printer.",
-          type: "success",
-          cancelTitle: "OK",
-        });
+        if (printWindow.document.readyState === "complete") {
+          setTimeout(triggerPrint, 500);
+        } else {
+          printWindow.onload = () => {
+            setTimeout(triggerPrint, 500);
+          };
+          setTimeout(() => {
+            if (printWindow.document.readyState === "complete") {
+              triggerPrint();
+            }
+          }, 1000);
+        }
+
+        return;
       } else {
         try {
           await Print.printAsync({
@@ -435,10 +586,9 @@ const Records = () => {
               bottom: 20,
             },
           });
-
           setModalConfig({
             title: "Print Successful",
-            message: "Document sent to printer successfully.",
+            message: "Custom report sent to printer successfully.",
             type: "success",
             cancelTitle: "OK",
           });
@@ -446,7 +596,7 @@ const Records = () => {
           console.error("Print error:", printError);
           setModalConfig({
             title: "Print Failed",
-            message: "Failed to print the document. Please try again.",
+            message: "Failed to print the custom report. Please try again.",
             type: "error",
             cancelTitle: "OK",
           });
@@ -454,63 +604,101 @@ const Records = () => {
       }
     } else {
       try {
-        const { uri } = await Print.printToFileAsync({ html });
-        const pdfName = `${
-          eventInfo?.name && eventInfo.name !== "eventloging"
-            ? eventInfo.name.replace(/[^a-zA-Z0-9\s]/g, "").replace(/\s+/g, "_")
-            : "Attendance_Report"
-        }_${new Date().toISOString().split("T")[0]}.pdf`;
-
         if (Platform.OS === "web") {
-          const link = document.createElement("a");
-          link.href = uri;
-          link.download = pdfName;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
+          const printWindow = window.open("", "_blank", "width=900,height=700");
+          printWindow.document.open();
+          printWindow.document.write(html);
+          printWindow.document.close();
+          printWindow.onload = () => {
+            setTimeout(() => {
+              printWindow.focus();
+              printWindow.print();
+              setTimeout(() => {
+                printWindow.close();
+              }, 1000);
+            }, 500);
+          };
+          setModalConfig({
+            title: "PDF Preview Opened",
+            message: "Use your browser's print dialog to save as PDF.",
+            type: "success",
+            cancelTitle: "OK",
+          });
         } else {
+          const { uri } = await Print.printToFileAsync({
+            html: html,
+            width: 612,
+            height: 792,
+            margins: {
+              left: 20,
+              top: 20,
+              right: 20,
+              bottom: 20,
+            },
+          });
+          const filterName =
+            attendanceFilter === "all"
+              ? "General_List"
+              : attendanceFilter === "present"
+              ? "Present_List"
+              : "Absent_List";
+          const pdfName = `${
+            eventInfo?.name && eventInfo.name !== "eventloging"
+              ? eventInfo.name
+                  .replace(/[^a-zA-Z0-9\s]/g, "")
+                  .replace(/\s+/g, "_")
+              : "Attendance_Report"
+          }_${filterName}_${new Date().toISOString().split("T")[0]}.pdf`;
           const pdfPath = `${FileSystem.documentDirectory}${pdfName}`;
           await FileSystem.moveAsync({ from: uri, to: pdfPath });
           await Sharing.shareAsync(pdfPath, {
             UTI: ".pdf",
             mimeType: "application/pdf",
           });
+          setModalConfig({
+            title: "Download Successful",
+            message: `Custom ${filterName.replace(
+              "_",
+              " "
+            )} report downloaded successfully.`,
+            type: "success",
+            cancelTitle: "OK",
+          });
         }
-
-        setModalConfig({
-          title: "Download Successful",
-          message: "Attendance report has been downloaded successfully.",
-          type: "success",
-          cancelTitle: "OK",
-        });
       } catch (downloadError) {
         console.error("Download error:", downloadError);
         setModalConfig({
           title: "Download Failed",
-          message: "Failed to download the report. Please try again.",
+          message: "Failed to download the custom report. Please try again.",
           type: "error",
           cancelTitle: "OK",
         });
       }
     }
-
     setModalVisible(true);
   };
 
   const handlePrintDownload = async (filters, action = "download") => {
     try {
-      const { departmentIds, yearLevelIds, blockIds } = filters;
-
-      console.log("Print filters received:", {
+      const {
         departmentIds,
         yearLevelIds,
         blockIds,
-      });
-
+        attendanceFilter = "all",
+      } = filters;
       setLoading(true);
-
       let filteredStudents = [...attendanceData];
-
+      if (attendanceFilter === "present") {
+        filteredStudents = filteredStudents.filter(
+          (student) => (student.present_count || 0) > 0
+        );
+      } else if (attendanceFilter === "absent") {
+        filteredStudents = filteredStudents.filter(
+          (student) =>
+            (student.absent_count || 0) > 0 ||
+            (student.present_count || 0) === 0
+        );
+      }
       if (departmentIds && departmentIds.length > 0) {
         filteredStudents = filteredStudents.filter((student) => {
           return departmentIds.some(
@@ -519,22 +707,14 @@ const Records = () => {
               String(student.department_id) === String(deptId)
           );
         });
-        console.log(
-          `After department filter: ${filteredStudents.length} students`
-        );
       }
-
       if (yearLevelIds && yearLevelIds.length > 0) {
         filteredStudents = filteredStudents.filter((student) => {
           return yearLevelIds.some(
             (yearId) => String(student.year_level_id) === String(yearId)
           );
         });
-        console.log(
-          `After year level filter: ${filteredStudents.length} students`
-        );
       }
-
       if (blockIds && blockIds.length > 0) {
         filteredStudents = filteredStudents.filter((student) => {
           return blockIds.some((blockValue) => {
@@ -544,9 +724,7 @@ const Records = () => {
                 block.block_id === blockValue ||
                 block.id === blockValue
             );
-
             if (!selectedBlock) return false;
-
             const matches =
               String(student.block_id) === String(selectedBlock.block_id) ||
               String(student.block_id) === String(selectedBlock.id) ||
@@ -557,20 +735,18 @@ const Records = () => {
                 `${student.course_code}_${student.block_name}` ===
                   selectedBlock.value) ||
               student.block_name === selectedBlock.block_name;
-
             return matches;
           });
         });
-        console.log(`After block filter: ${filteredStudents.length} students`);
       }
-
       if (filteredStudents.length === 0) {
         setModalConfig({
           title: "No Students Found",
           message:
             departmentIds?.length > 0 ||
             yearLevelIds?.length > 0 ||
-            blockIds?.length > 0
+            blockIds?.length > 0 ||
+            attendanceFilter !== "all"
               ? "No students match the selected filter criteria."
               : "No students available for this event.",
           type: "warning",
@@ -580,14 +756,12 @@ const Records = () => {
         setLoading(false);
         return;
       }
-
       filteredStudents = filteredStudents.map((student) => {
         const studentBlock = blocks.find(
           (block) =>
             block.block_id === String(student.block_id) ||
             block.id === String(student.block_id)
         );
-
         return {
           ...student,
           course_code: student.course_code || studentBlock?.course_code || "",
@@ -601,13 +775,7 @@ const Records = () => {
               : student.block_name || studentBlock?.block_name || "N/A",
         };
       });
-
-      console.log(
-        `Final filtered students for PDF: ${filteredStudents.length}`
-      );
-      await generatePrintDocument(filteredStudents, action);
-
-      setModalVisible(true);
+      await generatePrintDocument(filteredStudents, filters, action);
     } catch (error) {
       console.error("Print/Download error:", error);
       setModalConfig({
@@ -635,6 +803,7 @@ const Records = () => {
       setModalVisible(true);
       return;
     }
+    setCurrentAction("download");
     setShowPrintModal(true);
   };
 
@@ -649,6 +818,7 @@ const Records = () => {
       setModalVisible(true);
       return;
     }
+    setCurrentAction("print");
     setShowPrintModal(true);
   };
 
@@ -691,12 +861,10 @@ const Records = () => {
     const uniqueKey = item.id_number
       ? `student-${item.id_number}`
       : `student-${index}`;
-
     const blockDisplay =
       item.course_code && item.block_name
         ? `${item.course_code} ${item.block_name}`
         : item.block_name || "N/A";
-
     return (
       <View key={uniqueKey} style={styles.listRow}>
         <View style={[styles.id, styles.dataCell]}>
@@ -736,15 +904,13 @@ const Records = () => {
           <Text style={styles.eventTitle}>{eventInfo.name}</Text>
         </View>
       )}
-
       <View style={styles.searchContainer}>
         <CustomSearch
           onSearch={handleSearch}
           value={searchQuery}
-          placeholder="Search by name, ID, or block..."
+          placeholder="Search by name"
         />
       </View>
-
       <View style={styles.dropdownWrapper}>
         <View style={[styles.dropdownContainer, { zIndex: 1002 }]}>
           <CustomDropdown
@@ -778,7 +944,6 @@ const Records = () => {
           />
         </View>
       </View>
-
       <View style={styles.tableContainer}>
         <View style={styles.listHeader}>
           <View style={[styles.id, styles.headerText]}>
@@ -800,7 +965,6 @@ const Records = () => {
             <Text style={styles.headerTextStyle}>Absent</Text>
           </View>
         </View>
-
         <ScrollView
           style={styles.scrollViewContent}
           contentContainerStyle={styles.scrollView}
@@ -810,7 +974,6 @@ const Records = () => {
               <Text style={styles.statusText}>Loading attendance data...</Text>
             </View>
           )}
-
           {error && (
             <View style={styles.statusContainer}>
               <Text style={[styles.statusText, { color: theme.colors.error }]}>
@@ -818,7 +981,6 @@ const Records = () => {
               </Text>
             </View>
           )}
-
           {!loading && !error && attendanceData.length === 0 && (
             <View style={styles.statusContainer}>
               <Text style={styles.statusText}>
@@ -828,7 +990,6 @@ const Records = () => {
               </Text>
             </View>
           )}
-
           {!loading &&
             !error &&
             attendanceData.length > 0 &&
@@ -839,7 +1000,6 @@ const Records = () => {
                 </Text>
               </View>
             )}
-
           {!loading && !error && filteredData.length > 0 && (
             <View style={styles.dataContainer}>
               {filteredData.map((item, index) =>
@@ -849,7 +1009,6 @@ const Records = () => {
           )}
         </ScrollView>
       </View>
-
       <View style={styles.printDlButton}>
         <View style={styles.buttonWrapper}>
           <View style={styles.buttonContainer}>
@@ -868,20 +1027,24 @@ const Records = () => {
           </View>
         </View>
       </View>
-
       <PrintFilterModal
         visible={showPrintModal}
         onClose={() => setShowPrintModal(false)}
-        onPrint={(filters) => handlePrintDownload(filters, "print")}
+        onPrint={(filters) => {
+          handlePrintDownload(filters, currentAction);
+        }}
         showDepartment={true}
         showYearLevel={true}
         showBlock={true}
+        showAttendance={true}
         departments={departments.filter((dept) => dept.value !== "")}
         yearLevels={yearLevels.filter((year) => year.value !== "")}
         blocks={blocks}
         students={attendanceData}
+        title={currentAction === "print" ? "Print Options" : "Download Options"}
+        buttonTitle={currentAction === "print" ? "Print" : "Download"}
+        currentAction={currentAction}
       />
-
       <CustomModal
         visible={modalVisible}
         title={modalConfig.title}

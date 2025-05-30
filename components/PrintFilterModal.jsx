@@ -16,6 +16,8 @@ const PrintFilterModal = ({
   blocks = [],
   yearLevels = [],
   title = "Download",
+  buttonTitle,
+  currentAction,
 }) => {
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [selectedBlocks, setSelectedBlocks] = useState([]);
@@ -58,6 +60,9 @@ const PrintFilterModal = ({
   }, [selectedDepartments, selectedYearLevels, blocks]);
 
   const handlePrint = () => {
+    console.log("Modal button pressed, currentAction:", currentAction);
+    console.log("Modal buttonTitle:", buttonTitle);
+
     if (blocks.length === 0) {
       Alert.alert(
         "No Blocks Available",
@@ -78,6 +83,7 @@ const PrintFilterModal = ({
       attendanceFilter: selectedAttendance,
     };
 
+    console.log("Calling onPrint with filters:", filters);
     onPrint(filters);
     onClose();
   };
@@ -148,7 +154,9 @@ const PrintFilterModal = ({
           <View style={styles.buttonWrapper}>
             <View style={styles.buttonContainer}>
               <CustomButton
-                title={Platform.OS === "web" ? "Print" : "Download"}
+                title={
+                  buttonTitle || (Platform.OS === "web" ? "Print" : "Download")
+                }
                 onPress={handlePrint}
                 style={styles.customButton}
                 textStyle={styles.customButtonText}
