@@ -95,7 +95,9 @@ const EditStudent = () => {
           blocksData
             .filter((block) => block.status === "Active")
             .map((block) => ({
-              label: block.block_name || `Block ${block.block_id}`,
+              label:
+                `${block.course_code} ${block.block_name}` ||
+                `Block ${block.block_id}`,
               value: block.block_id,
             }))
         );
