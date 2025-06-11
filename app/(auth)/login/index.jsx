@@ -3,6 +3,8 @@ import {
   Text,
   View,
   TouchableOpacity,
+  TouchableWithoutFeedback,
+  Keyboard,
   Platform,
 } from "react-native";
 import React, { useState, useEffect } from "react";
@@ -241,66 +243,68 @@ const Login = () => {
   }
 
   return (
-    <SafeAreaView style={[globalStyles.primaryContainer, { padding: 0 }]}>
-      <Header type="primary" />
-      <Text style={styles.header}>WELCOME!</Text>
-      <View style={styles.form}>
-        <FormField
-          type="id"
-          value={id}
-          onChangeText={setId}
-          placeholder="ID Number"
-        />
-        <FormField
-          type="password"
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Password"
-        />
-      </View>
-      <View style={styles.rememberForgotContainer}>
-        <View style={styles.rememberMeContainer}>
-          <Checkbox
-            style={styles.checkbox}
-            value={isChecked}
-            onValueChange={setChecked}
-            color={isChecked ? "#81b0ff" : undefined}
+    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+      <SafeAreaView style={[globalStyles.primaryContainer, { padding: 0 }]}>
+        <Header type="primary" />
+        <Text style={styles.header}>WELCOME!</Text>
+        <View style={styles.form}>
+          <FormField
+            type="id"
+            value={id}
+            onChangeText={setId}
+            placeholder="ID Number"
           />
-          <TouchableOpacity onPress={() => setChecked(!isChecked)}>
-            <Text style={styles.rememberMe}>Remember Me</Text>
-          </TouchableOpacity>
+          <FormField
+            type="password"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Password"
+          />
         </View>
-        <View style={styles.forgotPassContainer}>
-          <TouchableOpacity
-            onPress={() => router.push("/login/ForgotPassword")}
-          >
-            <Text style={styles.forgotPass}>Forgot Password?</Text>
-          </TouchableOpacity>
+        <View style={styles.rememberForgotContainer}>
+          <View style={styles.rememberMeContainer}>
+            <Checkbox
+              style={styles.checkbox}
+              value={isChecked}
+              onValueChange={setChecked}
+              color={isChecked ? "#81b0ff" : undefined}
+            />
+            <TouchableOpacity onPress={() => setChecked(!isChecked)}>
+              <Text style={styles.rememberMe}>Remember Me</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.forgotPassContainer}>
+            <TouchableOpacity
+              onPress={() => router.push("/login/ForgotPassword")}
+            >
+              <Text style={styles.forgotPass}>Forgot Password?</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-      <View style={styles.buttonContainer}>
-        <CustomButton type="secondary" title="Login" onPress={handleLogin} />
-      </View>
+        <View style={styles.buttonContainer}>
+          <CustomButton type="secondary" title="Login" onPress={handleLogin} />
+        </View>
 
-      {Platform.OS !== "web" && (
-        <View style={styles.registerContainer}>
-          <Text style={styles.registerQ}>Don't have an account?</Text>
-          <TouchableOpacity onPress={() => router.push("/signup")}>
-            <Text style={styles.registerLink}>Register</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        {Platform.OS !== "web" && (
+          <View style={styles.registerContainer}>
+            <Text style={styles.registerQ}>Don't have an account?</Text>
+            <TouchableOpacity onPress={() => router.push("/signup")}>
+              <Text style={styles.registerLink}>Register</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
-      <StatusBar style="auto" />
-      <CustomModal
-        cancelTitle="CLOSE"
-        visible={modalVisible}
-        title={modalTitle}
-        message={modalMessage}
-        type={modalType}
-        onClose={() => setModalVisible(false)}
-      />
-    </SafeAreaView>
+        <StatusBar style="auto" />
+        <CustomModal
+          cancelTitle="CLOSE"
+          visible={modalVisible}
+          title={modalTitle}
+          message={modalMessage}
+          type={modalType}
+          onClose={() => setModalVisible(false)}
+        />
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 };
 
