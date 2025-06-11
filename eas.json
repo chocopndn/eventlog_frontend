@@ -5,7 +5,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://e95e4b4f-bf1f-4218-9726-ddd9c80f480b-00-4i1feii93h4b.pike.replit.dev",
+        "EXPO_PUBLIC_API_URL": "https://eventlog-backend.onrender.com",
         "EXPO_PUBLIC_QR_SECRET_KEY": "eventlog"
       }
     },
@@ -14,27 +14,27 @@
         "gradleCommand": ":app:assembleRelease"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://e95e4b4f-bf1f-4218-9726-ddd9c80f480b-00-4i1feii93h4b.pike.replit.dev",
+        "EXPO_PUBLIC_API_URL": "https://eventlog-backend.onrender.com",
         "EXPO_PUBLIC_QR_SECRET_KEY": "eventlog"
       }
     },
     "preview3": {
       "developmentClient": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://e95e4b4f-bf1f-4218-9726-ddd9c80f480b-00-4i1feii93h4b.pike.replit.dev",
+        "EXPO_PUBLIC_API_URL": "https://eventlog-backend.onrender.com",
         "EXPO_PUBLIC_QR_SECRET_KEY": "eventlog"
       }
     },
     "preview4": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://e95e4b4f-bf1f-4218-9726-ddd9c80f480b-00-4i1feii93h4b.pike.replit.dev",
+        "EXPO_PUBLIC_API_URL": "https://eventlog-backend.onrender.com",
         "EXPO_PUBLIC_QR_SECRET_KEY": "eventlog"
       }
     },
     "production": {
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://e95e4b4f-bf1f-4218-9726-ddd9c80f480b-00-4i1feii93h4b.pike.replit.dev",
+        "EXPO_PUBLIC_API_URL": "https://eventlog-backend.onrender.com",
         "EXPO_PUBLIC_QR_SECRET_KEY": "eventlog"
       }
     }
