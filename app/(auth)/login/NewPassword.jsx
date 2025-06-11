@@ -1,4 +1,10 @@
-import { StyleSheet, Text, View } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from "react-native";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -78,48 +84,50 @@ const NewPassword = () => {
   };
 
   return (
-    <SafeAreaView style={[globalStyles.primaryContainer, { paddingTop: 0 }]}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.forgotPassword}>SET NEW PASSWORD</Text>
-        <Text style={styles.info}>
-          Your password should be at least 8 characters long
-        </Text>
-      </View>
-      <View style={styles.inputContainer}>
-        <FormField
-          type="password"
-          placeholder="Enter your new password"
-          value={password}
-          onChangeText={setPassword}
-          title="New Password"
-        />
-        <FormField
-          type="password"
-          placeholder="Re-enter password"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          title="Confirm Password"
-        />
-      </View>
-      <View style={styles.buttonContainer}>
-        <CustomButton
-          type="secondary"
-          title="RESET PASSWORD"
-          onPress={handleResetPassword}
-        />
-      </View>
+    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+      <SafeAreaView style={[globalStyles.primaryContainer, { paddingTop: 0 }]}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.forgotPassword}>SET NEW PASSWORD</Text>
+          <Text style={styles.info}>
+            Your password should be at least 8 characters long
+          </Text>
+        </View>
+        <View style={styles.inputContainer}>
+          <FormField
+            type="password"
+            placeholder="Enter your new password"
+            value={password}
+            onChangeText={setPassword}
+            title="New Password"
+          />
+          <FormField
+            type="password"
+            placeholder="Re-enter password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            title="Confirm Password"
+          />
+        </View>
+        <View style={styles.buttonContainer}>
+          <CustomButton
+            type="secondary"
+            title="RESET PASSWORD"
+            onPress={handleResetPassword}
+          />
+        </View>
 
-      <CustomModal
-        visible={modalVisible}
-        title={modalTitle}
-        message={modalMessage}
-        type={modalType}
-        cancelTitle="CLOSE"
-        onClose={() => setModalVisible(false)}
-      />
+        <CustomModal
+          visible={modalVisible}
+          title={modalTitle}
+          message={modalMessage}
+          type={modalType}
+          cancelTitle="CLOSE"
+          onClose={() => setModalVisible(false)}
+        />
 
-      <StatusBar style="auto" />
-    </SafeAreaView>
+        <StatusBar style="auto" />
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 };
 

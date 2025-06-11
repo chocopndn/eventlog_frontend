@@ -1,4 +1,11 @@
-import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from "react-native";
 import React, { useState, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -95,49 +102,53 @@ const VerifyCode = () => {
   };
 
   return (
-    <SafeAreaView style={globalStyles.primaryContainer}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.forgotPassword}>CHECK YOUR EMAIL</Text>
-        <Text style={styles.info}>Enter the 5-digit code sent to {email}</Text>
-      </View>
+    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+      <SafeAreaView style={globalStyles.primaryContainer}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.forgotPassword}>CHECK YOUR EMAIL</Text>
+          <Text style={styles.info}>
+            Enter the 5-digit code sent to {email}
+          </Text>
+        </View>
 
-      <FormField
-        type="code"
-        value={code}
-        onChangeText={setCode}
-        error={!isCodeValid ? "Invalid code, please try again." : ""}
-      />
-
-      <View style={styles.buttonContainer}>
-        <CustomButton
-          type="secondary"
-          title="VERIFY CODE"
-          onPress={handleVerifyCode}
+        <FormField
+          type="code"
+          value={code}
+          onChangeText={setCode}
+          error={!isCodeValid ? "Invalid code, please try again." : ""}
         />
-      </View>
 
-      <View style={styles.resendContainer}>
-        <Text style={styles.question}>Didn't receive the code?</Text>
-        {timer > 0 ? (
-          <Text style={styles.timerText}>Resend code in {timer}s</Text>
-        ) : (
-          <TouchableOpacity onPress={handleResend}>
-            <Text style={styles.resendText}>Resend code</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+        <View style={styles.buttonContainer}>
+          <CustomButton
+            type="secondary"
+            title="VERIFY CODE"
+            onPress={handleVerifyCode}
+          />
+        </View>
 
-      <CustomModal
-        visible={modalVisible}
-        title={modalTitle}
-        message={modalMessage}
-        type={modalType}
-        onClose={() => setModalVisible(false)}
-        cancelTitle="CLOSE"
-      />
+        <View style={styles.resendContainer}>
+          <Text style={styles.question}>Didn't receive the code?</Text>
+          {timer > 0 ? (
+            <Text style={styles.timerText}>Resend code in {timer}s</Text>
+          ) : (
+            <TouchableOpacity onPress={handleResend}>
+              <Text style={styles.resendText}>Resend code</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
-      <StatusBar style="auto" />
-    </SafeAreaView>
+        <CustomModal
+          visible={modalVisible}
+          title={modalTitle}
+          message={modalMessage}
+          type={modalType}
+          onClose={() => setModalVisible(false)}
+          cancelTitle="CLOSE"
+        />
+
+        <StatusBar style="auto" />
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 };
 

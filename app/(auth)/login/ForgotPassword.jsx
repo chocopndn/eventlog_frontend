@@ -1,4 +1,10 @@
-import { StyleSheet, Text, View } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from "react-native";
 import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
@@ -56,39 +62,41 @@ const ForgotPassword = () => {
   };
 
   return (
-    <SafeAreaView style={[globalStyles.primaryContainer, { paddingTop: 0 }]}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.forgotPassword}>FORGOT PASSWORD</Text>
-        <Text style={styles.info}>
-          Please enter your email to reset your password.
-        </Text>
-      </View>
-      <View style={styles.inputContainer}>
-        <FormField
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-        />
-      </View>
-      <View style={styles.buttonContainer}>
-        <CustomButton
-          type="secondary"
-          title="RESET PASSWORD"
-          onPress={handleResetPassword}
-        />
-      </View>
+    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+      <SafeAreaView style={[globalStyles.primaryContainer, { paddingTop: 0 }]}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.forgotPassword}>FORGOT PASSWORD</Text>
+          <Text style={styles.info}>
+            Please enter your email to reset your password.
+          </Text>
+        </View>
+        <View style={styles.inputContainer}>
+          <FormField
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+          />
+        </View>
+        <View style={styles.buttonContainer}>
+          <CustomButton
+            type="secondary"
+            title="RESET PASSWORD"
+            onPress={handleResetPassword}
+          />
+        </View>
 
-      <CustomModal
-        visible={modalVisible}
-        title={modalTitle}
-        message={modalMessage}
-        type={modalType}
-        onClose={() => setModalVisible(false)}
-      />
+        <CustomModal
+          visible={modalVisible}
+          title={modalTitle}
+          message={modalMessage}
+          type={modalType}
+          onClose={() => setModalVisible(false)}
+        />
 
-      <StatusBar style="auto" />
-    </SafeAreaView>
+        <StatusBar style="auto" />
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 };
 
