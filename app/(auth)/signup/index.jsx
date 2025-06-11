@@ -4,6 +4,8 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -153,14 +155,17 @@ const SignUp = () => {
 
   return (
     <SafeAreaView style={[globalStyles.primaryContainer, { padding: 0 }]}>
-      <View style={styles.headerContainer}>
-        <Header type="primary" />
-        <Text style={styles.headerText}>REGISTER</Text>
-      </View>
+      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+        <View style={styles.headerContainer}>
+          <Header type="primary" />
+          <Text style={styles.headerText}>REGISTER</Text>
+        </View>
+      </TouchableWithoutFeedback>
 
       <ScrollView
         contentContainerStyle={styles.scrollview}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <FormField
           type="id"
@@ -282,15 +287,19 @@ const SignUp = () => {
         </View>
       </ScrollView>
 
-      <CustomModal
-        visible={modalVisible}
-        message={modalMessage}
-        type={modalType}
-        cancelTitle="CLOSE"
-        onClose={() => setModalVisible(false)}
-      />
+      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+        <View>
+          <CustomModal
+            visible={modalVisible}
+            message={modalMessage}
+            type={modalType}
+            cancelTitle="CLOSE"
+            onClose={() => setModalVisible(false)}
+          />
 
-      <StatusBar style="light" />
+          <StatusBar style="light" />
+        </View>
+      </TouchableWithoutFeedback>
     </SafeAreaView>
   );
 };
